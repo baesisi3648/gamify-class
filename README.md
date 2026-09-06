@@ -2,11 +2,12 @@
 
 교사가 직접 만든 수업 게임과 교실 도구를 모아 두는 페이지.
 
-빌드 도구도 프레임워크도 없습니다. HTML 두 장과 CSS 한 장이 전부입니다.
+빌드 도구도 프레임워크도 없습니다. HTML 세 장과 CSS 한 장이 전부입니다.
 
 ```
 index.html        /      — 검정 배경 브랜드 소개 랜딩
 apps/index.html   /apps  — 흰 배경 앱 라이브러리 (사이드바 + 카드)
+404.html                 — 없는 주소일 때 (Pages가 자동으로 씁니다)
 assets/base.css          — 두 페이지가 같이 쓰는 색·폰트·버튼
 assets/*.jpg             — 게임 카드 썸네일 (960×540, 16:9)
 fonts/                   — Pretendard Variable (자체 호스팅)
