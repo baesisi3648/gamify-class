@@ -100,7 +100,8 @@ sips -p 540 960 --padColor 0F1720 small.png --out padded.png
 `index.html`과 `apps/index.html`의 `og:image` 태그가 이 파일을 가리킵니다.
 
 바꾼 뒤에는 **카카오가 옛 이미지를 캐시하고 있어서 바로 안 바뀝니다.**
-https://developers.kakao.com/tool/clear/og 에 주소를 넣고 초기화하세요.
+https://developers.kakao.com/tool/debugger — "카카오톡 URL 메타정보 관리"에서
+주소를 넣고 초기화하세요. **카카오계정 로그인이 필요합니다.**
 
 ## 게임 링크
 
