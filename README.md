@@ -10,7 +10,8 @@ index.html        /      — 검정 배경 브랜드 소개 랜딩
 apps/index.html   /apps  — 흰 배경 앱 라이브러리 (사이드바 + 카드)
 404.html                 — 없는 주소일 때 (Pages가 자동으로 씁니다)
 assets/base.css          — 두 페이지가 같이 쓰는 색·폰트·버튼
-assets/*.jpg             — 게임 카드 썸네일 (960×540, 16:9)
+assets/og.jpg            — 카톡·SNS 공유 대표 이미지 (1200×630)
+assets/{게임}.jpg         — 게임 카드 썸네일 (960×540, 16:9)
 fonts/                   — Pretendard Variable (자체 호스팅)
 ```
 
@@ -92,6 +93,14 @@ sips -p 540 960 --padColor 0F1720 small.png --out padded.png
 
 작은 대문자 라벨(`.eyebrow`)은 자간이 넓어서 한글을 넣으면 글자가 떠 보입니다.
 그 자리에는 영문만 쓰고, 한글은 본문 폰트로 갑니다.
+
+## 공유 이미지 (og:image)
+
+카톡·슬랙 등에 링크를 붙였을 때 뜨는 대표 이미지는 `assets/og.jpg` (1200×630)입니다.
+`index.html`과 `apps/index.html`의 `og:image` 태그가 이 파일을 가리킵니다.
+
+바꾼 뒤에는 **카카오가 옛 이미지를 캐시하고 있어서 바로 안 바뀝니다.**
+https://developers.kakao.com/tool/clear/og 에 주소를 넣고 초기화하세요.
 
 ## 게임 링크
 
