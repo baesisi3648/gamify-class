@@ -2,7 +2,8 @@
 
 교사가 직접 만든 수업 게임과 교실 도구를 모아 두는 페이지.
 
-빌드 도구도 프레임워크도 없습니다. HTML 세 장과 CSS 한 장이 전부입니다.
+저장소는 `baesisi3648/gamify-class`. 빌드 도구도 프레임워크도 없습니다.
+HTML 세 장과 CSS 한 장이 전부입니다.
 
 ```
 index.html        /      — 검정 배경 브랜드 소개 랜딩
@@ -107,16 +108,13 @@ sips -p 540 960 --padColor 0F1720 small.png --out padded.png
 
 ## 배포
 
-**Cloudflare Pages** — 이 저장소는 Pages 프로젝트 **두 개**가 같이 보고 있습니다.
-둘 다 `main`에 푸시하면 각자 재배포됩니다.
+**Cloudflare Pages** — 프로젝트 `gamifyclass` → **gamifyclass.pages.dev**.
+`main`에 푸시하면 자동 재배포됩니다.
 
-| 프로젝트 | 주소 | 용도 |
-| --- | --- | --- |
-| `gamifyclass` | **gamifyclass.pages.dev** | 지금 쓰는 주소 |
-| `bae-lab` | bae-lab.pages.dev | 옛 주소 — 예전에 공유한 링크가 안 깨지게 남겨 둠 |
+서브도메인은 프로젝트 이름에서 나옵니다. 바꾸려면 Settings → General → Rename.
+(옛 `bae-lab` 프로젝트는 2026-09-06에 삭제했습니다. bae-lab.pages.dev는 더 이상 열리지 않습니다.)
 
-새로 만들 때 설정은 아래와 같습니다. Pages는 만든 뒤에 프로젝트 이름(=서브도메인)을
-바꿀 수 없으니, 이름을 바꾸려면 프로젝트를 새로 만들어야 합니다.
+새로 만들 때 설정은 아래와 같습니다.
 
 | 항목 | 값 |
 | --- | --- |
