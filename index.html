@@ -3,577 +3,576 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>bae lab — 수업에서 쓰는 생명과학 게임</title>
-<meta name="description" content="고등학교 생명과학 수업에서 실제로 쓰는 게임 두 개. 학생은 폰으로, 교사는 TV로. 설치도 로그인도 없습니다." />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' shape-rendering='crispEdges'%3E%3Crect width='10' height='10' fill='%233d2b17'/%3E%3Crect x='2' y='3' width='2' height='2' fill='%23f4e4c1'/%3E%3Crect x='6' y='3' width='2' height='2' fill='%23f4e4c1'/%3E%3Crect x='2' y='6' width='1' height='1' fill='%23f4e4c1'/%3E%3Crect x='3' y='7' width='4' height='1' fill='%23f4e4c1'/%3E%3Crect x='7' y='6' width='1' height='1' fill='%23f4e4c1'/%3E%3C/svg%3E" />
+<title>GAMIFY CLASS — 수업이 게임이 되는 순간</title>
+<meta name="description" content="교사가 직접 만들고 교실에서 활용하는 수업 게임과 학급경영 도구. 회원가입도 설치도 없이 웹에서 바로 시작합니다." />
+<link rel="canonical" href="https://bae-lab.pages.dev/" />
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content="GAMIFY CLASS — 수업이 게임이 되는 순간" />
+<meta property="og:description" content="교사가 직접 만들고 교실에서 활용하는 수업 게임과 학급경영 도구." />
+<meta property="og:image" content="https://bae-lab.pages.dev/assets/bio-marble.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0a0b'/%3E%3Cpath d='M13 10.5l9 5.5-9 5.5z' fill='%23a3e635'/%3E%3C/svg%3E" />
+
+<link rel="preload" as="font" type="font/woff2" href="/fonts/PretendardVariable.woff2" crossorigin />
+<link rel="stylesheet" href="/assets/base.css" />
 
 <style>
-/* ── 갈무리 도트 폰트 (SIL OFL, fonts/GALMURI-LICENSE.txt) ── */
-@font-face {
-  font-family: "Galmuri11";
-  font-weight: 400;
-  font-display: swap;
-  src: url("./fonts/Galmuri11.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Galmuri11";
-  font-weight: 700;
-  font-display: swap;
-  src: url("./fonts/Galmuri11-Bold.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Galmuri14";
-  font-weight: 400;
-  font-display: swap;
-  src: url("./fonts/Galmuri14.woff2") format("woff2");
-}
-@font-face {
-  font-family: "GalmuriMono11";
-  font-weight: 400;
-  font-display: swap;
-  src: url("./fonts/GalmuriMono11.woff2") format("woff2");
-}
-
-/* ── 디자인 토큰 ─────────────────────────────── */
-:root {
-  /* 양피지 · 나무 */
-  --paper:      #f4e4c1;
-  --paper-hi:   #fdf4dd;
-  --paper-card: #fbeed0;
-  --ink:        #3d2b17;
-  --wood:       #8b5a2b;
-  --muted:      #6b5133;
-  --line:       #c9a877;
-
-  /* 포인트 */
-  --sky:   #5fc9f8;
-  --grass: #7ac74f;
-  --gold:  #f2b233;
-
-  /* 도트 폰트는 네이티브 크기의 정수배에서만 또렷합니다.
-     Galmuri11 → 11 / 22 / 33px,  Galmuri14 → 14 / 28 / 42 / 56px */
-  --font-title: "Galmuri14", "Galmuri11", monospace;
-  --font-body:  "Galmuri11", monospace;
-  --font-mono:  "GalmuriMono11", "Galmuri11", monospace;
-
-  --pad: 16px;
-}
-@media (min-width: 768px)  { :root { --pad: 32px; } }
-@media (min-width: 1024px) { :root { --pad: 48px; } }
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { height: 100%; }
-
 body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-
-  background-color: var(--paper);
-  background-image: radial-gradient(rgba(139, 90, 43, 0.13) 1px, transparent 1px);
-  background-size: 6px 6px;
-
-  color: var(--ink);
-  font-family: var(--font-body);
-  font-size: 22px;
-  line-height: 36px;
-
-  /* 도트가 뭉개지지 않도록 안티에일리어싱을 끕니다 */
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: unset;
+  background: var(--d-bg);
+  color: var(--d-text);
 }
 
-img, svg { image-rendering: pixelated; }
+::selection { background: var(--lime); color: var(--lime-ink); }
 
-::selection { background: var(--ink); color: var(--paper); }
-
-a { color: inherit; text-decoration: none; }
-ul { list-style: none; }
-
-/* ── 헤더 (나무 표지판) ──────────────────────── */
-header {
-  padding: 14px var(--pad);
+/* ── 헤더 ────────────────────────────────────── */
+.site-head {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
-
-  background: var(--wood);
-  border-bottom: 4px solid var(--ink);
-  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.22),
-              inset 0 -3px 0 rgba(61, 43, 23, 0.35);
+  padding: 14px var(--pad);
+  background: rgba(10, 10, 11, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
 }
+.site-head.scrolled { border-bottom-color: var(--d-line); }
 
-.brand { display: flex; align-items: center; gap: 10px; }
+.site-head .wordmark { color: var(--d-text); }
 
-.avatar {
-  width: 32px; height: 32px;
-  flex-shrink: 0;
-  background: var(--paper-hi);
-  color: var(--ink);          /* 픽셀 얼굴 색 (svg fill=currentColor) */
-  border: 3px solid var(--ink);
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 3px 3px 0 rgba(61, 43, 23, 0.4);
-}
-.avatar svg { width: 20px; height: 20px; display: block; }
-
-.brand .name {
-  font-size: 22px;
-  line-height: 22px;
-  color: var(--paper-hi);
-  text-shadow: 2px 2px 0 rgba(61, 43, 23, 0.75);
-}
-
-nav {
+.head-nav {
+  margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 20px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  gap: 6px;
 }
-nav a {
-  color: var(--paper);
-  padding: 6px 8px;
-  border: 2px solid transparent;
+.head-nav a.link {
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--d-muted);
+  border-radius: var(--r-sm);
+  transition: color 0.15s ease;
 }
-nav a:hover {
-  color: var(--ink);
-  background: var(--gold);
-  border-color: var(--ink);
-}
+.head-nav a.link:hover { color: var(--d-text); }
+@media (max-width: 640px) { .head-nav a.link { display: none; } }
 
-/* ── 본문 ────────────────────────────────────── */
-main { flex: 1; width: 100%; padding: 48px var(--pad); }
-@media (min-width: 768px) { main { padding: 72px var(--pad); } }
+/* ── 공통 섹션 틀 ────────────────────────────── */
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: var(--pad); }
 
-.hero { max-width: 1024px; margin-bottom: 72px; }
-@media (min-width: 768px) { .hero { margin-bottom: 96px; } }
+section { position: relative; }
 
-.hero h1 {
-  font-family: var(--font-title);
-  font-size: 28px;
-  line-height: 42px;
-  font-weight: 400;
-  text-shadow: 3px 3px 0 var(--line);
-}
-@media (min-width: 768px)  { .hero h1 { font-size: 42px; line-height: 60px; } }
-@media (min-width: 1024px) { .hero h1 { font-size: 56px; line-height: 80px; } }
+.sec-pad { padding-block: clamp(88px, 13vw, 168px); }
 
-.hero h1 .dim { color: var(--wood); }
-
-.hero p {
-  margin-top: 28px;
-  max-width: 640px;
-  color: var(--muted);
-}
-
-/* 픽셀 점선 구분줄 */
-.rule {
-  margin-top: 28px;
-  height: 4px;
-  background-image: linear-gradient(90deg, var(--line) 50%, transparent 50%);
-  background-size: 8px 4px;
-}
-
-.stats {
-  margin-top: 20px;
+.sec-label {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--muted);
+  gap: 9px;
+  color: var(--lime);
+  margin-bottom: 26px;
 }
-.stats .dot { color: var(--grass); }
+.sec-label::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
 
-/* ── 섹션 ────────────────────────────────────── */
-section + section { margin-top: 72px; }
+h2.sec-title {
+  font-size: clamp(2rem, 5.2vw, 3.4rem);
+  line-height: 1.14;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+h2.sec-title .dim { color: var(--d-muted); display: block; }
 
-.section-head {
+.sec-lead {
+  margin-top: 26px;
+  max-width: 46ch;
+  font-size: clamp(1rem, 1.5vw, 1.125rem);
+  color: var(--d-muted);
+}
+
+/* ── SECTION 1 — HERO ────────────────────────── */
+.hero {
+  position: relative;
+  min-height: calc(100svh - 68px);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 28px;
-  padding-bottom: 12px;
-  border-bottom: 4px solid var(--line);
-}
-.section-head h2 {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 11px;
-  font-weight: 400;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-}
-.section-head h2::before { content: "◆ "; color: var(--grass); letter-spacing: 0; }
-.section-head .note {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 11px;
-  color: var(--muted);
+  padding-block: 72px 96px;
+  overflow: hidden;
 }
 
-/* ── 카드 그리드 (퀘스트 창) ─────────────────── */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
+/* 아주 옅은 그리드 — 화면 중앙에서만 보이도록 마스크 */
+.hero .grid-bg,
+.hero .glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
-@media (min-width: 768px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-
-.card {
-  height: 100%;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-
-  background: var(--paper-card);
-  border: 4px solid var(--ink);
-  /* 안쪽 밝은 테두리 = 이중선 프레임 */
-  box-shadow: inset 0 0 0 3px var(--paper-hi),
-              inset 0 -8px 0 rgba(139, 90, 43, 0.13),
-              6px 6px 0 rgba(61, 43, 23, 0.28);
-
-  transition: transform 0.08s steps(2), box-shadow 0.08s steps(2);
+.hero .grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 76px 76px;
+  -webkit-mask-image: radial-gradient(ellipse 78% 62% at 42% 42%, #000 25%, transparent 78%);
+          mask-image: radial-gradient(ellipse 78% 62% at 42% 42%, #000 25%, transparent 78%);
 }
-a.card:hover {
-  transform: translate(-2px, -4px);
-  box-shadow: inset 0 0 0 3px var(--paper-hi),
-              inset 0 -8px 0 rgba(139, 90, 43, 0.13),
-              10px 10px 0 rgba(61, 43, 23, 0.28);
+.hero .glow {
+  background:
+    radial-gradient(46rem 26rem at 18% 30%, rgba(163, 230, 53, 0.11), transparent 68%),
+    radial-gradient(34rem 22rem at 88% 78%, rgba(163, 230, 53, 0.055), transparent 70%);
 }
 
-.card-top {
-  display: flex;
+.hero .wrap { position: relative; width: 100%; }
+
+.hero-eyebrow {
+  display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
+  color: var(--lime);
+  margin-bottom: 30px;
 }
-/* 메이플 아이템 슬롯 느낌의 작은 픽셀 칸 */
-.card-top::before {
-  content: "";
-  width: 14px; height: 14px;
-  flex-shrink: 0;
-  background: var(--sky);
-  border: 3px solid var(--ink);
-  box-shadow: inset -3px -3px 0 rgba(61, 43, 23, 0.22);
+.hero-eyebrow .pip {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(163, 230, 53, 0.16);
 }
 
-.card h3 {
-  font-family: var(--font-title);
-  font-size: 28px;
-  line-height: 32px;
-  font-weight: 400;
+h1.hero-title {
+  font-size: clamp(3rem, 11.5vw, 8.5rem);
+  line-height: 0.94;
+  font-weight: 800;
+  letter-spacing: -0.05em;
 }
+h1.hero-title .l2 { display: block; color: var(--d-muted); }
 
-.badge {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 11px;
-  letter-spacing: 1px;
-  padding: 5px 7px;
-  color: #12300a;
-  background: var(--grass);
-  border: 3px solid var(--ink);
-  box-shadow: inset -3px -3px 0 rgba(61, 43, 23, 0.2);
-}
-.badge.wip { background: var(--line); color: var(--ink); }
-
-.card p { color: var(--muted); }
-
-.card-foot {
-  margin-top: auto;
-  padding-top: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 11px;
-  color: var(--muted);
-}
-.tags span {
-  padding: 5px 7px;
-  background: rgba(139, 90, 43, 0.11);
-  border: 2px solid var(--line);
-}
-
-.visit {
-  flex-shrink: 0;
-  font-size: 22px;
-  line-height: 22px;
-  color: var(--wood);
-}
-a.card:hover .visit { color: var(--ink); }
-
-/* 링크가 두 개인 카드 — 픽셀 버튼 */
-.links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-.link-chip {
-  font-size: 22px;
-  line-height: 22px;
-  padding: 8px 12px;
-
-  background: var(--sky);
-  color: #072d43;
-  border: 3px solid var(--ink);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45),
-              4px 4px 0 rgba(61, 43, 23, 0.32);
-
-  transition: transform 0.06s steps(2), box-shadow 0.06s steps(2);
-}
-.link-chip:hover { background: var(--gold); }
-.link-chip:active {
-  transform: translate(4px, 4px);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
-}
-
-/* 준비 중 카드 */
-.card.soon {
-  min-height: 180px;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-
-  background: transparent;
-  border-style: dashed;
-  border-color: var(--line);
-  box-shadow: none;
-}
-.card.soon:hover { transform: none; box-shadow: none; }
-.card.soon h3 { font-size: 28px; color: var(--line); }
-.card.soon p { margin-top: 10px; color: var(--line); }
-
-/* ── 사용법 (퀘스트 목록) ────────────────────── */
-.steps { display: grid; grid-template-columns: 1fr; gap: 20px; }
-@media (min-width: 768px) { .steps { grid-template-columns: repeat(3, 1fr); } }
-
-.step {
-  padding: 20px;
-  background: rgba(253, 244, 221, 0.6);
-  border: 3px solid var(--line);
-}
-.step .num {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 11px;
-  padding: 6px 8px;
-  color: var(--paper-hi);
-  background: var(--wood);
-  border: 3px solid var(--ink);
-  box-shadow: inset -3px -3px 0 rgba(61, 43, 23, 0.3);
-}
-/* 3단 좁은 칸이라 크기 대신 굵기·색으로 위계를 줍니다 */
-.step h4 {
-  margin-top: 14px;
-  font-size: 22px;
-  line-height: 30px;
+.hero-sub {
+  margin-top: clamp(28px, 4vw, 44px);
+  font-size: clamp(1.35rem, 3.4vw, 2.15rem);
+  line-height: 1.3;
   font-weight: 700;
-  color: var(--ink);
-}
-.step p { margin-top: 8px; color: var(--muted); }
-.step code {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 2px 5px;
-  background: rgba(139, 90, 43, 0.14);
-  border: 2px solid var(--line);
+  letter-spacing: -0.03em;
 }
 
-/* ── 푸터 (나무 바닥) ────────────────────────── */
-footer {
-  padding: 20px var(--pad);
+.hero-desc {
+  margin-top: 20px;
+  max-width: 42ch;
+  font-size: clamp(1rem, 1.6vw, 1.1rem);
+  color: var(--d-muted);
+}
+
+.hero-cta {
+  margin-top: 40px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hero-meta {
+  margin-top: 34px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  color: var(--d-dim);
+}
+.hero-meta .sep { color: var(--d-line-2); }
+
+.scroll-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--d-dim);
+}
+.scroll-hint svg { animation: bob 2.4s ease-in-out infinite; }
+@keyframes bob {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  50%      { transform: translateY(5px); opacity: 1; }
+}
+@media (max-height: 700px), (max-width: 640px) { .scroll-hint { display: none; } }
+
+/* ── SECTION 2 — PHILOSOPHY ──────────────────── */
+.philosophy { background: var(--d-bg-2); border-block: 1px solid var(--d-line); }
+
+.phil-top {
+  display: grid;
+  gap: 32px clamp(40px, 7vw, 96px);
+  align-items: start;
+}
+@media (min-width: 900px) { .phil-top { grid-template-columns: 1fr 1fr; } }
+
+.phil-body p + p { margin-top: 18px; }
+.phil-body p {
+  font-size: clamp(1rem, 1.5vw, 1.125rem);
+  color: var(--d-muted);
+}
+
+/* 키워드 3개 — 박스가 아니라 넓은 타이포그래피 행 */
+.keywords { margin-top: clamp(56px, 8vw, 96px); }
+
+.kw {
+  display: grid;
+  gap: 6px 32px;
+  align-items: baseline;
+  padding-block: clamp(24px, 3.5vw, 38px);
+  border-top: 1px solid var(--d-line);
+}
+.kw:last-child { border-bottom: 1px solid var(--d-line); }
+@media (min-width: 800px) {
+  .kw { grid-template-columns: 4.5rem minmax(0, 17.5rem) 1fr; }
+}
+
+.kw .no {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--lime);
+}
+.kw .en {
+  font-size: clamp(1.9rem, 4.6vw, 3.1rem);
+  line-height: 1.02;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+.kw .ko {
+  font-size: clamp(0.95rem, 1.4vw, 1.0625rem);
+  color: var(--d-muted);
+  max-width: 34ch;
+}
+
+/* ── SECTION 3 — WHAT YOU CAN FIND ───────────── */
+.finds {
+  margin-top: clamp(48px, 6vw, 76px);
+  display: grid;
+  gap: 1px;
+  background: var(--d-line);
+  border: 1px solid var(--d-line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+@media (min-width: 860px) { .finds { grid-template-columns: repeat(3, 1fr); } }
+
+.find {
+  padding: clamp(26px, 3.2vw, 38px);
+  background: var(--d-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.find .no { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: var(--d-dim); }
+.find h3 {
+  font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.find p { color: var(--d-muted); font-size: 0.9375rem; }
+
+.chip {
+  margin-top: auto;
+  padding-top: 18px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-
-  background: var(--wood);
-  border-top: 4px solid var(--ink);
-  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.22);
-
-  font-family: var(--font-mono);
+  gap: 7px;
+  font-family: var(--mono);
   font-size: 11px;
-  line-height: 11px;
-  color: var(--paper);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--d-dim);
+}
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.chip.live { color: var(--lime); }
+
+/* ── SECTION 4 — WHY ─────────────────────────── */
+.why { background: var(--d-bg-2); border-block: 1px solid var(--d-line); }
+
+.why-grid {
+  margin-top: clamp(48px, 6vw, 76px);
+  display: grid;
+  gap: clamp(28px, 4vw, 52px) clamp(32px, 5vw, 72px);
+}
+@media (min-width: 760px) { .why-grid { grid-template-columns: 1fr 1fr; } }
+
+.why-item { padding-top: 22px; border-top: 1px solid var(--d-line); }
+.why-item .no {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--lime);
+}
+.why-item h3 {
+  margin-top: 12px;
+  font-size: clamp(1.15rem, 1.9vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.why-item p { margin-top: 8px; color: var(--d-muted); font-size: 0.9375rem; max-width: 38ch; }
+
+/* ── SECTION 5 — FINAL CTA ───────────────────── */
+.final {
+  position: relative;
+  text-align: center;
+  overflow: hidden;
+}
+.final .glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(38rem 20rem at 50% 108%, rgba(163, 230, 53, 0.14), transparent 70%);
+}
+.final .wrap { position: relative; }
+.final .sec-label { justify-content: center; }
+.final h2 {
+  font-size: clamp(2.1rem, 6vw, 4rem);
+  line-height: 1.12;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.final .btn { margin-top: 42px; }
+
+/* ── 푸터 ────────────────────────────────────── */
+.site-foot .foot-ko { font-size: 12.5px; color: var(--d-dim); }
+
+.site-foot {
+  padding-block: 28px;
+  border-top: 1px solid var(--d-line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  color: var(--d-dim);
 }
 
-/* 모션을 줄이도록 설정한 사용자에게는 튀는 움직임을 없앱니다 */
+/* ── 스크롤 등장 (아주 약하게) ───────────────── */
+.rise {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.rise.in { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
-  a.card:hover { transform: none; }
+  .rise { opacity: 1; transform: none; }
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <a class="brand" href="/">
-    <span class="avatar" aria-label="bae lab">
-      <svg viewBox="0 0 10 10" shape-rendering="crispEdges" fill="currentColor" aria-hidden="true">
-        <rect x="2" y="3" width="2" height="2" />
-        <rect x="6" y="3" width="2" height="2" />
-        <rect x="2" y="6" width="1" height="1" />
-        <rect x="3" y="7" width="4" height="1" />
-        <rect x="7" y="6" width="1" height="1" />
-      </svg>
-    </span>
-    <span class="name">bae lab</span>
-  </a>
-  <nav>
-    <a href="#games">게임</a>
-    <a href="#howto">수업 전에</a>
+<header class="site-head" id="head">
+  <a class="wordmark" href="/" aria-label="GAMIFY CLASS 홈">GAMIFY CLASS</a>
+  <nav class="head-nav" aria-label="주요">
+    <a class="link" href="#about">소개</a>
+    <a class="link" href="#why">특징</a>
+    <a class="btn btn-lime btn-sm" href="/apps">START PLAYING <span class="arw" aria-hidden="true">→</span></a>
   </nav>
 </header>
 
 <main>
 
+  <!-- SECTION 1 — HERO -->
   <section class="hero">
-    <h1>
-      수업 시간에 하는<br />
-      <span class="dim">생명과학 게임</span>
-    </h1>
-    <p>
-      고2 생명과학 수업에서 제가 실제로 쓰는 게임들입니다. 학생은 폰으로 들어오고
-      교사 화면은 TV에 띄웁니다. 설치할 것도, 로그인할 것도 없습니다.
-    </p>
-    <div class="rule"></div>
-    <div class="stats">
-      <span><span class="dot">◆</span> 게임 2개</span>
-      <span><span class="dot">◆</span> 한 차시 안에 끝남</span>
-      <span><span class="dot">◆</span> 모둠당 폰 한 대</span>
+    <div class="grid-bg" aria-hidden="true"></div>
+    <div class="glow" aria-hidden="true"></div>
+
+    <div class="wrap">
+      <p class="eyebrow hero-eyebrow"><span class="pip" aria-hidden="true"></span>Games &amp; Classroom Tools</p>
+
+      <h1 class="hero-title">GAMIFY<span class="l2">CLASS</span></h1>
+
+      <p class="hero-sub">수업이 게임이 되는 순간.</p>
+
+      <p class="hero-desc">
+        교사가 직접 만들고, 교실에서 활용하는 수업 게임과 학급경영 도구를 만나보세요.
+      </p>
+
+      <div class="hero-cta">
+        <a class="btn btn-lime" href="/apps">START PLAYING <span class="arw" aria-hidden="true">→</span></a>
+        <a class="btn btn-outline-d" href="#about">어떤 곳인가요</a>
+      </div>
+
+      <p class="eyebrow hero-meta">
+        <span>No login</span><span class="sep" aria-hidden="true">·</span>
+        <span>No install</span><span class="sep" aria-hidden="true">·</span>
+        <span>Free to use</span>
+      </p>
+    </div>
+
+    <div class="scroll-hint eyebrow" aria-hidden="true">
+      <span>Explore</span>
+      <svg width="14" height="8" viewBox="0 0 14 8" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M1 1l6 6 6-6" />
+      </svg>
     </div>
   </section>
 
-  <section id="games">
-    <div class="section-head">
-      <h2>게임</h2>
-      <span class="note">무료 · 로그인 없음</span>
+  <!-- SECTION 2 — INTRO / PHILOSOPHY -->
+  <section class="philosophy sec-pad" id="about">
+    <div class="wrap">
+      <div class="phil-top rise">
+        <div>
+          <p class="eyebrow sec-label">Philosophy</p>
+          <h2 class="sec-title">Gamify<span class="dim">your class.</span></h2>
+        </div>
+        <div class="phil-body">
+          <p>
+            GAMIFY CLASS는 수업과 학급경영에 게임의 재미를 더하기 위해 만든 공간입니다.
+          </p>
+          <p>
+            실제 교실에서 활용할 수 있는 게임과 도구를 교사가 직접 만들고 공유합니다.
+            수업에서 써 보고 고치기를 반복하며 다듬어 온 것들입니다.
+          </p>
+        </div>
+      </div>
+
+      <div class="keywords">
+        <div class="kw rise">
+          <span class="no">01</span>
+          <span class="en">PLAY</span>
+          <span class="ko">학생이 즐겁게 참여하는 수업</span>
+        </div>
+        <div class="kw rise">
+          <span class="no">02</span>
+          <span class="en">LEARN</span>
+          <span class="ko">게임 속에서 자연스럽게 이루어지는 학습</span>
+        </div>
+        <div class="kw rise">
+          <span class="no">03</span>
+          <span class="en">TOGETHER</span>
+          <span class="ko">경쟁뿐 아니라 토론과 협력이 이루어지는 교실</span>
+        </div>
+      </div>
     </div>
-
-    <ul class="grid">
-
-      <li>
-        <a class="card" href="https://bio-marble.pages.dev" target="_blank" rel="noreferrer">
-          <div class="card-top">
-            <h3>Bio Marble</h3>
-            <span class="badge">운영 중</span>
-          </div>
-          <p>
-            부루마블 규칙 그대로입니다. 모둠이 차례로 말을 옮기고, 멈춘 칸의 문제를
-            TV 화면에서 풉니다. 문제 50개가 들어 있고, 교사가 관리 페이지에서 바꿀 수 있습니다.
-          </p>
-          <div class="card-foot">
-            <div class="tags">
-              <span>보드게임</span>
-              <span>모둠 대결</span>
-              <span>퀴즈 50문항</span>
-            </div>
-            <span class="visit">열기 ▶</span>
-          </div>
-        </a>
-      </li>
-
-      <li>
-        <div class="card">
-          <div class="card-top">
-            <h3>와일드 더비</h3>
-            <span class="badge">운영 중</span>
-          </div>
-          <p>
-            더 지니어스의 사기경마를 수업용으로 바꾼 것입니다. 동물 8마리가 달리고, 모둠은
-            문제를 맞혀 순위 힌트를 모은 뒤 1·2·3등에 코인을 겁니다. 배당판은 TV에서 실시간으로
-            움직입니다. 단원을 마무리할 때 씁니다.
-          </p>
-          <div class="links">
-            <a class="link-chip" href="https://wilde-derby.baesisi3648.workers.dev/teacher" target="_blank" rel="noreferrer">교사 화면 (TV) ▶</a>
-            <a class="link-chip" href="https://wilde-derby.baesisi3648.workers.dev/" target="_blank" rel="noreferrer">학생 화면 (폰) ▶</a>
-            <a class="link-chip" href="https://wilde-derby.baesisi3648.workers.dev/guide" target="_blank" rel="noreferrer">첫 판 가이드 ▶</a>
-          </div>
-          <div class="card-foot">
-            <div class="tags">
-              <span>베팅 레이스</span>
-              <span>6모둠</span>
-              <span>실시간</span>
-              <span>단원 마무리</span>
-            </div>
-          </div>
-        </div>
-      </li>
-
-      <li>
-        <div class="card soon">
-          <div>
-            <h3>세 번째 게임</h3>
-            <p>아직 만드는 중입니다</p>
-          </div>
-        </div>
-      </li>
-
-    </ul>
   </section>
 
-  <section id="howto">
-    <div class="section-head">
-      <h2>수업 전에</h2>
-      <span class="note">3분이면 됩니다</span>
-    </div>
+  <!-- SECTION 3 — WHAT YOU CAN FIND -->
+  <section class="sec-pad">
+    <div class="wrap">
+      <div class="rise">
+        <p class="eyebrow sec-label">What you can find</p>
+        <h2 class="sec-title">교실에 필요한 것들.</h2>
+        <p class="sec-lead">
+          수업용 게임부터 학급 운영 도구까지, 한 곳에서 골라 바로 실행합니다.
+        </p>
+      </div>
 
-    <div class="steps">
-      <div class="step">
-        <span class="num">01</span>
-        <h4>링크가 열리는지 먼저 확인</h4>
-        <p>
-          학교 와이파이가 바깥 주소를 막아 두는 경우가 있습니다. 수업 전에 선생님 폰으로
-          두 게임 링크를 한 번씩 열어 보세요. 안 열리면 그날은 LTE로 하는 게 빠릅니다.
-        </p>
+      <div class="finds rise">
+        <article class="find">
+          <span class="no">01</span>
+          <h3>Classroom Management</h3>
+          <p>학급 운영에 바로 사용할 수 있는 도구.</p>
+          <p class="chip"><span class="dot" aria-hidden="true"></span>Coming soon</p>
+        </article>
+        <article class="find">
+          <span class="no">02</span>
+          <h3>Lesson Games</h3>
+          <p>수업에 활용할 수 있는 게임형 활동.</p>
+          <p class="chip live"><span class="dot" aria-hidden="true"></span>2 apps live</p>
+        </article>
+        <article class="find">
+          <span class="no">03</span>
+          <h3>More Tools</h3>
+          <p>타이머, 랜덤 도구 같은 교실용 웹 도구.</p>
+          <p class="chip"><span class="dot" aria-hidden="true"></span>Coming soon</p>
+        </article>
       </div>
-      <div class="step">
-        <span class="num">02</span>
-        <h4>TV에는 교사 화면, 폰에는 학생 화면</h4>
-        <p>
-          교사 화면을 TV에 띄우면 학생용 QR이 같이 나옵니다. 모둠마다 폰 한 대로 QR을
-          찍으면 끝입니다. 나머지 학생은 그 폰을 같이 봅니다.
-        </p>
+    </div>
+  </section>
+
+  <!-- SECTION 4 — WHY GAMIFY CLASS -->
+  <section class="why sec-pad" id="why">
+    <div class="wrap">
+      <div class="rise">
+        <p class="eyebrow sec-label">Why GAMIFY CLASS</p>
+        <h2 class="sec-title">Made for<span class="dim">the classroom.</span></h2>
       </div>
-      <div class="step">
-        <span class="num">03</span>
-        <h4>문제는 전날 넣어 두기</h4>
-        <p>
-          두 게임 다 관리 페이지에서 문제를 넣고 고칩니다. 와일드 더비는 주소 뒤에
-          <code>/admin</code>을 붙이면 됩니다. 한 단원에 18문항이면 한 차시가 찹니다.
-        </p>
+
+      <div class="why-grid">
+        <article class="why-item rise">
+          <span class="no">01</span>
+          <h3>바로 시작</h3>
+          <p>회원가입과 설치 없이 웹에서 바로 시작할 수 있습니다.</p>
+        </article>
+        <article class="why-item rise">
+          <span class="no">02</span>
+          <h3>교사가 직접 활용</h3>
+          <p>실제 수업 상황에 맞게 사용할 수 있습니다.</p>
+        </article>
+        <article class="why-item rise">
+          <span class="no">03</span>
+          <h3>실제 교실에서 사용</h3>
+          <p>교사가 직접 수업에서 활용하며 기능을 개선합니다.</p>
+        </article>
+        <article class="why-item rise">
+          <span class="no">04</span>
+          <h3>무료 공유</h3>
+          <p>더 많은 교사들이 활용할 수 있도록 공개합니다.</p>
+        </article>
       </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5 — FINAL CTA -->
+  <section class="final sec-pad">
+    <div class="glow" aria-hidden="true"></div>
+    <div class="wrap rise">
+      <p class="eyebrow sec-label">Ready to play?</p>
+      <h2>오늘 수업에<br />게임을 더해보세요.</h2>
+      <a class="btn btn-lime" href="/apps">START PLAYING <span class="arw" aria-hidden="true">→</span></a>
     </div>
   </section>
 
 </main>
 
-<footer>
-  <span>© 2026 bae lab</span>
+<footer class="site-foot wrap">
+  <span class="eyebrow">© 2026 GAMIFY CLASS</span>
+  <span class="foot-ko">용인삼계고 배성용 · 교사</span>
 </footer>
+
+<script>
+// 헤더는 스크롤이 시작되면 아래 경계선을 드러냅니다.
+(function () {
+  var head = document.getElementById("head");
+  var onScroll = function () {
+    head.classList.toggle("scrolled", window.scrollY > 8);
+  };
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+})();
+
+// 스크롤 등장 — 지원하지 않거나 모션을 줄인 환경에서는 그냥 다 보입니다.
+(function () {
+  var items = document.querySelectorAll(".rise");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (reduce || !("IntersectionObserver" in window)) {
+    items.forEach(function (el) { el.classList.add("in"); });
+    return;
+  }
+
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      e.target.classList.add("in");
+      io.unobserve(e.target);
+    });
+  }, { rootMargin: "0px 0px -12% 0px", threshold: 0.08 });
+
+  items.forEach(function (el) { io.observe(el); });
+})();
+</script>
 
 </body>
 </html>

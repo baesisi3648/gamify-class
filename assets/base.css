@@ -1,0 +1,151 @@
+/* ─────────────────────────────────────────────────────────────
+   GAMIFY CLASS — 공용 디자인 시스템
+   랜딩(/)과 앱 라이브러리(/apps)가 같은 브랜드로 보이도록
+   폰트·색·버튼·라벨을 여기 한 곳에서만 정의합니다.
+   ───────────────────────────────────────────────────────────── */
+
+/* Pretendard Variable (SIL OFL) — 자체 호스팅, 외부 CDN 없음 */
+@font-face {
+  font-family: "Pretendard Variable";
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+  src: url("../fonts/PretendardVariable.woff2") format("woff2-variations");
+}
+
+:root {
+  /* 포인트 컬러 — 검정 위에서는 형광, 흰색 위에서는 형광펜 */
+  --lime:     #a3e635;
+  --lime-hi:  #bef264;
+  --lime-ink: #0a0a0a;   /* 라임 위에 얹는 글자색 */
+
+  /* 어두운 면 (랜딩) */
+  --d-bg:     #0a0a0b;
+  --d-bg-2:   #101012;
+  --d-panel:  #141417;
+  --d-line:   rgba(255, 255, 255, 0.09);
+  --d-line-2: rgba(255, 255, 255, 0.16);
+  --d-text:   #f5f5f4;
+  --d-muted:  #8b8b86;
+  --d-dim:    #63635f;
+
+  /* 밝은 면 (/apps) */
+  --l-bg:     #ffffff;
+  --l-bg-2:   #f7f7f6;
+  --l-panel:  #fbfbfa;
+  --l-line:   #e6e6e3;
+  --l-line-2: #d4d4d0;
+  --l-text:   #101010;
+  --l-muted:  #6d6d68;
+  --l-dim:    #96968f;
+
+  --font: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+          "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --r-sm: 6px;
+  --r:    10px;
+  --r-lg: 16px;
+
+  --pad: 20px;
+}
+@media (min-width: 768px)  { :root { --pad: 40px; } }
+@media (min-width: 1200px) { :root { --pad: 64px; } }
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.65;
+  font-feature-settings: "ss01", "tnum";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  word-break: keep-all;      /* 한글이 어절 중간에서 끊기지 않게 */
+  overflow-wrap: anywhere;
+}
+
+img, svg { display: block; max-width: 100%; }
+img { height: auto; }
+a { color: inherit; text-decoration: none; }
+ul, ol { list-style: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+/* 키보드 사용자에게만 보이는 포커스 링 */
+:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* ── 브랜드 워드마크 ─────────────────────────── */
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+.wordmark::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 2px;
+  background: var(--lime);
+}
+
+/* ── 작은 대문자 라벨 ────────────────────────── */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* ── 버튼 ────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;             /* 모바일 터치 영역 */
+  padding: 0 22px;
+  border-radius: var(--r);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: background-color 0.16s ease, color 0.16s ease,
+              border-color 0.16s ease, transform 0.16s ease;
+}
+.btn .arw { transition: transform 0.2s ease; }
+.btn:hover .arw { transform: translateX(3px); }
+
+.btn-lime { background: var(--lime); color: var(--lime-ink); }
+.btn-lime:hover { background: var(--lime-hi); }
+
+.btn-sm { min-height: 38px; padding: 0 14px; font-size: 13px; }
+
+/* 어두운 배경용 외곽선 버튼 */
+.btn-outline-d {
+  border: 1px solid var(--d-line-2);
+  color: var(--d-text);
+}
+.btn-outline-d:hover { border-color: var(--d-text); background: rgba(255, 255, 255, 0.05); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

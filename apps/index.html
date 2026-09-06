@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>앱 — GAMIFY CLASS</title>
+<meta name="description" content="GAMIFY CLASS의 수업 게임과 교실 도구 목록. 카테고리를 고르고 카드를 누르면 바로 실행됩니다." />
+<link rel="canonical" href="https://bae-lab.pages.dev/apps" />
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content="앱 — GAMIFY CLASS" />
+<meta property="og:description" content="수업 게임과 교실 도구를 골라 바로 실행하세요." />
+<meta property="og:image" content="https://bae-lab.pages.dev/assets/bio-marble.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0a0b'/%3E%3Cpath d='M13 10.5l9 5.5-9 5.5z' fill='%23a3e635'/%3E%3C/svg%3E" />
+
+<link rel="preload" as="font" type="font/woff2" href="/fonts/PretendardVariable.woff2" crossorigin />
+<link rel="stylesheet" href="/assets/base.css" />
+
+<style>
+body {
+  background: var(--l-bg);
+  color: var(--l-text);
+}
+
+::selection { background: var(--lime); color: var(--lime-ink); }
+
+/* ── 상단 바 ─────────────────────────────────── */
+.app-head {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-inline: clamp(16px, 3vw, 28px);
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--l-line);
+}
+.app-head .wordmark { color: var(--l-text); }
+.app-head .head-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--l-muted);
+}
+.app-head .back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--l-muted);
+  transition: color 0.15s ease;
+}
+.app-head .back:hover { color: var(--l-text); }
+@media (max-width: 720px) { .app-head .head-right .title-note { display: none; } }
+
+/* ── 레이아웃 ────────────────────────────────── */
+.shell { display: block; }
+@media (min-width: 900px) {
+  .shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); }
+}
+
+/* ── 사이드바 (데스크톱) ─────────────────────── */
+.side {
+  border-right: 1px solid var(--l-line);
+  background: var(--l-panel);
+}
+@media (min-width: 900px) {
+  .side {
+    position: sticky;
+    top: 60px;
+    height: calc(100svh - 60px);
+    display: flex;
+    flex-direction: column;
+    padding: 26px 16px 16px;
+  }
+}
+
+.side-label {
+  padding-inline: 12px;
+  margin-bottom: 12px;
+  color: var(--l-dim);
+}
+@media (max-width: 899px) { .side-label { display: none; } }
+
+.cats { display: flex; flex-direction: column; gap: 2px; }
+
+.cat {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--r);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--l-muted);
+  text-align: left;
+  transition: background-color 0.14s ease, color 0.14s ease;
+}
+.cat:hover { background: rgba(0, 0, 0, 0.045); color: var(--l-text); }
+
+.cat .bar {
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+  background: transparent;
+  flex: none;
+  transition: background-color 0.14s ease;
+}
+.cat .ko { flex: 1; }
+.cat .n {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--l-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.cat[aria-current="true"] {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--l-text);
+  font-weight: 700;
+}
+.cat[aria-current="true"] .bar { background: var(--lime); }
+.cat[aria-current="true"] .n { color: var(--l-muted); }
+
+/* 모바일 — 가로 스크롤 칩 줄로 변환 */
+@media (max-width: 899px) {
+  .side {
+    position: sticky;
+    top: 60px;
+    z-index: 55;
+    border-right: 0;
+    border-bottom: 1px solid var(--l-line);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .cats {
+    flex-direction: row;
+    gap: 8px;
+    padding: 12px clamp(16px, 4vw, 28px);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cats::-webkit-scrollbar { display: none; }
+
+  .cat {
+    width: auto;
+    flex: none;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--l-line-2);
+    border-radius: 999px;
+    gap: 8px;
+  }
+  .cat .bar { display: none; }
+  .cat[aria-current="true"] {
+    background: var(--lime);
+    border-color: var(--lime);
+    color: var(--lime-ink);
+  }
+  .cat[aria-current="true"] .n { color: rgba(10, 10, 10, 0.6); }
+}
+
+/* 제작자 정보 */
+.maker {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: auto;
+  padding: 14px 12px 4px;
+  border-top: 1px solid var(--l-line);
+}
+@media (max-width: 899px) { .side .maker { display: none; } }
+
+.maker .ini {
+  width: 34px; height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--l-text);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+.maker .who { min-width: 0; line-height: 1.4; }
+.maker .school { font-size: 12px; color: var(--l-dim); }
+.maker .name { font-size: 13px; font-weight: 600; }
+
+/* ── 본문 ────────────────────────────────────── */
+.main { padding: clamp(28px, 4vw, 48px) clamp(16px, 4vw, 44px) 72px; }
+.main-inner { max-width: 1160px; }
+
+.cat-head { margin-bottom: clamp(24px, 3vw, 34px); }
+.cat-head h1 {
+  font-size: clamp(1.75rem, 3.6vw, 2.5rem);
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+.cat-head p {
+  margin-top: 10px;
+  max-width: 52ch;
+  color: var(--l-muted);
+  font-size: clamp(0.9375rem, 1.4vw, 1.0625rem);
+}
+
+/* ── 카드 그리드 ─────────────────────────────── */
+.cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(18px, 2.4vw, 26px);
+}
+@media (min-width: 620px)  { .cards { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1320px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--l-bg);
+  border: 1px solid var(--l-line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+.card:hover {
+  border-color: var(--l-line-2);
+  box-shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.24);
+  transform: translateY(-2px);
+}
+/* 카드 안에 링크가 여러 개라 포커스 링을 카드 전체에 그립니다 */
+.card:focus-within {
+  border-color: var(--l-text);
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.5);
+}
+
+.thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--l-bg-2);
+  border-bottom: 1px solid var(--l-line);
+  overflow: hidden;
+}
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+.card:hover .thumb img { transform: scale(1.035); }
+
+.thumb .status {
+  position: absolute;
+  top: 10px; left: 10px;   /* 두 썸네일 모두 좌상단이 비어 있어 가릴 것이 없습니다 */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--l-text);
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+}
+.thumb .status .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #4ca80f;   /* 흰 배경에서 읽히는 진한 라임 */
+  flex: none;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 10px;
+  padding: 18px 18px 16px;
+}
+
+.card h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+/* 제목 링크가 카드 전체를 덮어 어디를 눌러도 열립니다 */
+.card h2 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.card h2 a .ext {
+  display: inline-block;
+  margin-left: 5px;
+  color: var(--l-dim);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.card:hover h2 a .ext { color: var(--l-text); transform: translate(2px, -2px); }
+
+.card .desc { color: var(--l-muted); font-size: 0.9375rem; }
+
+/* 보조 링크 — 카드 전체 링크보다 위에 떠 있어야 클릭됩니다 */
+.sub-links {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sub-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--l-line-2);
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--l-muted);
+  background: var(--l-bg);
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+.sub-links a:hover {
+  border-color: var(--l-text);
+  color: var(--l-text);
+  background: var(--l-bg-2);
+}
+
+.tags {
+  margin-top: auto;
+  padding-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tags span {
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  background: var(--l-bg-2);
+  border: 1px solid var(--l-line);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--l-muted);
+}
+
+/* ── 빈 카테고리 ─────────────────────────────── */
+.empty {
+  padding: clamp(44px, 7vw, 76px) 24px;
+  text-align: center;
+  border: 1px dashed var(--l-line-2);
+  border-radius: var(--r-lg);
+  background: var(--l-panel);
+}
+.empty h2 { font-size: 1.0625rem; font-weight: 700; }
+.empty p { margin-top: 8px; color: var(--l-muted); font-size: 0.9375rem; }
+
+/* ── 수업 전 체크 ────────────────────────────── */
+.prep {
+  margin-top: clamp(48px, 6vw, 76px);
+  border-top: 1px solid var(--l-line);
+  padding-top: clamp(28px, 3.4vw, 40px);
+}
+.prep summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.prep summary::-webkit-details-marker { display: none; }
+.prep summary .caret {
+  color: var(--l-dim);
+  transition: transform 0.2s ease;
+}
+.prep[open] summary .caret { transform: rotate(180deg); }
+.prep summary .hint {
+  margin-left: auto;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--l-dim);
+}
+
+.steps {
+  margin-top: 24px;
+  display: grid;
+  gap: clamp(18px, 2.4vw, 26px);
+}
+@media (min-width: 800px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+
+.step {
+  padding: 20px;
+  border: 1px solid var(--l-line);
+  border-radius: var(--r);
+  background: var(--l-panel);
+}
+.step .no {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--l-dim);
+}
+.step h3 { margin-top: 10px; font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.015em; }
+.step p { margin-top: 8px; font-size: 0.875rem; color: var(--l-muted); }
+.step code {
+  font-family: var(--mono);
+  font-size: 0.8125em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--l-bg-2);
+  border: 1px solid var(--l-line);
+}
+
+.app-foot {
+  margin-top: clamp(40px, 5vw, 64px);
+  padding-top: 22px;
+  border-top: 1px solid var(--l-line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  color: var(--l-dim);
+}
+.app-foot .foot-ko { font-size: 12.5px; color: var(--l-dim); }
+
+/* 사이드바가 숨는 모바일에서는 제작자 정보를 푸터에 둡니다 */
+.foot-maker { display: none; }
+@media (max-width: 899px) { .foot-maker { display: inline; } }
+</style>
+</head>
+
+<body>
+
+<header class="app-head">
+  <a class="wordmark" href="/" aria-label="GAMIFY CLASS 홈">GAMIFY CLASS</a>
+  <div class="head-right">
+    <span class="eyebrow title-note">Games &amp; Classroom Tools</span>
+    <a class="back" href="/"><span aria-hidden="true">←</span> 소개</a>
+  </div>
+</header>
+
+<div class="shell">
+
+  <aside class="side">
+    <p class="eyebrow side-label">Apps</p>
+    <nav class="cats" id="cats" aria-label="카테고리"></nav>
+
+    <div class="maker">
+      <span class="ini" aria-hidden="true">배</span>
+      <span class="who">
+        <span class="school">용인삼계고등학교</span><br />
+        <span class="name">배성용 · 교사</span>
+      </span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="main-inner">
+
+      <header class="cat-head">
+        <h1 id="cat-title">전체</h1>
+        <p id="cat-desc">교사가 직접 만든 수업 게임과 교실 도구입니다.</p>
+      </header>
+
+      <div class="cards" id="cards" aria-live="polite"></div>
+
+      <details class="prep">
+        <summary>
+          수업 전에 확인할 것
+          <span class="hint">3분</span>
+          <svg class="caret" width="12" height="8" viewBox="0 0 14 8" fill="none"
+               stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M1 1l6 6 6-6" />
+          </svg>
+        </summary>
+
+        <div class="steps">
+          <article class="step">
+            <span class="no">01</span>
+            <h3>링크가 열리는지 먼저 확인</h3>
+            <p>
+              학교 와이파이가 바깥 주소를 막아 두는 경우가 있습니다. 수업 전에 선생님 폰으로
+              게임 링크를 한 번씩 열어 보세요. 안 열리면 그날은 LTE로 하는 게 빠릅니다.
+            </p>
+          </article>
+          <article class="step">
+            <span class="no">02</span>
+            <h3>TV에는 교사 화면, 폰에는 학생 화면</h3>
+            <p>
+              교사 화면을 TV에 띄우면 학생용 QR이 같이 나옵니다. 모둠마다 폰 한 대로 QR을
+              찍으면 끝입니다. 나머지 학생은 그 폰을 같이 봅니다.
+            </p>
+          </article>
+          <article class="step">
+            <span class="no">03</span>
+            <h3>문제는 전날 넣어 두기</h3>
+            <p>
+              두 게임 다 관리 페이지에서 문제를 넣고 고칩니다. 와일드 더비는 주소 뒤에
+              <code>/admin</code>을 붙이면 됩니다. 한 단원에 18문항이면 한 차시가 찹니다.
+            </p>
+          </article>
+        </div>
+      </details>
+
+      <footer class="app-foot">
+        <span class="eyebrow">© 2026 GAMIFY CLASS</span>
+        <span class="foot-ko foot-maker">용인삼계고 배성용 · 교사</span>
+      </footer>
+
+    </div>
+  </main>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   앱 데이터 — 새 게임/도구는 여기 항목 하나만 추가하면 됩니다.
+   category: "class" (학급 경영) | "classroom" (수업) | "etc" (기타)
+   status:   "available" | "building"
+   links:    카드 안에 함께 노출할 보조 링크 (없으면 생략)
+   ═══════════════════════════════════════════════════════════ */
+var APPS = [
+  {
+    id: "bio-marble",
+    title: "Bio Marble",
+    description: "부루마블 규칙 그대로. 모둠이 말을 옮기고 멈춘 칸의 문제를 TV 화면에서 풉니다.",
+    category: "classroom",
+    tags: ["QUIZ", "BOARD GAME", "GROUP"],
+    url: "https://bio-marble.pages.dev",
+    thumbnail: "/assets/bio-marble.jpg",
+    thumbAlt: "Bio Marble 게임 보드 화면 — 동물 칸이 둘러싼 판과 모둠별 코인 현황",
+    status: "available",
+    external: true,
+    links: [
+      { label: "첫 수업 가이드", url: "https://bio-marble.pages.dev/guide" }
+    ]
+  },
+  {
+    id: "wild-derby",
+    title: "와일드 더비",
+    description: "동물 8마리가 달리고, 모둠은 문제를 맞혀 순위 힌트를 모은 뒤 1·2·3등에 코인을 겁니다.",
+    category: "classroom",
+    tags: ["QUIZ", "STRATEGY", "DISCUSSION"],
+    url: "https://wilde-derby.baesisi3648.workers.dev/teacher",
+    thumbnail: "/assets/wild-derby.jpg",
+    thumbAlt: "와일드 더비 교사 화면 — 동물 8마리가 달리는 경주 트랙과 모둠 토론 타이머",
+    status: "available",
+    external: true,
+    links: [
+      { label: "학생 화면 (폰)", url: "https://wilde-derby.baesisi3648.workers.dev/" },
+      { label: "첫 판 가이드",   url: "https://wilde-derby.baesisi3648.workers.dev/guide" }
+    ]
+  }
+];
+
+/* 카테고리 — 여기에 항목을 추가하면 사이드바 메뉴가 늘어납니다. */
+var CATEGORIES = [
+  { id: "all",       en: "All",               ko: "전체",      desc: "교사가 직접 만든 수업 게임과 교실 도구입니다." },
+  { id: "class",     en: "Class Management",  ko: "학급 경영", desc: "학급 운영에 바로 사용할 수 있는 도구입니다." },
+  { id: "classroom", en: "Classroom",         ko: "수업",      desc: "수업에서 바로 활용할 수 있는 게임입니다." },
+  { id: "etc",       en: "Etc.",              ko: "기타",      desc: "타이머, 랜덤 도구 같은 교실용 웹 도구입니다." }
+];
+
+/* ─────────────────────────────────────────────────────────── */
+
+var catsEl  = document.getElementById("cats");
+var cardsEl = document.getElementById("cards");
+var titleEl = document.getElementById("cat-title");
+var descEl  = document.getElementById("cat-desc");
+
+function appsIn(catId) {
+  return catId === "all" ? APPS : APPS.filter(function (a) { return a.category === catId; });
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+function cardHTML(app) {
+  var ext = app.external ? ' target="_blank" rel="noopener noreferrer"' : "";
+
+  var status = app.status === "building"
+    ? '<span class="status">준비 중</span>'
+    : '<span class="status"><span class="dot" aria-hidden="true"></span>운영 중</span>';
+
+  var thumb = app.thumbnail
+    ? '<img src="' + esc(app.thumbnail) + '" alt="' + esc(app.thumbAlt || app.title + " 화면") +
+      '" width="960" height="540" loading="lazy" decoding="async" />'
+    : "";
+
+  var subs = (app.links || []).map(function (l) {
+    return '<a href="' + esc(l.url) + '"' + ext + '>' + esc(l.label) +
+           ' <span aria-hidden="true">↗</span></a>';
+  }).join("");
+
+  var tags = (app.tags || []).map(function (t) {
+    return "<span>" + esc(t) + "</span>";
+  }).join("");
+
+  return '' +
+    '<article class="card">' +
+      '<div class="thumb">' + thumb + status + '</div>' +
+      '<div class="card-body">' +
+        '<h2><a href="' + esc(app.url) + '"' + ext + '>' + esc(app.title) +
+          '<span class="ext" aria-hidden="true">↗</span></a></h2>' +
+        '<p class="desc">' + esc(app.description) + '</p>' +
+        (subs ? '<div class="sub-links">' + subs + '</div>' : "") +
+        (tags ? '<div class="tags">' + tags + '</div>' : "") +
+      '</div>' +
+    '</article>';
+}
+
+function emptyHTML(cat) {
+  return '' +
+    '<div class="empty" style="grid-column: 1 / -1">' +
+      '<h2>' + esc(cat.ko) + ' 앱은 아직 없습니다</h2>' +
+      '<p>준비 중입니다. 만들어지는 대로 여기에 올라옵니다.</p>' +
+    '</div>';
+}
+
+function render(catId) {
+  var cat = CATEGORIES.filter(function (c) { return c.id === catId; })[0] || CATEGORIES[0];
+  var list = appsIn(cat.id);
+
+  titleEl.textContent = cat.ko;
+  descEl.textContent  = cat.desc;
+  document.title = (cat.id === "all" ? "앱" : cat.ko) + " — GAMIFY CLASS";
+
+  cardsEl.innerHTML = list.length
+    ? list.map(cardHTML).join("")
+    : emptyHTML(cat);
+
+  Array.prototype.forEach.call(catsEl.children, function (btn) {
+    btn.setAttribute("aria-current", btn.dataset.cat === cat.id ? "true" : "false");
+  });
+}
+
+/* 사이드바 — 실제 링크라서 새 탭으로 열거나 주소를 공유할 수 있습니다. */
+catsEl.innerHTML = CATEGORIES.map(function (c) {
+  var n = appsIn(c.id).length;
+  return '' +
+    '<a class="cat" href="#' + c.id + '" data-cat="' + c.id + '">' +
+      '<span class="bar" aria-hidden="true"></span>' +
+      '<span class="ko">' + esc(c.ko) + '</span>' +
+      '<span class="n">' + n + '</span>' +
+    '</a>';
+}).join("");
+
+function fromHash() {
+  var id = (location.hash || "").replace("#", "");
+  return CATEGORIES.some(function (c) { return c.id === id; }) ? id : "all";
+}
+
+window.addEventListener("hashchange", function () { render(fromHash()); });
+render(fromHash());
+</script>
+
+</body>
+</html>
