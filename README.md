@@ -58,7 +58,7 @@ HTML은 건드리지 않습니다.
 ```
 
 카드 몸통을 누르면 `url`로 갑니다. `links`를 넣으면 카드 안에 작은 링크가 따로 붙습니다
-(와일드 더비가 이 방식입니다 — 카드는 교사 화면, 안에 학생 화면과 가이드).
+(애니멀 더비가 이 방식입니다 — 카드는 교사 화면, 안에 학생 화면과 가이드).
 
 **카테고리를 늘리려면** 바로 아래 `CATEGORIES` 배열에 `{ id, en, ko, desc }`를 추가하면
 사이드바 메뉴와 개수 표시가 따라옵니다.
@@ -109,11 +109,11 @@ https://developers.kakao.com/tool/debugger — "카카오톡 URL 메타정보 �
 | --- | --- |
 | Bio Marble | `bio-marble.pages.dev` |
 | Bio Marble — 가이드 | `bio-marble.pages.dev/guide` |
-| 와일드 더비 — 교사 (TV) | `wilde-derby.baesisi3648.workers.dev/teacher` |
-| 와일드 더비 — 학생 (폰) | `wilde-derby.baesisi3648.workers.dev/` |
-| 와일드 더비 — 가이드 | `wilde-derby.baesisi3648.workers.dev/guide` |
+| 애니멀 더비 — 교사 (TV) | `wilde-derby.baesisi3648.workers.dev/teacher` |
+| 애니멀 더비 — 학생 (폰) | `wilde-derby.baesisi3648.workers.dev/` |
+| 애니멀 더비 — 가이드 | `wilde-derby.baesisi3648.workers.dev/guide` |
 
-와일드 더비는 2026-09-05부터 Cloudflare Workers에서 돕니다. 주소가 고정이라 재배포해도 바뀌지 않습니다.
+애니멀 더비(예전 이름 와일드 더비)는 2026-09-05부터 Cloudflare Workers에서 돕니다. 주소가 고정이라 재배포해도 바뀌지 않습니다.
 예전 Apps Script 판은 이 페이지에서 더 링크하지 않습니다.
 
 ## 배포

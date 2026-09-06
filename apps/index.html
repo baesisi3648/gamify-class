@@ -522,8 +522,9 @@ body {
             <span class="no">03</span>
             <h3>문제는 전날 넣어 두기</h3>
             <p>
-              두 게임 다 관리 페이지에서 문제를 넣고 고칩니다. 와일드 더비는 주소 뒤에
-              <code>/admin</code>을 붙이면 됩니다. 한 단원에 18문항이면 한 차시가 찹니다.
+              두 게임 다 관리 페이지에서 문제를 넣고 고칩니다. 애니멀 더비는 주소 뒤에
+              <code>/admin</code>을 붙이면 되고, JSON 파일로 30문항을 한 번에 넣을 수 있습니다.
+              난이도마다 10문항이면 10라운드 동안 같은 문제가 안 나옵니다.
             </p>
           </article>
         </div>
@@ -564,13 +565,13 @@ var APPS = [
   },
   {
     id: "wild-derby",
-    title: "와일드 더비",
-    description: "동물 8마리가 달리고, 모둠은 문제를 맞혀 순위 힌트를 모은 뒤 1·2·3등에 코인을 겁니다.",
+    title: "애니멀 더비",
+    description: "문제를 풀고 힌트를 모아 우승 동물을 예측하는 전략 퀴즈 게임. 힌트 중 한 라운드는 거짓이라 모둠이 서로 어긋나는 힌트를 가려내야 합니다. 문제만 넣으면 어떤 과목이든 됩니다.",
     category: "classroom",
     tags: ["QUIZ", "STRATEGY", "DISCUSSION"],
     url: "https://wilde-derby.baesisi3648.workers.dev/teacher",
     thumbnail: "/assets/wild-derby.jpg",
-    thumbAlt: "와일드 더비 교사 화면 — 동물 8마리가 달리는 경주 트랙과 모둠 토론 타이머",
+    thumbAlt: "애니멀 더비 교사 화면 — 동물 8마리가 달리는 잔디 경주 트랙과 모둠 현황",
     status: "available",
     external: true,
     links: [
