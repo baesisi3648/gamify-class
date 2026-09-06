@@ -107,7 +107,16 @@ sips -p 540 960 --padColor 0F1720 small.png --out padded.png
 
 ## 배포
 
-**Cloudflare Pages** — 대시보드 → Workers & Pages → Create → Pages → Connect to Git → 이 저장소.
+**Cloudflare Pages** — 이 저장소는 Pages 프로젝트 **두 개**가 같이 보고 있습니다.
+둘 다 `main`에 푸시하면 각자 재배포됩니다.
+
+| 프로젝트 | 주소 | 용도 |
+| --- | --- | --- |
+| `gamifyclass` | **gamifyclass.pages.dev** | 지금 쓰는 주소 |
+| `bae-lab` | bae-lab.pages.dev | 옛 주소 — 예전에 공유한 링크가 안 깨지게 남겨 둠 |
+
+새로 만들 때 설정은 아래와 같습니다. Pages는 만든 뒤에 프로젝트 이름(=서브도메인)을
+바꿀 수 없으니, 이름을 바꾸려면 프로젝트를 새로 만들어야 합니다.
 
 | 항목 | 값 |
 | --- | --- |
