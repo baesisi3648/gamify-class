@@ -250,6 +250,9 @@ a { color: inherit; text-decoration: none; }
 .field-label textarea { resize: vertical; min-height: 112px; }
 .location-field { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 12px; background: var(--white); }
 .location-field > span { padding-left: 14px; color: var(--forest-700); font: 900 17px var(--pixel); }.location-field input { min-width: 0; border: 0; box-shadow: none !important; }.location-field button { padding: 7px 11px; margin-right: 7px; border-radius: 8px; color: var(--forest-700); background: #edf3df; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.location-field input[readonly] { cursor: pointer; background: transparent; }
+.location-coordinate { display: block; margin-top: 7px; color: var(--muted); font: 700 9px var(--pixel); }
+.location-coordinate.selected { color: var(--forest-700); }
 .analyze-button { width: 100%; margin-top: 18px; }
 .candidate-panel, .research-panel { grid-column: 1 / -1; }
 .candidate-list { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 14px; }
@@ -274,6 +277,32 @@ a { color: inherit; text-decoration: none; }
 .profile-grid { display: grid; grid-template-columns: .65fr 1.35fr; gap: 18px; }.identity-card { grid-row: span 2; display: grid; place-content: center; justify-items: center; min-height: 390px; padding: 30px; text-align: center; }.large-avatar { width: 100px; height: 100px; display: grid; place-items: center; margin-bottom: 18px; border: 3px solid var(--forest-950); border-radius: 50%; color: var(--white); background: var(--forest-700); box-shadow: 6px 6px 0 var(--sun); font: 900 25px var(--pixel); }.identity-card h3 { font-size: 23px; }.identity-card p { color: var(--muted); font-size: 12px; }.session-badge { display: inline-flex; margin-top: 16px; padding: 6px 10px; border-radius: 99px; color: #2d6948; background: #e5f0d5; font-size: 10px; font-weight: 800; }
 .assignment-card, .safety-card { padding: 25px; }.assignment-card h3, .safety-card h3 { font-size: 18px; }.assignment-card dl { margin-top: 17px; }.assignment-card dl div { display: flex; justify-content: space-between; gap: 15px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 11px; }.assignment-card dt { color: var(--muted); }.assignment-card dd { font-weight: 800; }.safety-card ul { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }.safety-card li { padding: 9px 11px; border-radius: 9px; background: #f0f3e7; font-size: 10px; }.safety-card li::before { content: "✓"; margin-right: 6px; color: var(--forest-700); font-weight: 900; }
 .profile-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }.profile-actions .secondary-button { width: auto; padding: 0 20px; }.text-button.danger { color: #a65342; }
+
+/* Observation location picker */
+body.modal-open { overflow: hidden; }
+.location-picker-modal { position: fixed; z-index: 200; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(8,31,26,.72); backdrop-filter: blur(5px); }
+.location-picker-modal[hidden] { display: none; }
+.location-picker-card { width: min(900px,100%); max-height: calc(100svh - 48px); overflow: auto; border: 1px solid var(--line); border-radius: 22px; background: var(--paper); box-shadow: 0 28px 80px rgba(5,24,20,.38); }
+.location-picker-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 24px 26px 20px; border-bottom: 1px solid var(--line); }
+.location-picker-header h2 { margin-top: 4px; font-size: 26px; line-height: 1.2; }
+.location-picker-header p { margin-top: 6px; color: var(--muted); font-size: 12px; }
+.modal-close { width: 38px; height: 38px; flex: none; border: 1px solid var(--line); border-radius: 50%; color: var(--forest-900); background: var(--white); font-size: 22px; line-height: 1; }
+.location-picker-tools { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 8px 18px; border-bottom: 1px solid var(--line); background: #f4f6e9; }
+.location-picker-tools span { display: flex; align-items: center; gap: 9px; color: var(--forest-900); font-size: 11px; font-weight: 750; }
+.location-picker-tools button { padding: 8px 11px; border: 1px solid var(--line); border-radius: 9px; color: var(--forest-800); background: var(--white); font-size: 10px; font-weight: 800; white-space: nowrap; }
+.location-picker-map-wrap { position: relative; height: min(48vh,430px); min-height: 320px; background: #e8efd7; }
+.location-picker-map { position: absolute; inset: 0; }
+.picker-map-loading { position: absolute; z-index: 2; inset: 0; display: grid; place-items: center; padding: 30px; color: var(--forest-900); background: linear-gradient(145deg,#e8efd7,#d8ead5); font-size: 12px; font-weight: 800; }
+.picker-map-loading[hidden] { display: none; }
+.picker-map-loading.error { color: #8f4938; background: #f6efe3; }
+.location-picker-form { padding: 20px 26px 4px; }
+.location-picker-form .field-label { margin: 0; }
+.location-picker-form p { display: flex; gap: 9px; margin-top: 9px; color: var(--muted); font-size: 10px; }
+.location-picker-form p span { flex: none; color: var(--forest-900); font: 900 9px var(--pixel); }
+.location-picker-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 26px 24px; }
+.location-picker-actions .secondary-button { width: auto; }
+.location-picker-actions .primary-button { min-width: 165px; }
+.location-picker-actions .primary-button:disabled { cursor: not-allowed; transform: none; color: #87938b; background: #dce2d8; box-shadow: none; }
 
 /* Mobile nav */
 .mobile-nav { display: none; }
@@ -311,6 +340,7 @@ a { color: inherit; text-decoration: none; }
   .team-pill { font-size: 9px; }.stepper { overflow-x: auto; padding-bottom: 5px; }.stepper span { font-size: 9px; }.stepper b { min-width: 18px; }.observation-grid { grid-template-columns: 1fr; }.candidate-panel, .research-panel { grid-column: auto; }.form-panel, .candidate-panel, .research-panel { padding: 19px; }.candidate-list { grid-template-columns: 1fr; }.candidate-card { display: grid; grid-template-columns: 42px 1fr auto; column-gap: 12px; align-items: center; }.candidate-card .candidate-icon { grid-row: span 4; margin: 0; }.candidate-card .rank { position: static; grid-column: 3; grid-row: 1; }.candidate-card h4, .candidate-card > p, .candidate-card small, .candidate-card .confidence { grid-column: 2 / 4; }.candidate-card h4 { grid-row: 1; }.candidate-card > p { margin: 2px 0 7px; }.candidate-card .confidence { justify-self: start; }
   .dex-count { width: 64px; height: 64px; }.dex-summary { align-items: flex-start; flex-direction: column; padding: 20px; }.dex-progress-wrap { width: 100%; }.dex-grid { grid-template-columns: 1fr; gap: 13px; }.dex-card { display: grid; grid-template-columns: 125px minmax(0,1fr); }.dex-image { height: 100%; min-height: 180px; }.dex-image span { font-size: 52px; }.empty-dex-card { min-height: 180px; }.profile-grid { grid-template-columns: 1fr; }.identity-card { grid-row: auto; min-height: 290px; }.safety-card ul { grid-template-columns: 1fr; }.profile-actions { flex-direction: column; }.profile-actions .secondary-button { width: 100%; }
   .teacher-shell { display: block; padding-top: 26px; }.teacher-sidebar { position: static; height: auto; flex-direction: row; align-items: center; justify-content: space-between; padding: 13px 16px; }.teacher-sidebar nav { display: none; }.teacher-exit { margin: 0; padding: 9px; border: 0; }.teacher-main { padding: 27px 16px 50px; }.teacher-main > header { align-items: flex-start; }.teacher-main h1 { font-size: 27px; }.teacher-main header p { max-width: 230px; }.admin-profile span, .admin-profile b { display: none; }.admin-stats { gap: 8px; }.admin-stats article { padding: 15px; }.admin-stats article b { font-size: 22px; }.teacher-content-grid { grid-template-columns: 1fr; }.class-overview { grid-template-columns: repeat(3,1fr); }.sheets-panel { align-items: stretch; flex-direction: column; }.sheets-panel > div { align-items: flex-start; }.admin-primary { width: 100%; }
+  .location-picker-modal { align-items: end; padding: 0; }.location-picker-card { width: 100%; max-height: calc(100svh - 16px); border-radius: 22px 22px 0 0; }.location-picker-header { padding: 20px 18px 16px; }.location-picker-header h2 { font-size: 23px; }.location-picker-header p { max-width: 290px; font-size: 11px; }.location-picker-tools { padding-inline: 12px; }.location-picker-tools span { font-size: 10px; }.location-picker-map-wrap { height: 43vh; min-height: 290px; }.location-picker-form { padding: 17px 18px 2px; }.location-picker-actions { padding: 15px 18px calc(18px + env(safe-area-inset-bottom)); }.location-picker-actions > button { flex: 1; min-width: 0; }
 }
 
 @media (max-width: 420px) {

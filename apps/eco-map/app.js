@@ -15,6 +15,11 @@
   var currentLocationMarker;
   var observationMarkers = [];
   var schoolPosition = { lat: 37.2947967, lng: 127.2404688 };
+  var locationPickerMap;
+  var locationPickerMarker;
+  var pendingLocation;
+  var selectedLocation;
+  var pickerPreviousFocus;
 
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, function (character) {
@@ -255,6 +260,141 @@
     }, { enableHighAccuracy: true, timeout: 10000 });
   });
 
+  /* Observation location picker */
+  function updatePickerConfirmation() {
+    var hasName = document.getElementById("specific-location-name").value.trim().length > 0;
+    document.getElementById("confirm-location-picker").disabled = !(pendingLocation && hasName);
+  }
+
+  function setPickerPosition(latitude, longitude, moveMap) {
+    pendingLocation = { lat: latitude, lng: longitude };
+    var position = new window.kakao.maps.LatLng(latitude, longitude);
+    if (locationPickerMarker) {
+      locationPickerMarker.setPosition(position);
+      locationPickerMarker.setMap(locationPickerMap);
+    } else {
+      locationPickerMarker = new window.kakao.maps.Marker({
+        map: locationPickerMap,
+        position: position,
+        title: "선택한 발견 위치"
+      });
+    }
+    if (moveMap) locationPickerMap.panTo(position);
+    document.getElementById("picker-status").innerHTML = '<i class="live-dot"></i> 선택 위치 · ' + latitude.toFixed(6) + ', ' + longitude.toFixed(6);
+    updatePickerConfirmation();
+  }
+
+  function initializeLocationPickerMap() {
+    var loading = document.getElementById("picker-map-loading");
+    try {
+      var start = pendingLocation || schoolPosition;
+      var center = new window.kakao.maps.LatLng(start.lat, start.lng);
+      if (!locationPickerMap) {
+        locationPickerMap = new window.kakao.maps.Map(document.getElementById("location-picker-map"), {
+          center: center,
+          level: 3
+        });
+        locationPickerMap.addControl(new window.kakao.maps.MapTypeControl(), window.kakao.maps.ControlPosition.TOPRIGHT);
+        locationPickerMap.addControl(new window.kakao.maps.ZoomControl(), window.kakao.maps.ControlPosition.RIGHT);
+        window.kakao.maps.event.addListener(locationPickerMap, "click", function (mouseEvent) {
+          setPickerPosition(mouseEvent.latLng.getLat(), mouseEvent.latLng.getLng(), false);
+        });
+      } else {
+        locationPickerMap.relayout();
+        locationPickerMap.setCenter(center);
+      }
+      if (pendingLocation) {
+        setPickerPosition(pendingLocation.lat, pendingLocation.lng, false);
+      } else if (locationPickerMarker) {
+        locationPickerMarker.setMap(null);
+      }
+      loading.hidden = true;
+    } catch (error) {
+      loading.hidden = false;
+      loading.classList.add("error");
+      loading.textContent = "카카오맵을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+    }
+  }
+
+  function openLocationPicker() {
+    var modal = document.getElementById("location-picker-modal");
+    pickerPreviousFocus = document.activeElement;
+    pendingLocation = selectedLocation ? { lat: selectedLocation.lat, lng: selectedLocation.lng } : null;
+    document.getElementById("specific-location-name").value = selectedLocation ? selectedLocation.name : "";
+    document.getElementById("picker-status").innerHTML = '<i class="live-dot"></i> ' + (pendingLocation ? "저장된 핀을 확인하거나 새 위치를 눌러주세요." : "지도를 눌러 핀을 놓아주세요.");
+    document.getElementById("picker-map-loading").hidden = false;
+    document.getElementById("picker-map-loading").classList.remove("error");
+    document.getElementById("picker-map-loading").textContent = "카카오맵을 불러오는 중입니다…";
+    updatePickerConfirmation();
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+    document.getElementById("close-location-picker").focus();
+
+    if (!window.kakao || !window.kakao.maps || typeof window.kakao.maps.load !== "function") {
+      var loading = document.getElementById("picker-map-loading");
+      loading.classList.add("error");
+      loading.textContent = "카카오맵 SDK를 불러오지 못했습니다.";
+      return;
+    }
+    window.kakao.maps.load(function () {
+      window.setTimeout(initializeLocationPickerMap, 0);
+    });
+  }
+
+  function closeLocationPicker() {
+    document.getElementById("location-picker-modal").hidden = true;
+    document.body.classList.remove("modal-open");
+    if (pickerPreviousFocus && typeof pickerPreviousFocus.focus === "function") pickerPreviousFocus.focus();
+  }
+
+  document.getElementById("open-location-picker").addEventListener("click", openLocationPicker);
+  document.getElementById("observation-location").addEventListener("click", openLocationPicker);
+  document.getElementById("close-location-picker").addEventListener("click", closeLocationPicker);
+  document.getElementById("cancel-location-picker").addEventListener("click", closeLocationPicker);
+  document.getElementById("location-picker-modal").addEventListener("click", function (event) {
+    if (event.target === this) closeLocationPicker();
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !document.getElementById("location-picker-modal").hidden) closeLocationPicker();
+  });
+  document.getElementById("specific-location-name").addEventListener("input", updatePickerConfirmation);
+
+  document.getElementById("picker-current-location").addEventListener("click", function () {
+    if (!navigator.geolocation) {
+      showToast("이 브라우저에서는 현재 위치를 사용할 수 없습니다.");
+      return;
+    }
+    var status = document.getElementById("picker-status");
+    status.textContent = "현재 위치를 확인하는 중입니다…";
+    navigator.geolocation.getCurrentPosition(function (position) {
+      if (!locationPickerMap) {
+        showToast("지도를 불러온 뒤 다시 시도해 주세요.");
+        return;
+      }
+      setPickerPosition(position.coords.latitude, position.coords.longitude, true);
+    }, function () {
+      status.innerHTML = '<i class="live-dot"></i> 위치 권한을 허용하거나 지도에서 직접 선택해 주세요.';
+      showToast("현재 위치를 가져오지 못했습니다.");
+    }, { enableHighAccuracy: true, timeout: 10000 });
+  });
+
+  document.getElementById("confirm-location-picker").addEventListener("click", function () {
+    var name = document.getElementById("specific-location-name").value.trim();
+    if (!pendingLocation || !name) {
+      showToast("지도 핀과 구체적인 장소명을 모두 입력해 주세요.");
+      return;
+    }
+    selectedLocation = { lat: pendingLocation.lat, lng: pendingLocation.lng, name: name };
+    document.getElementById("observation-location").value = name;
+    document.getElementById("observation-latitude").value = selectedLocation.lat.toFixed(7);
+    document.getElementById("observation-longitude").value = selectedLocation.lng.toFixed(7);
+    var coordinate = document.getElementById("location-coordinate");
+    coordinate.textContent = "핀 저장됨 · " + selectedLocation.lat.toFixed(6) + ", " + selectedLocation.lng.toFixed(6);
+    coordinate.classList.add("selected");
+    closeLocationPicker();
+    showToast("발견 위치를 저장했습니다.");
+  });
+
   /* Photo selection */
   document.getElementById("photo-input").addEventListener("change", function (event) {
     var selected = Array.prototype.slice.call(event.target.files || []).slice(0, 3 - photos.length);
@@ -306,6 +446,10 @@
     var features = document.getElementById("feature-input").value.trim();
     if (!photos.length) {
       showToast("분석할 생물 사진을 한 장 이상 선택해 주세요.");
+      return;
+    }
+    if (!selectedLocation) {
+      showToast("지도에서 생물을 발견한 위치를 먼저 선택해 주세요.");
       return;
     }
     if (!category || !features) {

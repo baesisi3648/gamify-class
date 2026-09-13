@@ -231,7 +231,10 @@
                 </select>
               </label>
               <label class="field-label">발견 위치
-                <div class="location-field"><span>⌖</span><input value="본관 동쪽 화단" aria-label="발견 위치" /><button type="button">지도에서 수정</button></div>
+                <div class="location-field"><span>⌖</span><input id="observation-location" type="text" placeholder="지도에서 위치를 선택해 주세요" aria-label="발견 위치" readonly required /><button id="open-location-picker" type="button">지도에서 선택</button></div>
+                <small id="location-coordinate" class="location-coordinate">아직 위치가 선택되지 않았습니다.</small>
+                <input id="observation-latitude" type="hidden" />
+                <input id="observation-longitude" type="hidden" />
               </label>
               <label class="field-label">눈으로 확인한 특징
                 <textarea id="feature-input" rows="5" placeholder="예: 노란색 꽃이고 잎 가장자리가 톱니처럼 생겼어요. 줄기를 자르면 흰 즙이 나왔어요." required></textarea>
@@ -326,6 +329,33 @@
       </div>
       <section class="admin-panel sheets-panel"><div><span class="sheet-icon">▦</span><div><span class="pixel-label">GOOGLE SHEETS</span><h2>마스터 시트 동기화</h2><p>학생 명단, 공동 관찰, 개인 도감과 제출 현황을 선생님의 시트에 반영합니다.</p></div></div><button id="sync-sheets" class="admin-primary" type="button">지금 동기화</button></section>
     </main>
+  </div>
+
+  <div id="location-picker-modal" class="location-picker-modal" role="dialog" aria-modal="true" aria-labelledby="location-picker-title" hidden>
+    <section class="location-picker-card">
+      <header class="location-picker-header">
+        <div><span class="pixel-label">PIN THE SPOT</span><h2 id="location-picker-title">발견 위치 선택</h2><p>생물을 발견한 지점을 지도에서 누른 뒤 구체적인 장소명을 적어주세요.</p></div>
+        <button id="close-location-picker" class="modal-close" type="button" aria-label="위치 선택 닫기">×</button>
+      </header>
+      <div class="location-picker-tools">
+        <span id="picker-status"><i class="live-dot"></i> 지도를 눌러 핀을 놓아주세요.</span>
+        <button id="picker-current-location" type="button">◎ 현재 위치 사용</button>
+      </div>
+      <div class="location-picker-map-wrap">
+        <div id="location-picker-map" class="location-picker-map" aria-label="발견 위치 선택용 카카오 지도"></div>
+        <div id="picker-map-loading" class="picker-map-loading" role="status">카카오맵을 불러오는 중입니다…</div>
+      </div>
+      <div class="location-picker-form">
+        <label class="field-label" for="specific-location-name">구체적인 장소명
+          <input id="specific-location-name" type="text" maxlength="60" placeholder="예: 본관 동쪽 화단, 운동장 북쪽 펜스" />
+        </label>
+        <p><span>TIP</span> 친구들이 같은 장소를 알아볼 수 있도록 건물·방향·주변 시설을 함께 적어주세요.</p>
+      </div>
+      <footer class="location-picker-actions">
+        <button id="cancel-location-picker" class="secondary-button" type="button">취소</button>
+        <button id="confirm-location-picker" class="primary-button" type="button" disabled>이 위치로 결정</button>
+      </footer>
+    </section>
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
