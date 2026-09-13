@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>생명 마블</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { font-family:'Segoe UI','맑은 고딕',sans-serif; background:#1a1a2e; color:#fff; height:100%; overflow:hidden; }
+
+/* ===== SETUP ===== */
+#setup-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; padding:20px; }
+#setup-screen h1 { font-size:3em; margin-bottom:10px; background:linear-gradient(135deg,#f093fb,#f5576c,#4facfe); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+#setup-screen h2 { font-size:1.2em; color:#aaa; margin-bottom:30px; }
+.setup-box { background:#16213e; border-radius:16px; padding:30px; width:100%; max-width:500px; }
+.setup-box label { display:block; margin-bottom:8px; font-weight:bold; color:#4facfe; }
+.setup-box select,.setup-box input { width:100%; padding:10px; margin-bottom:15px; border:2px solid #333; border-radius:8px; background:#0f3460; color:#fff; font-size:1em; }
+.player-name-inputs { margin-top:10px; }
+.player-name-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.player-name-row .color-dot { width:20px; height:20px; border-radius:50%; flex-shrink:0; }
+.player-name-row input { flex:1; }
+#btn-start-game { width:100%; padding:14px; margin-top:15px; font-size:1.2em; font-weight:bold; border:none; border-radius:10px; background:linear-gradient(135deg,#f093fb,#f5576c); color:#fff; cursor:pointer; transition:transform .2s; }
+#btn-start-game:hover { transform:scale(1.03); }
+
+/* ===== GAME ===== */
+#game-screen { display:none; height:100vh; width:100vw; padding:6px; }
+
+/* ===== BOARD 10x6 ===== */
+#board { display:grid; grid-template-columns:repeat(10,1fr); grid-template-rows:repeat(6,1fr); gap:2px; width:100%; height:100%; background:#0a0a1a; border-radius:12px; overflow:hidden; border:3px solid #444; }
+
+/* Tiles */
+.tile { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:clamp(0.9em,1.6vw,1.25em); font-weight:bold; padding:3px; text-align:center; cursor:default; transition:filter .3s,transform .2s; overflow:hidden; }
+.tile:hover { filter:brightness(1.25); transform:scale(1.03); z-index:2; }
+.tile .tile-emoji { font-size:clamp(1.6em,3vw,2.8em); line-height:1; }
+.tile .tile-name { margin-top:2px; line-height:1.15; word-break:keep-all; font-size:1.1em; }
+.tile .tile-tax { font-size:0.85em; opacity:0.8; margin-top:1px; }
+.tile .region-bar { position:absolute; top:0; left:0; right:0; height:5px; }
+
+/* 초원 - 따뜻한 황금빛 초록 */
+.tile-grassland { background:linear-gradient(180deg,#3d6b2e 0%,#2a5a1a 100%); border-bottom:3px solid #8bc34a; }
+.tile-grassland .region-bar { background:linear-gradient(90deg,#8bc34a,#cddc39); }
+.tile-grassland .tile-name { color:#e8f5e9; }
+
+/* 극지방 - 차가운 얼음빛 시안 */
+.tile-polar { background:linear-gradient(180deg,#1a5276 0%,#154360 100%); border-bottom:3px solid #00bcd4; }
+.tile-polar .region-bar { background:linear-gradient(90deg,#00bcd4,#80deea); }
+.tile-polar .tile-name { color:#e0f7fa; }
+
+/* 바다 - 깊은 남색 */
+.tile-ocean { background:linear-gradient(180deg,#1a237e 0%,#0d1642 100%); border-bottom:3px solid #42a5f5; }
+.tile-ocean .region-bar { background:linear-gradient(90deg,#1565c0,#42a5f5); }
+.tile-ocean .tile-name { color:#bbdefb; }
+
+/* 삼림 - 짙은 에메랄드 */
+.tile-forest { background:linear-gradient(180deg,#1b4332 0%,#0b2e1f 100%); border-bottom:3px solid #66bb6a; }
+.tile-forest .region-bar { background:linear-gradient(90deg,#2e7d32,#a5d6a7); }
+.tile-forest .tile-name { color:#c8e6c9; }
+.tile-start { background:linear-gradient(135deg,#f093fb22,#f5576c33); border:2px solid #f5576c; }
+.tile-key { background:linear-gradient(135deg,#f9a82522,#f9a82544); border:2px solid #f9a825; }
+.tile-jail { background:linear-gradient(135deg,#ff572222,#ff572244); border:2px solid #ff5722; }
+.tile-reserve { background:linear-gradient(135deg,#4caf5022,#4caf5044); border:2px solid #4caf50; }
+.tile-travel { background:linear-gradient(135deg,#9c27b022,#9c27b044); border:2px solid #9c27b0; }
+
+.tile-tokens { position:absolute; bottom:3px; left:3px; right:3px; display:flex; gap:2px; justify-content:center; flex-wrap:wrap; }
+.token { width:32px; height:32px; border-radius:50%; border:3px solid #fff; z-index:5; box-shadow:0 0 6px rgba(0,0,0,.6), 0 0 10px rgba(255,255,255,.2); }
+
+/* 동물원 표시 - 화려한 배너 */
+.zoo-indicator { position:absolute; inset:0; pointer-events:none; display:flex; flex-direction:column; justify-content:flex-end; }
+.zoo-banner { width:100%; padding:3px 0; text-align:center; font-size:clamp(0.65em,1.1vw,0.9em); font-weight:bold; color:#fff; letter-spacing:0.5px; text-shadow:0 1px 3px rgba(0,0,0,.7); }
+.zoo-border { position:absolute; inset:0; border:3px solid; border-radius:3px; pointer-events:none; }
+
+/* Lv.1 동물원 */
+.zoo-lv1 .zoo-banner { background:linear-gradient(90deg,transparent,rgba(0,0,0,.5),transparent); }
+.zoo-lv1 .zoo-border { border-color:currentColor; opacity:.6; }
+
+/* Lv.2 동물원 - 빛나는 효과 */
+.zoo-lv2 .zoo-banner { background:linear-gradient(90deg,transparent,rgba(255,215,0,.3),transparent); }
+.zoo-lv2 .zoo-border { border-color:#ffd700; box-shadow:inset 0 0 8px rgba(255,215,0,.3), 0 0 8px rgba(255,215,0,.2); }
+
+/* Lv.3 무적 동물원 - 빛나는 쉴드 + 애니메이션 */
+.zoo-lv3 .zoo-banner { background:linear-gradient(90deg,transparent,rgba(255,215,0,.5),transparent); }
+.zoo-lv3 .zoo-border { border-color:#ffd700; box-shadow:inset 0 0 12px rgba(255,215,0,.4), 0 0 12px rgba(255,215,0,.4); animation:shieldPulse 2s infinite; }
+@keyframes shieldPulse { 0%,100%{box-shadow:inset 0 0 12px rgba(255,215,0,.4),0 0 12px rgba(255,215,0,.4)} 50%{box-shadow:inset 0 0 20px rgba(255,215,0,.6),0 0 20px rgba(255,215,0,.6)} }
+
+/* 소유자 표시 코너 깃발 */
+.zoo-flag { position:absolute; top:0; left:0; width:0; height:0; border-style:solid; border-width:20px 20px 0 0; z-index:3; }
+
+/* ===== CENTER PANEL (inside board) ===== */
+#center-panel {
+  grid-column:2/10; grid-row:2/6;
+  background:linear-gradient(135deg,#16213e,#1a1a3e);
+  border-radius:8px;
+  display:flex;
+  gap:8px;
+  padding:10px;
+  overflow:hidden;
+}
+#center-left { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
+#center-right { flex:1; display:flex; flex-direction:column; gap:6px; overflow:hidden; }
+
+/* Title */
+#center-title { text-align:center; }
+#center-title .title-emoji { font-size:2.8em; }
+#center-title .title-text { font-size:1.8em; font-weight:bold; background:linear-gradient(135deg,#f093fb,#f5576c,#4facfe); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+#center-title .title-sub { color:#888; font-size:1em; margin-top:3px; }
+
+/* Turn info */
+#turn-box { text-align:center; padding:8px 0; }
+#turn-box .turn-label { font-size:1em; color:#4facfe; font-weight:bold; }
+#turn-box .turn-name { font-size:1.6em; font-weight:bold; }
+#turn-box .turn-coins { font-size:1.2em; color:#ffd700; }
+
+/* Dice */
+#dice-box { text-align:center; }
+#dice-display { display:flex; justify-content:center; gap:14px; margin:8px 0; }
+.dice { width:60px; height:60px; background:#fff; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:2.2em; color:#1a1a2e; font-weight:bold; box-shadow:0 4px 14px rgba(0,0,0,.5); }
+.dice.rolling { animation:shake .1s infinite; }
+@keyframes shake { 0%,100%{transform:rotate(0)} 25%{transform:rotate(8deg)} 75%{transform:rotate(-8deg)} }
+#dice-sum { font-size:1.2em; font-weight:bold; color:#ffd700; min-height:1.4em; }
+#btn-roll { padding:10px 36px; font-size:1.1em; font-weight:bold; border:none; border-radius:10px; background:linear-gradient(135deg,#4facfe,#00f2fe); color:#1a1a2e; cursor:pointer; transition:all .2s; margin-top:6px; }
+#btn-roll:hover:not(:disabled) { transform:scale(1.07); box-shadow:0 0 20px rgba(79,172,254,.5); }
+#btn-roll:disabled { opacity:.35; cursor:not-allowed; }
+
+/* Action */
+#action-box { text-align:center; min-height:40px; }
+.action-btn { padding:9px 18px; font-size:1em; font-weight:bold; border:none; border-radius:8px; cursor:pointer; margin:3px; color:#fff; transition:all .2s; }
+.action-btn:hover:not(:disabled) { transform:scale(1.07); }
+.btn-build { background:linear-gradient(135deg,#4caf50,#66bb6a); } .btn-upgrade { background:linear-gradient(135deg,#1976d2,#42a5f5); }
+.btn-takeover { background:linear-gradient(135deg,#e65100,#ff9800); } .btn-pay { background:linear-gradient(135deg,#c62828,#ef5350); }
+.btn-next { background:linear-gradient(135deg,#667eea,#764ba2); padding:11px 30px; font-size:1.1em; }
+.btn-skip { background:#777; }
+
+/* Players */
+#players-box { flex-shrink:0; }
+#players-box h4 { font-size:1em; color:#4facfe; margin-bottom:6px; font-weight:bold; }
+.player-row { display:flex; align-items:center; gap:8px; padding:5px 8px; border-radius:8px; margin-bottom:3px; font-size:1em; }
+.player-row.active { background:rgba(79,172,254,.2); border:2px solid #4facfe; }
+.player-row.bankrupt { opacity:.35; text-decoration:line-through; }
+.p-color { width:16px; height:16px; border-radius:50%; border:2px solid #fff; flex-shrink:0; }
+.p-name { flex:1; font-weight:bold; }
+.p-coins { color:#ffd700; font-weight:bold; }
+.p-zoos { color:#4caf50; }
+
+/* Log */
+#log-box { flex:1; min-height:0; overflow:hidden; }
+#log-box h4 { font-size:1em; color:#4facfe; margin-bottom:4px; font-weight:bold; }
+#log-area { max-height:100%; overflow-y:auto; }
+.log-entry { padding:2px 0; font-size:.9em; border-bottom:1px solid #ffffff0a; color:#ccc; }
+
+/* ===== MODAL ===== */
+#modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100; align-items:center; justify-content:center; }
+#modal-overlay.show { display:flex; }
+#modal { background:#16213e; border-radius:16px; padding:22px; max-width:500px; width:90%; max-height:85vh; overflow-y:auto; border:2px solid #4facfe; }
+#modal h2 { text-align:center; margin-bottom:10px; }
+#modal .modal-emoji { text-align:center; font-size:3em; margin-bottom:6px; }
+#modal .quiz-question { background:#0f3460; padding:14px; border-radius:10px; font-size:1.05em; margin:8px 0; line-height:1.6; text-align:center; }
+#modal .quiz-timer { text-align:center; font-size:2em; font-weight:bold; margin:6px 0; }
+#modal .quiz-timer.urgent { color:#f44336; animation:pulse .5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+#modal .quiz-answer { background:#1b5e20; padding:12px; border-radius:8px; text-align:center; font-size:1.05em; margin:8px 0; display:none; }
+#modal .quiz-buttons { display:flex; gap:10px; justify-content:center; margin-top:10px; flex-wrap:wrap; }
+#modal .quiz-buttons button { padding:10px 22px; font-size:1em; font-weight:bold; border:none; border-radius:8px; cursor:pointer; color:#fff; }
+.btn-success { background:#4caf50; } .btn-fail { background:#f44336; } .btn-close-modal { background:#667eea; }
+.key-card { background:linear-gradient(135deg,#f9a825,#ff8f00); color:#1a1a2e; padding:16px; border-radius:12px; text-align:center; font-size:1.1em; font-weight:bold; margin:10px 0; }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup-screen">
+  <h1>🌍 생명 마블</h1>
+  <h2>by 용쌤</h2>
+  <div class="setup-box">
+    <label>참가 모둠 수</label>
+    <select id="player-count" onchange="updatePlayerInputs()">
+      <option value="2">2 모둠</option>
+      <option value="3">3 모둠</option>
+      <option value="4" selected>4 모둠</option>
+    </select>
+    <div id="player-inputs" class="player-name-inputs"></div>
+    <button id="btn-start-game" onclick="startGame()">게임 시작!</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-screen">
+  <div id="board"></div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay"><div id="modal"></div></div>
+
+<script>
+const PLAYER_COLORS = ['#f44336','#2196f3','#4caf50','#ff9800'];
+const TILES = [
+  { id:0,  name:'START',        type:'start',   region:null,     tax:0, emoji:'🏁' },
+  { id:1,  name:'생물구조열쇠', type:'key',     region:null,     tax:0, emoji:'🔑' },
+  { id:2,  name:'하이에나',     type:'animal',  region:'초원',   tax:1, emoji:'🦴' },
+  { id:3,  name:'하마',         type:'animal',  region:'초원',   tax:1, emoji:'🦛' },
+  { id:4,  name:'얼룩말',       type:'animal',  region:'초원',   tax:1, emoji:'🦓' },
+  { id:5,  name:'기린',         type:'animal',  region:'초원',   tax:1, emoji:'🦒' },
+  { id:6,  name:'코끼리',       type:'animal',  region:'초원',   tax:1, emoji:'🐘' },
+  { id:7,  name:'생물구조열쇠', type:'key',     region:null,     tax:0, emoji:'🔑' },
+  { id:8,  name:'사자',         type:'animal',  region:'초원',   tax:1, emoji:'🦁' },
+  { id:9,  name:'생물보호구역', type:'reserve', region:null,     tax:0, emoji:'🏕️' },
+  { id:10, name:'펭귄',         type:'animal',  region:'극지방', tax:2, emoji:'🐧' },
+  { id:11, name:'생물구조열쇠', type:'key',     region:null,     tax:0, emoji:'🔑' },
+  { id:12, name:'바다사자',     type:'animal',  region:'극지방', tax:2, emoji:'🦭' },
+  { id:13, name:'북극곰',       type:'animal',  region:'극지방', tax:2, emoji:'🐻‍❄️' },
+  { id:14, name:'감옥',         type:'jail',    region:null,     tax:0, emoji:'⛓️' },
+  { id:15, name:'문어',         type:'animal',  region:'바다',   tax:3, emoji:'🐙' },
+  { id:16, name:'산호',         type:'animal',  region:'바다',   tax:3, emoji:'🪸' },
+  { id:17, name:'게',           type:'animal',  region:'바다',   tax:3, emoji:'🦀' },
+  { id:18, name:'상어',         type:'animal',  region:'바다',   tax:3, emoji:'🦈' },
+  { id:19, name:'해마',         type:'animal',  region:'바다',   tax:3, emoji:'🐴' },
+  { id:20, name:'생물구조열쇠', type:'key',     region:null,     tax:0, emoji:'🔑' },
+  { id:21, name:'바다거북',     type:'animal',  region:'바다',   tax:3, emoji:'🐢' },
+  { id:22, name:'고래',         type:'animal',  region:'바다',   tax:3, emoji:'🐋' },
+  { id:23, name:'세계동물여행', type:'travel',  region:null,     tax:0, emoji:'✈️' },
+  { id:24, name:'판다',         type:'animal',  region:'삼림',   tax:4, emoji:'🐼' },
+  { id:25, name:'생물구조열쇠', type:'key',     region:null,     tax:0, emoji:'🔑' },
+  { id:26, name:'독수리',       type:'animal',  region:'삼림',   tax:4, emoji:'🦅' },
+  { id:27, name:'호랑이',       type:'animal',  region:'삼림',   tax:4, emoji:'🐯' },
+];
+
+// 10 cols x 6 rows — START bottom-right, clockwise
+// Bottom(right→left): 0-9, Left(bottom→top): 10-13, Top(left→right): 14-23, Right(top→bottom): 24-27
+const TILE_POS = {
+  0:[5,9], 1:[5,8], 2:[5,7], 3:[5,6], 4:[5,5], 5:[5,4], 6:[5,3], 7:[5,2], 8:[5,1], 9:[5,0],
+  10:[4,0], 11:[3,0], 12:[2,0], 13:[1,0],
+  14:[0,0], 15:[0,1], 16:[0,2], 17:[0,3], 18:[0,4], 19:[0,5], 20:[0,6], 21:[0,7], 22:[0,8], 23:[0,9],
+  24:[1,9], 25:[2,9], 26:[3,9], 27:[4,9]
+};
+
+const QUIZZES = {
+  '하이에나': { q:'일정한 지역에 같은 종의 개체가 무리를 이룬 것을 무엇이라 하는가?', a:'개체군', time:5 },
+  '하마':     { q:'비생물적 요인 3개를 말하시오.', a:'빛, 공기, 온도, 물, 토양 중 3개', time:5 },
+  '얼룩말':   { q:'생장 곡선에서 개체군의 생장을 억제하는 환경 요인을 무엇이라 하는가?', a:'환경 저항', time:5 },
+  '기린':     { q:'질소 고정 세균의 종류 두 가지를 말하시오.', a:'뿌리혹 박테리아, 아조토박터', time:5 },
+  '코끼리':   { q:'생태적 지위가 동일한 개체군은 같은 장소에 공존을 계속할 수 없다는 원리는?', a:'경쟁 배타의 원리', time:5 },
+  '사자':     { q:'서식지, 먹이 등을 달리하여 경쟁을 피하는 현상을 무엇이라 하는가?', a:'분서', time:5 },
+  '펭귄':     { q:'생존 곡선에서 사망률이 일정한 Ⅱ형에 해당하는 생물 예시를 2개 말하시오.', a:'히드라, 다람쥐, 조류 등', time:5 },
+  '바다사자': { q:'개체군 내 상호 작용의 종류 4가지를 말하시오.', a:'텃세, 순위제, 리더제, 가족생활, 사회생활 중 4개', time:5 },
+  '북극곰':   { q:'군집 내 개체군의 상호 작용의 유형 4가지를 말하시오.', a:'종간 경쟁, 분서, 상리 공생, 편리 공생, 편해 공생, 기생, 포식과 피식 중 4가지', time:5 },
+  '문어':     { q:'순위제를 하는 생물 예시 3개를 말하시오.', a:'닭, 큰뿔양, 일본 원숭이', time:5 },
+  '산호':     { q:'편리 공생에 해당하는 생물-생물의 예시를 말하시오.', a:'빨판 상어와 바다 거북, 혹등고래와 따개비 등', time:5 },
+  '게':       { q:'상리 공생에 해당하는 생물-생물의 예시를 말하시오.', a:'흰동가리와 말미잘, 지의류, 개미와 진딧물 등', time:5 },
+  '상어':     { q:'1차 천이인 건성 천이 과정에서 개척자가 어떤 생물인지 말하시오.', a:'지의류', time:5 },
+  '해마':     { q:'한대 사막에 서식하는 생물 2종류를 말하시오.', a:'지의류, 이끼류', time:5 },
+  '바다거북': { q:'열대우림에 주로 구성된 식물의 종류를 말하시오.', a:'상록 활엽수', time:5 },
+  '고래':     { q:'식물이 흡수할 수 있는 질소의 형태를 두 가지 말하시오.', a:'암모늄 이온, 질산 이온', time:5 },
+  '판다':     { q:'한라산 식물 군집의 수직 분포를 높은 고도부터 순서대로 말하시오.\n① → ② → ③ → ④ → ⑤', a:'관목대 → 침엽수림 → 혼합림 → 낙엽 활엽수림 → 상록 활엽수림', time:10 },
+  '독수리':   { q:'건성 천이의 과정을 첫 시작부터 극상까지 순서대로 말하시오.\n① → ② → ③ → ④ → ⑤ → ⑥ → ⑦', a:'땅 → 지의류, 이끼류 → 초원 → 관목림 → 양수림 → 혼합림 → 음수림(극상)', time:10 },
+  '호랑이':   { q:'습성 천이의 과정을 첫 시작부터 극상까지 순서대로 말하시오.\n① → ② → ③ → ④ → ⑤ → ⑥ → ⑦ → ⑧', a:'빈영양호 → 부영양호 → 이끼류, 습원 → 초원 → 관목림 → 양수림 → 혼합림 → 음수림', time:10 },
+};
+
+const GOLDEN_KEYS = [
+  { text:'생물 구조에 성공했습니다! 상금 +1 코인', effect:'coins', value:1 },
+  { text:'생물 구조에 성공했습니다! 상금 +2 코인', effect:'coins', value:2 },
+  { text:'생물 구조에 성공했습니다! 상금 +3 코인', effect:'coins', value:3 },
+  { text:'생물 구조에 성공했습니다! 상금 +5 코인', effect:'coins', value:5 },
+  { text:'생물 구조에 실패했습니다... 벌금 -1 코인', effect:'coins', value:-1 },
+  { text:'생물 구조에 실패했습니다... 벌금 -2 코인', effect:'coins', value:-2 },
+  { text:'원하는 곳으로 이동할 수 있습니다!', effect:'teleport', value:0 },
+  { text:'상대 팀의 동물원 하나를 가로챌 수 있습니다!', effect:'steal', value:0 },
+  { text:'상대 팀과 우리 팀의 동물원을 교체합니다!', effect:'swap', value:0 },
+  { text:'상대 팀 동물원 하나를 폐쇄합니다!', effect:'close', value:0 },
+  { text:'원하는 곳에 동물원을 무상 설립!', effect:'free_zoo', value:0 },
+  { text:'다음 턴에 주사위를 두 번 던집니다!', effect:'double_turn', value:0 },
+];
+
+let state = { players:[], current:0, phase:'roll', diceResult:0, doubleTurnNext:[], zoos:{}, jailTurns:{}, logs:[] };
+
+// ===== SETUP =====
+function updatePlayerInputs() {
+  const n=+document.getElementById('player-count').value, div=document.getElementById('player-inputs');
+  div.innerHTML='';
+  for(let i=0;i<n;i++) div.innerHTML+=`<div class="player-name-row"><div class="color-dot" style="background:${PLAYER_COLORS[i]}"></div><input id="pname-${i}" placeholder="${i+1}모둠" value="${i+1}모둠"></div>`;
+}
+updatePlayerInputs();
+
+function startGame() {
+  const n=+document.getElementById('player-count').value;
+  state={players:[],current:0,phase:'roll',diceResult:0,doubleTurnNext:[],zoos:{},jailTurns:{},logs:[]};
+  for(let i=0;i<n;i++) state.players.push({name:document.getElementById(`pname-${i}`).value||`${i+1}모둠`,color:PLAYER_COLORS[i],coins:25,position:0,bankrupt:false});
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('game-screen').style.display='block';
+  renderBoard();
+  addLog('🌍 생명 마블 게임 시작!');
+  checkJailOnTurn();
+}
+
+// ===== RENDER BOARD =====
+function getTileClass(t) {
+  if(t.type==='start') return 'tile-start'; if(t.type==='key') return 'tile-key';
+  if(t.type==='jail') return 'tile-jail'; if(t.type==='reserve') return 'tile-reserve';
+  if(t.type==='travel') return 'tile-travel';
+  if(t.region==='초원') return 'tile-grassland'; if(t.region==='극지방') return 'tile-polar';
+  if(t.region==='바다') return 'tile-ocean'; if(t.region==='삼림') return 'tile-forest';
+  return '';
+}
+
+function renderBoard() {
+  const board=document.getElementById('board');
+  board.innerHTML='';
+  const placed=new Set();
+  // Place tiles
+  for(const [id,pos] of Object.entries(TILE_POS)) {
+    const tile=TILES[+id], cell=document.createElement('div');
+    cell.className=`tile ${getTileClass(tile)}`;
+    cell.id=`tile-${tile.id}`;
+    cell.style.gridRow=pos[0]+1;
+    cell.style.gridColumn=pos[1]+1;
+    let regionBar='';
+    if(tile.region){const rc={'초원':'#66bb6a','극지방':'#4fc3f7','바다':'#1e88e5','삼림':'#2e7d32'};regionBar=`<div class="region-bar" style="background:${rc[tile.region]}"></div>`;}
+    let tax=tile.tax>0?`<div class="tile-tax">${tile.region} ${tile.tax}</div>`:'';
+    let nm=tile.name;
+    if(tile.type==='key')nm='생물구조<br>열쇠';
+    if(tile.type==='reserve')nm='생물<br>보호구역';
+    if(tile.type==='travel')nm='세계<br>동물여행';
+    cell.innerHTML=`${regionBar}<div class="tile-emoji">${tile.emoji}</div><div class="tile-name">${nm}</div>${tax}<div class="tile-tokens" id="tokens-${tile.id}"></div>`;
+    board.appendChild(cell);
+    placed.add(`${pos[0]},${pos[1]}`);
+  }
+  // Center panel
+  const cp=document.createElement('div');
+  cp.id='center-panel';
+  cp.innerHTML=`
+    <div id="center-left">
+      <div id="center-title">
+        <div class="title-emoji">🌍</div>
+        <div class="title-text">생명 마블</div>
+        <div class="title-sub">by 용쌤</div>
+      </div>
+      <div id="turn-box">
+        <div class="turn-label">현재 차례</div>
+        <div class="turn-name" id="current-name">-</div>
+        <div class="turn-coins" id="current-coins">-</div>
+      </div>
+      <div id="dice-box">
+        <div id="dice-display">
+          <div class="dice" id="dice1">?</div>
+          <div class="dice" id="dice2">?</div>
+        </div>
+        <div id="dice-sum"></div>
+        <button id="btn-roll" onclick="rollDice()">🎲 주사위 굴리기</button>
+      </div>
+      <div id="action-box"></div>
+    </div>
+    <div id="center-right">
+      <div id="players-box">
+        <h4>모둠 현황</h4>
+        <div id="players-list"></div>
+      </div>
+      <div id="log-box">
+        <h4>게임 로그</h4>
+        <div id="log-area"></div>
+      </div>
+    </div>`;
+  board.appendChild(cp);
+  renderTokens(); renderZoos(); renderPlayers(); updateTurnInfo();
+}
+
+function renderTokens() {
+  document.querySelectorAll('.tile-tokens').forEach(el=>el.innerHTML='');
+  state.players.forEach((p,i)=>{
+    if(p.bankrupt)return;
+    const c=document.getElementById(`tokens-${p.position}`);
+    if(!c)return;
+    const t=document.createElement('div');
+    t.className='token'; t.style.background=p.color; t.title=p.name;
+    c.appendChild(t);
+  });
+}
+
+function renderZoos() {
+  document.querySelectorAll('.zoo-indicator,.zoo-flag').forEach(el=>el.remove());
+  Object.entries(state.zoos).forEach(([tid,zoo])=>{
+    const el=document.getElementById(`tile-${tid}`);
+    if(!el)return;
+    const color=state.players[zoo.owner].color;
+    const lvl=zoo.level;
+    const lvLabels=['','⭐ Lv.1','⭐⭐ Lv.2','🛡️ 무적'];
+    // Zoo indicator overlay
+    const ind=document.createElement('div');
+    ind.className=`zoo-indicator zoo-lv${lvl}`;
+    ind.innerHTML=`<div class="zoo-border" style="border-color:${color};${lvl>=2?'border-color:#ffd700':''}"></div><div class="zoo-banner" style="background:linear-gradient(90deg,transparent,${color}cc,transparent)">${lvLabels[lvl]}</div>`;
+    el.appendChild(ind);
+    // Corner flag
+    const flag=document.createElement('div');
+    flag.className='zoo-flag';
+    flag.style.borderColor=`${color} transparent transparent transparent`;
+    el.appendChild(flag);
+  });
+}
+
+function updateTurnInfo() {
+  const p=state.players[state.current];
+  const ne=document.getElementById('current-name');
+  if(!ne)return;
+  ne.textContent=p.name; ne.style.color=p.color;
+  document.getElementById('current-coins').textContent=`💰 ${p.coins} 코인`;
+  const btn=document.getElementById('btn-roll');
+  if(btn) btn.disabled=(state.phase!=='roll');
+}
+
+function renderPlayers() {
+  const div=document.getElementById('players-list');
+  if(!div)return;
+  div.innerHTML='';
+  state.players.forEach((p,i)=>{
+    const zc=Object.values(state.zoos).filter(z=>z.owner===i).length;
+    div.innerHTML+=`<div class="player-row ${i===state.current?'active':''} ${p.bankrupt?'bankrupt':''}"><div class="p-color" style="background:${p.color}"></div><div class="p-name">${p.name}</div><div class="p-coins">💰${p.coins}</div><div class="p-zoos">🏛️${zc}</div></div>`;
+  });
+}
+
+function addLog(msg) {
+  state.logs.unshift(msg);
+  if(state.logs.length>40)state.logs.pop();
+  const d=document.getElementById('log-area');
+  if(d) d.innerHTML=state.logs.map(l=>`<div class="log-entry">${l}</div>`).join('');
+}
+
+// ===== DICE (2 dice) =====
+function rollDice() {
+  if(state.phase!=='roll')return;
+  state.phase='rolling';
+  document.getElementById('btn-roll').disabled=true;
+  const d1=document.getElementById('dice1'),d2=document.getElementById('dice2'),sm=document.getElementById('dice-sum');
+  d1.classList.add('rolling'); d2.classList.add('rolling'); sm.textContent='';
+  const faces=['⚀','⚁','⚂','⚃','⚄','⚅'];
+  let c=0;
+  const iv=setInterval(()=>{
+    d1.textContent=faces[Math.floor(Math.random()*6)];
+    d2.textContent=faces[Math.floor(Math.random()*6)];
+    if(++c>15){
+      clearInterval(iv);
+      const r1=Math.floor(Math.random()*6)+1, r2=Math.floor(Math.random()*6)+1, total=r1+r2;
+      d1.textContent=faces[r1-1]; d2.textContent=faces[r2-1];
+      d1.classList.remove('rolling'); d2.classList.remove('rolling');
+      state.diceResult=total;
+      sm.textContent=`${r1} + ${r2} = ${total}`;
+      addLog(`🎲 ${state.players[state.current].name}: [${r1}]+[${r2}] = ${total}칸`);
+      setTimeout(()=>movePlayer(total),400);
+    }
+  },80);
+}
+
+// ===== MOVEMENT =====
+function movePlayer(steps) {
+  state.phase='moving';
+  const p=state.players[state.current];
+  let moved=0;
+  const iv=setInterval(()=>{
+    moved++; p.position=(p.position+1)%28;
+    if(p.position===0&&moved<steps){p.coins+=2;addLog(`🏁 ${p.name} START 통과 +2코인`);}
+    renderTokens(); highlightTile(p.position);
+    if(moved>=steps){clearInterval(iv);setTimeout(()=>handleLanding(),300);}
+  },180);
+}
+
+function highlightTile(id) {
+  document.querySelectorAll('.tile').forEach(t=>t.style.boxShadow='');
+  const el=document.getElementById(`tile-${id}`);
+  if(el)el.style.boxShadow='0 0 15px 5px rgba(255,255,255,0.5)';
+}
+
+// ===== LANDING =====
+function handleLanding() {
+  const p=state.players[state.current],tile=TILES[p.position];
+  highlightTile(p.position);
+  switch(tile.type){
+    case 'start': p.coins+=3; addLog(`🏁 ${p.name} START 도착! +3코인`); showNextTurn(); break;
+    case 'key': drawGoldenKey(); break;
+    case 'animal': handleAnimal(tile); break;
+    case 'jail': handleJail(); break;
+    case 'reserve':
+      addLog(`🏕️ ${p.name} 생물 보호 구역 — 안전 지대!`);
+      showModal('🏕️','생물 보호 구역','<p>안전 지대입니다. 편히 쉬어가세요!</p>',[{text:'확인',class:'btn-close-modal',action(){closeModal();showNextTurn();}}]);
+      break;
+    case 'travel': handleTravel(); break;
+  }
+  renderPlayers(); updateTurnInfo();
+}
+
+function handleAnimal(tile) {
+  const zoo=state.zoos[tile.id];
+  if(zoo&&zoo.owner===state.current) handleOwnZoo(tile,zoo);
+  else if(zoo) handleOpponentZoo(tile,zoo);
+  else startQuiz(tile,'build');
+}
+
+// ===== QUIZ =====
+function startQuiz(tile,purpose) {
+  const quiz=QUIZZES[tile.name];
+  if(!quiz){showNextTurn();return;}
+  state.phase='quiz';
+  let timeLeft=quiz.time;
+  showModal(tile.emoji,`${tile.name} 미션!`,`<div class="quiz-question">${quiz.q.replace(/\n/g,'<br>')}</div><div class="quiz-timer" id="quiz-timer">${timeLeft}초</div><div class="quiz-answer" id="quiz-answer">정답: ${quiz.a}</div>`,[],false);
+  const timer=setInterval(()=>{
+    timeLeft--;
+    const el=document.getElementById('quiz-timer');
+    if(el){el.textContent=`${timeLeft}초`;if(timeLeft<=2)el.classList.add('urgent');}
+    if(timeLeft<=0){clearInterval(timer);showQuizResult(tile,purpose);}
+  },1000);
+  state._qt=timer;
+}
+
+function showQuizResult(tile,purpose) {
+  if(state._qt)clearInterval(state._qt);
+  const a=document.getElementById('quiz-answer');if(a)a.style.display='block';
+  const d=document.createElement('div');d.className='quiz-buttons';
+  d.innerHTML=`<button class="btn-success" onclick="quizResult(true,${tile.id},'${purpose}')">⭕ 성공!</button><button class="btn-fail" onclick="quizResult(false,${tile.id},'${purpose}')">❌ 실패...</button>`;
+  document.getElementById('modal').appendChild(d);
+}
+
+function quizResult(ok,tileId,purpose) {
+  closeModal();
+  const tile=TILES[tileId],p=state.players[state.current];
+  addLog(`${ok?'⭕':'❌'} ${p.name} 미션 ${ok?'성공':'실패'}!`);
+  if(purpose==='build') buildAfterQuiz(tile,ok);
+  else if(purpose==='toll') tollAfterQuiz(tile,ok);
+}
+
+function buildAfterQuiz(tile,ok) {
+  const p=state.players[state.current],cost=ok?2:(2+tile.tax);
+  if(p.coins>=cost){
+    showAction([
+      {text:`🏛️ 동물원 건설 (${cost}코인)`,class:'action-btn btn-build',action(){p.coins-=cost;state.zoos[tile.id]={owner:state.current,level:1};addLog(`🏛️ ${p.name} ${tile.name} 동물원 건설! -${cost}코인`);renderBoard();showNextTurn();}},
+      {text:'건너뛰기',class:'action-btn btn-skip',action(){showNextTurn();}}
+    ]);
+  } else { addLog(`💸 코인 부족`); showNextTurn(); }
+}
+
+function handleOpponentZoo(tile,zoo) {
+  addLog(`🏛️ ${state.players[state.current].name} → ${state.players[zoo.owner].name}의 ${tile.name}`);
+  startQuiz(tile,'toll');
+}
+
+function tollAfterQuiz(tile,ok) {
+  const p=state.players[state.current],zoo=state.zoos[tile.id];
+  if(!zoo){showNextTurn();return;}
+  const owner=state.players[zoo.owner],mult=zoo.level>=2?2:1;
+  const toll=ok?(tile.tax+2)*mult:(tile.tax+2+2)*mult;
+  addLog(`💰 관람비: ${toll}코인`);
+  const acts=[{text:`💰 관람비 ${toll}코인 지불`,class:'action-btn btn-pay',action(){
+    const paid=Math.min(toll,p.coins);p.coins-=paid;owner.coins+=paid;
+    addLog(`💰 ${p.name}→${owner.name}: ${paid}코인`);
+    if(p.coins<=0){p.coins=0;checkBankrupt(state.current);}
+    renderPlayers();updateTurnInfo();showNextTurn();
+  }}];
+  if(ok&&zoo.level<3){const tc=toll*2;if(p.coins>=tc)acts.push({text:`🔄 인수 (${tc}코인)`,class:'action-btn btn-takeover',action(){
+    p.coins-=tc;owner.coins+=tc;zoo.owner=state.current;zoo.level=Math.min(zoo.level+1,3);
+    addLog(`🔄 ${p.name} ${tile.name} 인수!`);renderBoard();showNextTurn();
+  }});}
+  showAction(acts);
+}
+
+function handleOwnZoo(tile,zoo) {
+  const p=state.players[state.current];
+  if(zoo.level>=3){addLog(`🛡️ ${tile.name} 이미 무적!`);showNextTurn();return;}
+  const cost=2+tile.tax;
+  if(p.coins>=cost){
+    showAction([
+      {text:`⬆️ 업그레이드 Lv.${zoo.level+1} (${cost}코인)${zoo.level+1===3?' 🛡️무적!':''}`,class:'action-btn btn-upgrade',action(){
+        p.coins-=cost;zoo.level++;addLog(`⬆️ ${p.name} ${tile.name} Lv.${zoo.level}${zoo.level===3?' 🛡️무적!':''}`);renderBoard();showNextTurn();
+      }},
+      {text:'건너뛰기',class:'action-btn btn-skip',action(){showNextTurn();}}
+    ]);
+  } else { addLog('💸 업그레이드 코인 부족'); showNextTurn(); }
+}
+
+// ===== JAIL =====
+function handleJail() {
+  const p=state.players[state.current];
+  state.jailTurns[state.current]=2;
+  addLog(`⛓️ ${p.name} 감옥! (2턴 정지 또는 3코인 탈출)`);
+  const btns=[{text:'감옥에서 대기',class:'btn-fail',action(){closeModal();showNextTurn();}}];
+  if(p.coins>=3)btns.unshift({text:'💰 3코인 탈출',class:'btn-success',action(){p.coins-=3;delete state.jailTurns[state.current];addLog(`💰 ${p.name} 감옥 탈출!`);closeModal();renderPlayers();updateTurnInfo();showNextTurn();}});
+  showModal('⛓️','감옥!','<p>2턴 정지 또는 3코인으로 즉시 탈출</p>',btns);
+}
+
+function checkJailOnTurn() {
+  const p=state.players[state.current];
+  if(p.bankrupt){nextTurn();return;}
+  if(state.jailTurns[state.current]!==undefined){
+    if(state.jailTurns[state.current]<=0){delete state.jailTurns[state.current];addLog(`🔓 ${p.name} 석방!`);state.phase='roll';updateTurnInfo();}
+    else{
+      state.jailTurns[state.current]--;
+      addLog(`⛓️ ${p.name} 감옥 (${state.jailTurns[state.current]}턴 남음)`);
+      if(p.coins>=3){
+        showModal('⛓️','감옥',`<p>${state.jailTurns[state.current]}턴 남음</p>`,[
+          {text:'💰 3코인 탈출',class:'btn-success',action(){p.coins-=3;delete state.jailTurns[state.current];addLog(`💰 ${p.name} 탈출!`);closeModal();renderPlayers();updateTurnInfo();state.phase='roll';updateTurnInfo();}},
+          {text:'대기',class:'btn-fail',action(){closeModal();showNextTurn();}}
+        ]);
+      } else showNextTurn();
+    }
+  } else { state.phase='roll'; updateTurnInfo(); }
+}
+
+// ===== TRAVEL =====
+function handleTravel() {
+  addLog(`✈️ ${state.players[state.current].name} 세계 동물 여행!`);
+  showTeleport();
+}
+
+function showTeleport() {
+  const opts=TILES.filter(t=>t.type==='animal').map(t=>
+    `<button style="margin:3px;padding:5px 9px;border:none;border-radius:6px;background:#0f3460;color:#fff;cursor:pointer;font-size:.9em" onclick="teleportTo(${t.id})">${t.emoji} ${t.name}</button>`
+  ).join('');
+  showModal('✈️','세계 동물 여행',`<p>이동할 칸 선택:</p><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:3px;margin-top:8px">${opts}</div>`,[],false);
+}
+
+function teleportTo(id) {
+  closeModal();state.players[state.current].position=id;
+  addLog(`✈️ → ${TILES[id].name}`);renderTokens();handleLanding();
+}
+
+// ===== GOLDEN KEY =====
+function drawGoldenKey() {
+  const p=state.players[state.current],card=GOLDEN_KEYS[Math.floor(Math.random()*GOLDEN_KEYS.length)];
+  addLog(`🔑 ${p.name} 생물 구조 열쇠!`);
+  const ch=`<div class="key-card">🔑 ${card.text}</div>`;
+  switch(card.effect){
+    case 'coins':
+      p.coins=Math.max(0,p.coins+card.value);addLog(`💰 ${card.value>0?'+':''}${card.value}코인`);
+      if(p.coins<=0)checkBankrupt(state.current);
+      showModal('🔑','생물 구조 열쇠',ch,[{text:'확인',class:'btn-close-modal',action(){closeModal();renderPlayers();updateTurnInfo();showNextTurn();}}]);break;
+    case 'teleport':showModal('🔑','생물 구조 열쇠',ch,[{text:'이동할 곳 선택',class:'btn-success',action(){closeModal();showTeleport();}}]);break;
+    case 'double_turn':state.doubleTurnNext.push(state.current);showModal('🔑','생물 구조 열쇠',ch,[{text:'확인',class:'btn-close-modal',action(){closeModal();showNextTurn();}}]);break;
+    case 'steal':showZooPick('steal',ch);break;
+    case 'close':showZooPick('close',ch);break;
+    case 'swap':showZooPick('swap',ch);break;
+    case 'free_zoo':showFreeZooPick(ch);break;
+  }
+}
+
+function showZooPick(action,ch) {
+  const zoos=Object.entries(state.zoos).filter(([,z])=>z.owner!==state.current&&z.level<3)
+    .map(([tid,z])=>{const t=TILES[+tid],o=state.players[z.owner];return `<button style="margin:3px;padding:5px 9px;border:none;border-radius:6px;background:${o.color};color:#fff;cursor:pointer" onclick="zooAction('${action}',${tid})">${t.emoji} ${t.name}(${o.name})</button>`;});
+  if(!zoos.length){showModal('🔑','생물 구조 열쇠',`${ch}<p>대상 없음</p>`,[{text:'확인',class:'btn-close-modal',action(){closeModal();showNextTurn();}}]);return;}
+  const lb=action==='steal'?'가로챌':action==='close'?'폐쇄할':'교체할';
+  showModal('🔑','생물 구조 열쇠',`${ch}<p>${lb} 동물원 선택:</p><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:3px;margin-top:6px">${zoos.join('')}</div>`,[],false);
+}
+
+function zooAction(action,tid) {
+  closeModal();const p=state.players[state.current],t=TILES[tid],z=state.zoos[tid];
+  if(!z){showNextTurn();return;}
+  if(action==='steal'){addLog(`🔑 ${p.name} ${state.players[z.owner].name}의 ${t.name} 가로챔!`);z.owner=state.current;}
+  else if(action==='close'){addLog(`🔑 ${p.name} ${state.players[z.owner].name}의 ${t.name} 폐쇄!`);delete state.zoos[tid];}
+  else if(action==='swap'){showSwapPick(tid);return;}
+  renderBoard();showNextTurn();
+}
+
+function showSwapPick(targetId) {
+  const my=Object.entries(state.zoos).filter(([,z])=>z.owner===state.current)
+    .map(([tid])=>`<button style="margin:3px;padding:5px 9px;border:none;border-radius:6px;background:#2196f3;color:#fff;cursor:pointer" onclick="doSwap(${targetId},${tid})">${TILES[+tid].emoji} ${TILES[+tid].name}</button>`);
+  if(!my.length){addLog('교체할 동물원 없음');showNextTurn();return;}
+  showModal('🔄','교체할 내 동물원',`<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:3px;margin-top:6px">${my.join('')}</div>`,[],false);
+}
+
+function doSwap(a,b) {
+  closeModal();const za=state.zoos[a],zb=state.zoos[b],tmp=za.owner;za.owner=zb.owner;zb.owner=tmp;
+  addLog(`🔄 ${TILES[a].name} ↔ ${TILES[b].name}`);renderBoard();showNextTurn();
+}
+
+function showFreeZooPick(ch) {
+  const empty=TILES.filter(t=>t.type==='animal'&&!state.zoos[t.id])
+    .map(t=>`<button style="margin:3px;padding:5px 9px;border:none;border-radius:6px;background:#4caf50;color:#fff;cursor:pointer" onclick="freeBuild(${t.id})">${t.emoji} ${t.name}</button>`);
+  if(!empty.length){showModal('🔑','생물 구조 열쇠',`${ch}<p>빈 칸 없음</p>`,[{text:'확인',class:'btn-close-modal',action(){closeModal();showNextTurn();}}]);return;}
+  showModal('🔑','무상 건설',`${ch}<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:3px;margin-top:6px">${empty.join('')}</div>`,[],false);
+}
+
+function freeBuild(id) {
+  closeModal();state.zoos[id]={owner:state.current,level:1};
+  addLog(`🏛️ ${state.players[state.current].name} ${TILES[id].name} 무상 건설!`);renderBoard();showNextTurn();
+}
+
+// ===== BANKRUPT =====
+function checkBankrupt(idx) {
+  const p=state.players[idx];
+  if(p.coins<=0){p.bankrupt=true;p.coins=0;
+    Object.keys(state.zoos).forEach(t=>{if(state.zoos[t].owner===idx)delete state.zoos[t];});
+    addLog(`💀 ${p.name} 파산!`);renderBoard();
+    const alive=state.players.filter(p=>!p.bankrupt);
+    if(alive.length<=1){state.phase='ended';showModal('🏆','게임 종료!',`<div style="text-align:center;font-size:1.5em;margin:20px 0">${alive[0]?.name||'???'} 우승! 🎉</div>`,[{text:'새 게임',class:'btn-success',action(){closeModal();location.reload();}}]);}
+  }
+}
+
+// ===== TURNS =====
+function showNextTurn() {
+  state.phase='action';
+  showAction([{text:'➡️ 다음 턴',class:'action-btn btn-next',action(){nextTurn();}}]);
+}
+
+function showAction(acts) {
+  const box=document.getElementById('action-box');
+  if(!box)return;
+  box.innerHTML='';
+  acts.forEach(a=>{const b=document.createElement('button');b.className=a.class;b.textContent=a.text;b.onclick=()=>{box.innerHTML='';a.action();};box.appendChild(b);});
+}
+
+function nextTurn() {
+  const ab=document.getElementById('action-box');if(ab)ab.innerHTML='';
+  highlightTile(-1);
+  const di=state.doubleTurnNext.indexOf(state.current);
+  if(di!==-1){state.doubleTurnNext.splice(di,1);addLog(`🎲 ${state.players[state.current].name} 주사위 한 번 더!`);state.phase='roll';updateTurnInfo();return;}
+  let next=(state.current+1)%state.players.length,s=0;
+  while(state.players[next].bankrupt&&s<state.players.length){next=(next+1)%state.players.length;s++;}
+  state.current=next;state.phase='roll';
+  renderPlayers();updateTurnInfo();checkJailOnTurn();
+}
+
+// ===== MODAL =====
+function showModal(emoji,title,content,buttons=[]) {
+  const m=document.getElementById('modal'),o=document.getElementById('modal-overlay');
+  const bh=buttons.map(b=>`<button class="${b.class}" style="padding:10px 20px;font-size:1em;font-weight:bold;border:none;border-radius:8px;cursor:pointer;color:#fff;margin:4px">${b.text}</button>`).join('');
+  m.innerHTML=`<div class="modal-emoji">${emoji}</div><h2>${title}</h2>${content}<div class="quiz-buttons" id="modal-buttons">${bh}</div>`;
+  const els=m.querySelectorAll('#modal-buttons button');
+  buttons.forEach((b,i)=>{if(els[i])els[i].onclick=b.action;});
+  o.classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+  if(state._qt){clearInterval(state._qt);state._qt=null;}
+}
+</script>
+</body>
+</html>

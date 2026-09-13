@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>생명 마블 첫 수업 가이드</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8D%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#eef2f6; --ink:#1b2734; --muted:#5b6b7c; --line:#d7dfe8;
+    --card:#fff; --accent:#f2b441; --accent-deep:#c98a15;
+    --green:#eaf6ec; --green-line:#4a9d5f;
+    --amber:#fdf3e0; --amber-line:#d99a1e;
+    --blue:#e9f1fb; --blue-line:#3d7cc9;
+    --dark:#141c26;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    font-size:16px;line-height:1.7;-webkit-text-size-adjust:100%}
+  .wrap{max-width:820px;margin:0 auto;padding:24px 16px 80px}
+
+  /* ---------- hero ---------- */
+  .hero{background:var(--dark);color:#fff;border-radius:16px;padding:34px 34px 30px;
+    position:relative;overflow:hidden}
+  .hero .kicker{color:var(--accent);font-weight:800;font-size:.8rem;letter-spacing:.14em;
+    text-transform:uppercase;margin-bottom:10px}
+  .hero h1{margin:0 0 14px;font-size:2.1rem;line-height:1.25;letter-spacing:-.02em}
+  .hero p{margin:0 0 18px;color:#c3ccd6;max-width:56ch}
+  .hero .url{display:inline-block;background:rgba(242,180,65,.14);color:var(--accent);
+    border-radius:9px;padding:9px 16px;font-weight:700;font-size:.95rem;
+    text-decoration:none;word-break:break-all}
+  .hero .url:hover{background:rgba(242,180,65,.24)}
+  .checker{position:absolute;top:0;right:0;width:110px;height:110px;opacity:.5;
+    background-image:
+      linear-gradient(45deg,#fff 25%,transparent 25%,transparent 75%,#fff 75%),
+      linear-gradient(45deg,#fff 25%,transparent 25%,transparent 75%,#fff 75%);
+    background-size:22px 22px;background-position:0 0,11px 11px;
+    -webkit-mask-image:radial-gradient(circle at 100% 0,#000 60%,transparent 72%);
+            mask-image:radial-gradient(circle at 100% 0,#000 60%,transparent 72%)}
+
+  /* ---------- fact strip ---------- */
+  .facts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 6px}
+  .fact{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+  .fact b{display:block;font-size:.72rem;color:var(--muted);font-weight:700;
+    letter-spacing:.03em;margin-bottom:3px}
+  .fact span{font-size:1.02rem;font-weight:800}
+  .facts-note{color:var(--muted);font-size:.85rem;margin:0 0 30px;text-align:right}
+
+  /* ---------- sections ---------- */
+  h2{margin:44px 0 4px;font-size:1.5rem;letter-spacing:-.01em;display:flex;
+    align-items:baseline;gap:12px}
+  h2 .n{color:var(--accent-deep);font-size:1.5rem;font-weight:900}
+  .sub{color:var(--muted);margin:0 0 18px;font-size:.94rem}
+  h3{margin:26px 0 8px;font-size:1.08rem}
+  p{margin:0 0 12px}
+  ul,ol{margin:0 0 14px;padding-left:22px}
+  li{margin:6px 0}
+  a{color:#2f6fbf}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;
+    padding:20px 22px;margin:0 0 16px}
+  .card > :last-child{margin-bottom:0}
+
+  /* ---------- step list ---------- */
+  .step{background:var(--card);border:1px solid var(--line);border-radius:13px;
+    padding:16px 20px;margin:0 0 10px;display:grid;grid-template-columns:34px 1fr;gap:14px}
+  .step .num{color:var(--accent-deep);font-weight:900;font-size:1.5rem;line-height:1.25}
+  .step h4{margin:0 0 6px;font-size:1.03rem}
+  .step > div > :last-child{margin-bottom:0}
+
+  /* ---------- callouts ---------- */
+  .note{border-left:4px solid var(--green-line);background:var(--green);
+    border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 16px}
+  .why{border-left:4px solid var(--amber-line);background:var(--amber);
+    border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 16px}
+  .tip{border-left:4px solid var(--blue-line);background:var(--blue);
+    border-radius:0 10px 10px 0;padding:14px 18px;margin:0 0 16px}
+  /* 첫 번째 <b>만 제목 줄. 본문 안의 <b>는 인라인 강조로 남아야 함 */
+  .note > b:first-child,.why > b:first-child,.tip > b:first-child{
+    display:block;margin-bottom:4px;font-weight:800}
+  .note > :last-child,.why > :last-child,.tip > :last-child{margin-bottom:0}
+
+  /* ---------- ui chips ---------- */
+  .btn{display:inline-block;background:#e5eaf0;border:1px solid #c6d0da;border-radius:6px;
+    padding:1px 8px;font-size:.88em;font-weight:700;white-space:nowrap}
+  code{background:var(--dark);color:#ffd98a;border-radius:5px;padding:2px 7px;
+    font-size:.88em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  /* ---------- figures ---------- */
+  figure{margin:0 0 18px}
+  figure img{width:100%;display:block;border-radius:11px;border:1px solid var(--line);
+    background:#0c1017}
+  figcaption{color:var(--muted);font-size:.86rem;margin-top:7px;text-align:center}
+
+  /* ---------- tables ---------- */
+  .tblwrap{overflow-x:auto;margin:0 0 16px;-webkit-overflow-scrolling:touch}
+  table{border-collapse:collapse;width:100%;font-size:.93rem;min-width:420px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);
+    vertical-align:top}
+  th{font-size:.78rem;color:var(--muted);font-weight:700;letter-spacing:.03em;
+    border-bottom:2px solid var(--line);white-space:nowrap}
+  td.num,th.num{text-align:center;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  .ok{color:#2f7a45;font-weight:800}
+  .no{color:#b5442f;font-weight:800}
+  caption{caption-side:top;text-align:left;color:var(--muted);font-size:.86rem;
+    padding-bottom:8px}
+  /* "화면 읽는 법" 표: 앞 두 열은 라벨이라 줄바꿈되면 읽기 나쁨 */
+  table.reading{min-width:560px}
+  table.reading td:nth-child(1),
+  table.reading td:nth-child(2){white-space:nowrap}
+  table.reading td:nth-child(2){font-weight:700}
+
+  /* ---------- faq ---------- */
+  details{background:var(--card);border:1px solid var(--line);border-radius:11px;
+    padding:0;margin:0 0 8px}
+  summary{cursor:pointer;padding:13px 18px;font-weight:700;list-style:none;
+    display:flex;gap:11px;align-items:flex-start}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"?";flex:0 0 auto;width:21px;height:21px;border-radius:50%;
+    background:var(--amber);color:var(--amber-line);font-size:.8rem;font-weight:900;
+    display:grid;place-items:center;margin-top:2px}
+  details[open] summary{border-bottom:1px solid var(--line)}
+  details .body{padding:14px 18px}
+  details .body > :last-child{margin-bottom:0}
+
+  /* ---------- cheat sheet ---------- */
+  .cheat{background:var(--dark);color:#e8edf3;border-radius:14px;padding:24px 26px}
+  .cheat h2{color:#fff;margin-top:0}
+  .cheat h2 .n{color:var(--accent)}
+  .cheat .sub{color:#9aa8b6}
+  .cheat table{color:#e8edf3}
+  .cheat th{color:#8d9bab;border-bottom-color:#2c3846}
+  .cheat td{border-bottom-color:#232e3b}
+  .cheat b{color:var(--accent)}
+
+  footer{margin-top:46px;padding-top:20px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:.88rem;display:flex;justify-content:space-between;
+    gap:14px;flex-wrap:wrap}
+
+  @media (max-width:640px){
+    .wrap{padding:14px 12px 60px}
+    .hero{padding:24px 20px}
+    .hero h1{font-size:1.6rem}
+    .facts{grid-template-columns:repeat(2,1fr)}
+    h2{font-size:1.3rem}
+    .step{grid-template-columns:26px 1fr;gap:10px;padding:14px 16px}
+    .checker{display:none}
+  }
+  @media print{
+    body{background:#fff}
+    .hero,.cheat{background:#fff;color:#000;border:1px solid #999}
+    .hero h1,.cheat h2{color:#000}
+    details{break-inside:avoid}
+    details[open] .body{display:block}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============ HERO ============ -->
+<div class="hero">
+  <div class="checker"></div>
+  <div class="kicker">생명 마블 · 첫 수업 가이드</div>
+  <h1>노트북 한 대로<br>한 반 굴리기</h1>
+  <p>생명과학 개념을 문제로 풀면서 진행하는 <b>부루마블식 보드게임</b>입니다.
+     학생 기기가 필요 없고, 선생님 노트북 한 대를 TV·빔에 띄워 진행합니다.
+     이 문서만 따라오면 첫 판을 끝까지 돌릴 수 있습니다.</p>
+  <a class="url" href="https://bio-marble.pages.dev/">https://bio-marble.pages.dev/</a>
+</div>
+
+<div class="facts">
+  <div class="fact"><b>준비물</b><span>노트북 1대</span></div>
+  <div class="fact"><b>모둠</b><span>2~4개</span></div>
+  <div class="fact"><b>문제 시간</b><span>10초</span></div>
+  <div class="fact"><b>기본 문제</b><span>50개</span></div>
+</div>
+<p class="facts-note">학생 휴대폰·태블릿 <b>필요 없음</b> — 화면 하나로 진행합니다</p>
+
+<!-- ============ 0 ============ -->
+<h2><span class="n">0</span> 이게 무슨 게임인가</h2>
+<p class="sub">30초면 이해됩니다.</p>
+<div class="card">
+<ul>
+  <li>모둠별 말이 <b>28칸 보드</b>를 시계방향으로 돕니다. 시작 코인은 <b>30개</b>.</li>
+  <li>주사위 2개를 굴려 나온 합만큼 이동합니다.</li>
+  <li><b>동물 칸</b>에 멈추면 생명과학 문제가 하나 나옵니다. 맞히면 그 칸에 <b>동물원</b>을 싸게 짓습니다.</li>
+  <li>남의 동물원에 멈추면 <b>관람비</b>를 냅니다. 문제를 맞히면 덜 냅니다.</li>
+  <li>코인이 0이 되면 파산. 마지막까지 남은 모둠이 우승합니다.</li>
+</ul>
+<div class="note">
+  <b>문제 정답은 선생님이 판정합니다</b>
+  학생이 답을 입력하는 칸이 없습니다. 10초가 지나면 화면에 정답이 뜨고,
+  선생님이 <span class="btn">⭕ 성공!</span> 또는 <span class="btn">❌ 실패…</span>를 눌러서 판정합니다.
+  모둠이 말로 답하게 하고 선생님이 눌러 주세요.
+</div>
+</div>
+
+<!-- ============ 1 ============ -->
+<h2><span class="n">1</span> 준비물</h2>
+<p class="sub">이게 전부입니다.</p>
+<div class="card">
+<ul>
+  <li><b>노트북 1대 + TV/빔프로젝터</b> — 화면을 크게 띄웁니다. 학생은 화면만 봅니다.</li>
+  <li><b>인터넷</b> — 첫 접속 때만 필요합니다.</li>
+  <li><b>모둠 나누기</b> — 2~4모둠. 모둠 이름을 미리 정해 두면 좋습니다.</li>
+  <li>소리를 켤 수 있으면 더 좋습니다 (배경음악 + 효과음이 들어 있습니다).</li>
+</ul>
+</div>
+
+<!-- ============ 2 ============ -->
+<h2><span class="n">2</span> 시작하기</h2>
+<p class="sub">클릭 세 번이면 판이 열립니다.</p>
+
+<div class="step"><div class="num">1</div><div>
+  <h4>주소 열기</h4>
+  <p>브라우저에서 <code>https://bio-marble.pages.dev/</code> 를 엽니다. 설치할 것은 없습니다.</p>
+</div></div>
+
+<div class="step"><div class="num">2</div><div>
+  <h4>모둠 수와 이름 정하기</h4>
+  <p>참가 모둠 수를 고르면 그만큼 이름 칸이 생깁니다. 비워 두면 <b>1모둠·2모둠…</b>으로 들어갑니다.
+     반 이름이나 모둠 이름을 넣으면 화면에 그대로 뜹니다.</p>
+</div></div>
+
+<div class="step"><div class="num">3</div><div>
+  <h4><span class="btn">🎮 게임 시작!</span> 누르기</h4>
+  <p>규칙 요약 창이 한 번 뜹니다. 학생들과 같이 읽고
+     <span class="btn">🎮 시작하기</span>를 누르면 보드가 나옵니다.</p>
+</div></div>
+
+<figure>
+  <img src="assets/guide/01-setup.jpg" alt="모둠 수와 모둠 이름을 정하는 시작 화면">
+  <figcaption>시작 화면 — 모둠 수를 고르고 이름을 넣습니다</figcaption>
+</figure>
+
+<div class="tip">
+  <b>배경음악은 시작 버튼을 눌러야 나옵니다</b>
+  브라우저 정책 때문에 자동 재생이 막혀 있어서 그렇습니다. 정상입니다.
+  소리 조절은 화면 <b>오른쪽 위 🎵 버튼</b>을 누르면 열립니다 (배경음악 / 효과음 따로, 음소거도 여기).
+</div>
+
+<!-- ============ 3 ============ -->
+<h2><span class="n">3</span> 화면 읽는 법</h2>
+<p class="sub">보드에 뭐가 어디 있는지.</p>
+
+<figure>
+  <img src="assets/guide/02-board.jpg" alt="게임 진행 중인 보드 전체 화면">
+  <figcaption>진행 중인 화면 — 가장자리가 보드, 가운데가 조작부입니다</figcaption>
+</figure>
+
+<div class="tblwrap">
+<table class="reading">
+  <thead><tr><th>위치</th><th>무엇</th><th>알아둘 것</th></tr></thead>
+  <tbody>
+    <tr><td>가장자리 전체</td><td>보드 28칸</td>
+        <td>오른쪽 아래 🏁 START에서 <b>시계방향</b>으로 돕니다
+            (아래줄은 왼쪽으로 → 왼쪽줄은 위로 → 윗줄은 오른쪽으로 → 오른쪽줄은 아래로).
+            칸마다 <b>지역과 세금</b>이 적혀 있습니다 (예: <span class="btn">바다 3💰</span>).</td></tr>
+    <tr><td>가운데 왼쪽</td><td>현재 차례 · 주사위</td>
+        <td>지금 누구 차례인지와 코인이 크게 뜹니다.
+            <span class="btn">🎲 주사위 굴리기</span>가 여기 있습니다.</td></tr>
+    <tr><td>가운데 오른쪽 위</td><td>모둠 현황</td>
+        <td>모둠별 코인과 동물원 개수(🏛️). 진행 중인 모둠 줄에 파란 테두리가 생깁니다.</td></tr>
+    <tr><td>가운데 오른쪽 아래</td><td>행동 버튼 자리</td>
+        <td>지을지 말지, 낼지 말지 같은 <b>선택 버튼이 항상 여기</b> 뜹니다.
+            화면이 멈춘 것 같으면 이 자리를 보세요.</td></tr>
+    <tr><td>말 위</td><td>🔻 빨간 화살표</td>
+        <td>지금 차례인 모둠의 말을 가리킵니다. 커졌다 작아지며 말을 따라 이동합니다.</td></tr>
+    <tr><td>동물 칸 위쪽</td><td>🎡🎢🏰 동물원</td>
+        <td>주인 모둠 색으로 칠해집니다. 관람차=Lv.1, 롤러코스터=Lv.2, 성=Lv.3.</td></tr>
+    <tr><td>🏕️ 생물보호구역</td><td>💰숫자 배지</td>
+        <td>지금까지 쌓인 기금입니다. 다음에 도착한 모둠이 <b>전액</b> 가져갑니다.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============ 4 ============ -->
+<h2><span class="n">4</span> 한 턴의 흐름</h2>
+<p class="sub">계속 이것만 반복합니다.</p>
+<div class="card">
+<ol>
+  <li><span class="btn">🎲 주사위 굴리기</span> 를 누릅니다.</li>
+  <li>말이 한 칸씩 자동으로 이동합니다. 도착할 때까지 기다립니다.</li>
+  <li>도착한 칸에 따라 창이나 버튼이 뜹니다. (아래 5~7번 참고)</li>
+  <li>처리가 끝나면 <span class="btn">➡️ 다음 턴</span> 이 뜹니다. 누르면 다음 모둠 차례.</li>
+</ol>
+<div class="note">
+  <b>더블(같은 숫자 두 개)이 나오면 한 번 더 굴립니다</b>
+  ⚡ 효과가 잠깐 뜨고, 그 칸 처리를 마친 뒤 같은 모둠이 다시 굴립니다.
+</div>
+<div class="tip">
+  <b>🏁 START</b>
+  지나가면 <b>+5 코인</b>, 정확히 도착하면 <b>+7 코인</b>입니다.
+</div>
+</div>
+
+<!-- ============ 5 ============ -->
+<h2><span class="n">5</span> 동물 칸에 멈췄을 때 — 문제 풀기</h2>
+<p class="sub">이 게임의 절반이 여기 있습니다.</p>
+
+<div class="step"><div class="num">1</div><div>
+  <h4>문제 시작 버튼</h4>
+  <p>오른쪽 아래에 <span class="btn">▶️ 기린 문제 시작</span> 처럼 뜹니다.
+     모둠이 준비되면 누르세요. <b>누르기 전까지는 기다립니다</b> —
+     설명할 시간이 필요하면 여기서 멈춰도 됩니다.</p>
+</div></div>
+
+<div class="step"><div class="num">2</div><div>
+  <h4>3 · 2 · 1 카운트다운</h4>
+  <p>화면 전체에 숫자가 크게 뜹니다.</p>
+</div></div>
+
+<div class="step"><div class="num">3</div><div>
+  <h4>문제 + 10초 타이머</h4>
+  <p>문제가 전체 화면으로 뜨고 10초가 내려갑니다. 마지막 3초에 숫자가 빨개지고 소리가 납니다.</p>
+</div></div>
+
+<figure>
+  <img src="assets/guide/03-quiz.jpg" alt="전체 화면으로 표시된 문제와 10초 타이머">
+  <figcaption>문제 화면 — 위에 어느 모둠·어느 칸인지 같이 뜹니다</figcaption>
+</figure>
+
+<div class="step"><div class="num">4</div><div>
+  <h4><span class="btn">🔓 정답 공개</span></h4>
+  <p>10초가 끝나도 정답이 <b>자동으로 뜨지 않습니다.</b> 선생님이 눌러야 나옵니다.
+     모둠 답을 다 들은 뒤에 누르세요.</p>
+</div></div>
+
+<div class="step"><div class="num">5</div><div>
+  <h4>성공 / 실패 판정</h4>
+  <p>정답이 뜨면 <span class="btn">⭕ 성공!</span> <span class="btn">❌ 실패…</span> 중에 선생님이 고릅니다.
+     <b>부분 정답을 인정할지는 선생님 재량</b>입니다.</p>
+</div></div>
+
+<figure>
+  <img src="assets/guide/04-answer.jpg" alt="정답이 공개되고 성공·실패 판정 버튼이 뜬 화면">
+  <figcaption>정답 공개 후 — 판정은 선생님이 직접 누릅니다</figcaption>
+</figure>
+
+<div class="why">
+  <b>왜 자동 채점이 아닌가요?</b>
+  생명과학 답은 "빛, 공기, 온도 중 3개"처럼 표현이 갈립니다.
+  기계가 맞다·틀리다를 가르면 억울한 오답이 나옵니다.
+  그래서 <b>판정 권한을 선생님에게 남겨</b> 뒀습니다. 대신 문제·정답을 크게 띄워서 반 전체가 같이 보게 했습니다.
+</div>
+
+<div class="note">
+  <b>문제는 겹치지 않습니다</b>
+  50문제를 섞어서 하나씩 꺼내 쓰기 때문에, 한 판 안에서 같은 문제가 두 번 나오지 않습니다.
+  50개를 다 쓰면 다시 섞습니다. 게임을 새로 시작할 때마다 순서도 새로 섞입니다.
+</div>
+
+<!-- ============ 6 ============ -->
+<h2><span class="n">6</span> 동물원 짓기와 관람비</h2>
+<p class="sub">코인이 오가는 부분. 외울 필요 없이 화면에 뜨는 숫자를 읽으면 됩니다.</p>
+
+<h3>빈 칸이면 — 짓기</h3>
+<p>문제를 푼 뒤 <span class="btn">🏛️ 동물원 건설 (4코인)</span> 처럼 <b>가격이 적힌 버튼</b>이 뜹니다.
+   <span class="btn">건너뛰기</span>를 눌러 안 지어도 됩니다.</p>
+
+<figure>
+  <img src="assets/guide/05-build.jpg" alt="문제를 맞힌 뒤 동물원 건설 버튼이 뜬 화면">
+  <figcaption>오른쪽 아래에 가격이 적힌 건설 버튼이 뜹니다</figcaption>
+</figure>
+
+<p><b>건설비 = 지역 세금 + 레벨 비용</b>입니다. 문제를 틀리면 <b>지역 세금만 2배</b>가 됩니다.</p>
+
+<div class="tblwrap">
+<table>
+  <caption>건설·업그레이드 비용 (성공 / 실패)</caption>
+  <thead><tr><th>지역</th><th class="num">🎡 Lv.1 짓기</th><th class="num">🎢 Lv.2</th><th class="num">🏰 Lv.3</th></tr></thead>
+  <tbody>
+    <tr><td>초원 (세금 1)</td><td class="num"><span class="ok">4</span> / <span class="no">5</span></td><td class="num"><span class="ok">5</span> / <span class="no">6</span></td><td class="num"><span class="ok">6</span> / <span class="no">7</span></td></tr>
+    <tr><td>극지방 (세금 2)</td><td class="num"><span class="ok">5</span> / <span class="no">7</span></td><td class="num"><span class="ok">6</span> / <span class="no">8</span></td><td class="num"><span class="ok">7</span> / <span class="no">9</span></td></tr>
+    <tr><td>바다 (세금 3)</td><td class="num"><span class="ok">6</span> / <span class="no">9</span></td><td class="num"><span class="ok">7</span> / <span class="no">10</span></td><td class="num"><span class="ok">8</span> / <span class="no">11</span></td></tr>
+    <tr><td>삼림 (세금 4)</td><td class="num"><span class="ok">7</span> / <span class="no">11</span></td><td class="num"><span class="ok">8</span> / <span class="no">12</span></td><td class="num"><span class="ok">9</span> / <span class="no">13</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>내 동물원이면 — 올리기</h3>
+<p>이미 내 동물원이 있는 칸에 다시 멈추면 <b>레벨 업그레이드</b>를 할 수 있습니다.
+   Lv.1 → Lv.2 → Lv.3, <b>모든 레벨에 문제가 붙습니다.</b>
+   Lv.3(🏰 성)은 <b>무적</b> — 열쇠 카드로도 뺏기지 않습니다.</p>
+
+<h3>남의 동물원이면 — 관람비</h3>
+<p>문제를 먼저 풀고, 그 결과에 따라 낼 금액이 정해집니다.
+   <b>관람비 = (지역 세금 + 2) × 레벨 배수</b>, 틀리면 <b>+3코인</b>이 붙습니다.</p>
+
+<div class="tblwrap">
+<table>
+  <caption>관람비 (성공 / 실패)</caption>
+  <thead><tr><th>지역</th><th class="num">Lv.1 ×1</th><th class="num">Lv.2 ×2</th><th class="num">Lv.3 ×3</th></tr></thead>
+  <tbody>
+    <tr><td>초원</td><td class="num"><span class="ok">3</span> / <span class="no">6</span></td><td class="num"><span class="ok">6</span> / <span class="no">9</span></td><td class="num"><span class="ok">9</span> / <span class="no">12</span></td></tr>
+    <tr><td>극지방</td><td class="num"><span class="ok">4</span> / <span class="no">7</span></td><td class="num"><span class="ok">8</span> / <span class="no">11</span></td><td class="num"><span class="ok">12</span> / <span class="no">15</span></td></tr>
+    <tr><td>바다</td><td class="num"><span class="ok">5</span> / <span class="no">8</span></td><td class="num"><span class="ok">10</span> / <span class="no">13</span></td><td class="num"><span class="ok">15</span> / <span class="no">18</span></td></tr>
+    <tr><td>삼림</td><td class="num"><span class="ok">6</span> / <span class="no">9</span></td><td class="num"><span class="ok">12</span> / <span class="no">15</span></td><td class="num"><span class="ok">18</span> / <span class="no">21</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <b>인수 — 남의 동물원 뺏기</b>
+  <b>문제를 맞혔고 + 상대 동물원이 Lv.1일 때만</b> 인수 버튼이 뜹니다.
+  값은 관람비의 <b>2배</b> (초원 6 · 극지방 8 · 바다 10 · 삼림 12코인).
+  Lv.2 이상은 인수할 수 없고, 인수해도 레벨은 <b>Lv.1 그대로</b>입니다.
+</div>
+
+<div class="tip">
+  <b>숫자를 외우지 마세요</b>
+  위 표는 참고용입니다. 실제로는 버튼에 항상 금액이 적혀 나오고,
+  코인이 모자라면 그 버튼 자체가 안 뜹니다.
+</div>
+
+<!-- ============ 7 ============ -->
+<h2><span class="n">7</span> 특수 칸 다섯 종류</h2>
+<p class="sub">동물 칸이 아닌 칸들.</p>
+
+<div class="tblwrap">
+<table>
+  <thead><tr><th>칸</th><th>멈추면</th></tr></thead>
+  <tbody>
+    <tr><td><b>🏁 START</b></td>
+        <td>지나가면 +5코인, 정확히 도착하면 <b>+7코인</b>.</td></tr>
+    <tr><td><b>🏕️ 생물보호구역</b></td>
+        <td>기금이 <b>비었으면 5코인을 냅니다</b>(적립). 기금이 <b>쌓여 있으면 전액 가져갑니다</b>(0으로 초기화).
+            타일 오른쪽 위 💰배지에 현재 액수가 보입니다.</td></tr>
+    <tr><td><b>⛓️ 감옥</b></td>
+        <td>도착하면 2턴 정지. 쉬는 턴마다 세 가지 중 고릅니다 —
+            <b>3코인 내고 즉시 탈출</b> / <b>주사위를 굴려 더블이면 탈출 후 그만큼 이동</b> / 그냥 대기.</td></tr>
+    <tr><td><b>✈️ 세계동물여행</b></td>
+        <td>동물 칸 아무 데나 골라 즉시 이동합니다. 가는 길에 START를 지나면 +5코인.
+            도착한 칸의 효과(문제·관람비 등)는 <b>그대로 발동합니다.</b></td></tr>
+    <tr><td><b>🔑 생물구조열쇠</b></td>
+        <td>14종 카드 중 하나가 무작위로 뽑힙니다. 아래 8번 참고.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<figure>
+  <img src="assets/guide/07-travel.jpg" alt="세계동물여행에서 이동할 칸을 고르는 화면">
+  <figcaption>✈️ 이동 선택 — 칸마다 <b>비어있음</b> / <b>주인·레벨</b>이 같이 뜨고, 고를 수 있는 칸은 보드에서 금색으로 반짝입니다</figcaption>
+</figure>
+
+<!-- ============ 8 ============ -->
+<h2><span class="n">8</span> 생물구조열쇠 14장</h2>
+<p class="sub">🔑 칸에서 무작위로 한 장. 판이 뒤집히는 자리입니다.</p>
+
+<figure>
+  <img src="assets/guide/06-key.jpg" alt="생물구조열쇠 카드가 뜬 화면">
+  <figcaption>카드가 뜨면 내용을 읽어 주고 확인을 누릅니다</figcaption>
+</figure>
+
+<div class="tblwrap">
+<table>
+  <thead><tr><th>카드</th><th class="num">장수</th><th>효과</th></tr></thead>
+  <tbody>
+    <tr><td>상금</td><td class="num">4</td><td>+2 / +4 / +6 / +8 코인</td></tr>
+    <tr><td>벌금</td><td class="num">2</td><td>−2 / −4 코인</td></tr>
+    <tr><td>원하는 곳으로 이동</td><td class="num">1</td><td>동물 칸 아무 데나. START 지나면 +5코인</td></tr>
+    <tr><td>상대 동물원 가로채기</td><td class="num">1</td><td>Lv.3 제외한 남의 동물원 1개를 뺏습니다</td></tr>
+    <tr><td>동물원 교체</td><td class="num">1</td><td>내 동물원 1개와 남의 것 1개를 맞바꿉니다</td></tr>
+    <tr><td>상대 동물원 폐쇄</td><td class="num">1</td><td>Lv.3 제외한 남의 동물원 1개를 없앱니다</td></tr>
+    <tr><td>무상 동물원 설립</td><td class="num">1</td><td>빈 동물 칸에 <b>공짜로</b> Lv.1을 짓습니다 (문제 없음)</td></tr>
+    <tr><td>주사위 두 번</td><td class="num">1</td><td>다음 턴에 한 번 더 굴립니다</td></tr>
+    <tr><td>다른 팀 감옥 보내기</td><td class="num">1</td><td>모둠 하나를 골라 감옥으로 보냅니다 (2턴 정지)</td></tr>
+    <tr><td>다른 팀과 코인 교환</td><td class="num">1</td><td>모둠을 고르면 <b>코인 총액을 통째로</b> 맞바꿉니다</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="tip">
+  <b>코인 교환 카드는 각 팀 코인이 보이는 상태로 고릅니다</b>
+  자기 팀을 고르면 교환이 일어나지 않습니다 — 손해 볼 상황이면 그렇게 넘기면 됩니다.
+</div>
+
+<!-- ============ 9 ============ -->
+<h2><span class="n">9</span> 문제 바꾸기 — 관리자 페이지</h2>
+<p class="sub">단원에 맞게 문제를 갈아 끼울 수 있습니다.</p>
+
+<div class="step"><div class="num">1</div><div>
+  <h4>관리자 페이지 열기</h4>
+  <p>시작 화면 아래 <span class="btn">⚙️ 문제 관리자 페이지</span> 를 누르거나,
+     주소 뒤에 <code>/admin.html</code> 을 붙입니다.</p>
+</div></div>
+
+<div class="step"><div class="num">2</div><div>
+  <h4>비밀번호 입력</h4>
+  <p>비밀번호는 <b>제작자에게 따로 문의</b>해 주세요. 학생이 정답을 미리 보지 못하게
+     막아 둔 것이라, 이 문서에는 적어 두지 않았습니다.</p>
+  <p><b>학생 앞에서 이 화면을 열지 마세요.</b> 문제와 정답이 목록으로 다 보입니다.</p>
+</div></div>
+
+<div class="step"><div class="num">3</div><div>
+  <h4>문제 추가 · 수정 · 삭제</h4>
+  <p>문제와 정답만 넣으면 됩니다. 시간은 10초 고정입니다.
+     기본 50문제는 그대로 두고 뒤에 덧붙여도 되고, 지우고 새로 채워도 됩니다.</p>
+</div></div>
+
+<figure>
+  <img src="assets/guide/08-admin.jpg" alt="문제 관리자 페이지의 문제 목록">
+  <figcaption>관리자 페이지 — 문제 추가 폼과 등록된 문제 목록</figcaption>
+</figure>
+
+<div class="why">
+  <b>다른 노트북에는 자동으로 안 옮겨집니다</b>
+  문제는 <b>그 브라우저 안에만</b> 저장됩니다. 집 컴퓨터에서 문제를 넣어도
+  교실 노트북에는 안 나타납니다. 옮기려면 이렇게 하세요 —
+  넣은 쪽에서 <span class="btn">📥 JSON 내보내기</span> 로 파일을 받고,
+  교실 노트북에서 <span class="btn">📤 JSON 가져오기</span> 로 그 파일을 불러옵니다.
+  <b>수업 전에 미리 한 번 해 두세요.</b>
+</div>
+
+<!-- ============ 10 ============ -->
+<h2><span class="n">10</span> 막히면 여기</h2>
+<p class="sub">수업 중에 자주 나오는 상황들.</p>
+
+<details><summary>화면이 멈춘 것 같아요. 아무 반응이 없어요</summary>
+<div class="body">
+<p>대부분 <b>선생님이 누를 버튼을 기다리는 중</b>입니다. 이 게임은 자동으로 넘어가지 않습니다.
+   화면 <b>가운데 오른쪽 아래(모둠 현황 밑)</b>를 보세요. 버튼은 항상 거기 뜹니다.</p>
+<p>문제 화면이라면 <span class="btn">🔓 정답 공개</span> 를 눌러야 다음으로 넘어갑니다.
+   10초가 지나도 정답은 자동으로 안 뜹니다.</p>
+</div></details>
+
+<details><summary>수업 시간이 다 됐는데 아무도 파산하지 않았어요</summary>
+<div class="body">
+<p>정식 승리 조건은 "마지막 한 모둠"이라 <b>정해진 턴 수가 없습니다.</b>
+   40~50분 수업이면 대개 결판이 안 납니다.</p>
+<p>시작할 때 <b>"종이 치면 코인이 가장 많은 모둠이 우승"</b>이라고 미리 알려 주세요.
+   모둠 현황에 코인이 계속 떠 있으니 그대로 읽으면 됩니다.
+   동물원을 가진 모둠에게 가산점을 주는 식으로 변형해도 좋습니다.</p>
+</div></details>
+
+<details><summary>한 모둠이 너무 앞서가서 나머지가 흥미를 잃어요</summary>
+<div class="body">
+<p>🔑 생물구조열쇠의 <b>코인 교환</b>과 <b>동물원 가로채기</b>가 이걸 뒤집는 장치입니다.
+   열쇠 칸은 보드에 5개 있어서 생각보다 자주 걸립니다.</p>
+<p>그래도 벌어지면, 뒤처진 모둠에게 문제 <b>부분 정답을 넉넉하게 인정</b>해 주세요.
+   판정 권한이 선생님에게 있는 이유이기도 합니다.</p>
+</div></details>
+
+<details><summary>실수로 성공/실패를 반대로 눌렀어요</summary>
+<div class="body">
+<p>되돌리는 버튼은 없습니다. 다만 판정 다음에 뜨는 <b>건설·지불 버튼에서 조정</b>할 수 있습니다.
+   예를 들어 잘못 "실패"를 눌렀다면 건설을 <span class="btn">건너뛰기</span> 하게 하고
+   다음 턴에 다시 기회를 주는 식입니다.</p>
+<p>코인이 크게 틀어졌다면 새로 시작하는 게 빠릅니다 — 판이 짧아서 부담이 적습니다.</p>
+</div></details>
+
+<details><summary>실수로 새로고침했어요. 판이 사라졌어요</summary>
+<div class="body">
+<p>진행 상황은 저장되지 않습니다. 새로고침하면 <b>처음부터</b> 시작해야 합니다.
+   수업 중에는 <kbd>F5</kbd>와 브라우저 <b>뒤로 가기</b>를 조심하세요.
+   전체 화면(<kbd>F11</kbd>)으로 띄워 두면 실수로 다른 걸 누를 일이 줄어듭니다.</p>
+</div></details>
+
+<details><summary>소리가 안 나와요</summary>
+<div class="body">
+<p>배경음악은 <span class="btn">🎮 게임 시작!</span> 을 눌러야 시작됩니다 (브라우저 자동재생 차단 때문).</p>
+<p>그래도 안 나오면 오른쪽 위 <span class="btn">🎵</span> 를 눌러 음소거(🔇)가 걸려 있는지,
+   슬라이더가 0으로 내려가 있는지 확인하세요. 볼륨 설정은 브라우저에 저장돼서
+   지난번에 0으로 두었으면 그대로 남아 있습니다.</p>
+</div></details>
+
+<details><summary>넣어 둔 문제가 교실 노트북에 안 보여요</summary>
+<div class="body">
+<p>문제는 <b>브라우저별로</b> 저장됩니다. 집 컴퓨터 ≠ 교실 노트북입니다.
+   9번의 JSON 내보내기 / 가져오기로 옮기세요.</p>
+<p>같은 노트북인데도 안 보인다면 시크릿 창이거나 브라우저가 다른 경우입니다
+   (크롬에서 넣고 엣지에서 열면 안 보입니다).</p>
+</div></details>
+
+<details><summary>모둠이 3개인데 4개로 시작해 버렸어요</summary>
+<div class="body">
+<p>중간에는 못 바꿉니다. 새로고침해서 다시 시작하세요. 시작 전이면 손해가 없습니다.</p>
+</div></details>
+
+<!-- ============ 11 ============ -->
+<div class="cheat">
+<h2><span class="n">11</span> 한 장 요약</h2>
+<p class="sub">인쇄해서 옆에 두고 보세요.</p>
+<div class="tblwrap">
+<table>
+  <tbody>
+    <tr><td>시작 코인</td><td><b>30</b>개 · 모둠 2~4</td></tr>
+    <tr><td>이동</td><td>주사위 2개 합 · <b>더블이면 한 번 더</b></td></tr>
+    <tr><td>🏁 START</td><td>통과 <b>+5</b> · 도착 <b>+7</b></td></tr>
+    <tr><td>🏕️ 보호구역</td><td>비었으면 <b>−5</b>(적립) · 쌓였으면 <b>전액 획득</b></td></tr>
+    <tr><td>⛓️ 감옥</td><td>2턴 정지 · <b>3코인</b> 또는 <b>더블</b>로 탈출</td></tr>
+    <tr><td>🐾 동물 칸</td><td>문제 <b>10초</b> → 정답 공개 → 선생님이 ⭕/❌</td></tr>
+    <tr><td>건설비</td><td>지역세금 + 레벨비(3/4/5) · <b>틀리면 세금만 2배</b></td></tr>
+    <tr><td>관람비</td><td>(지역세금+2) × 레벨배수(1/2/3) · <b>틀리면 +3</b></td></tr>
+    <tr><td>인수</td><td>관람비 <b>×2</b> · <b>맞혔고 상대가 Lv.1일 때만</b></td></tr>
+    <tr><td>🏰 Lv.3</td><td><b>무적</b> — 인수·가로채기·폐쇄·교체 전부 불가</td></tr>
+    <tr><td>승리</td><td>마지막 남은 모둠 · 시간이 없으면 <b>코인 최다</b></td></tr>
+    <tr><td>관리자</td><td><code>/admin.html</code> · 비번은 <b>제작자에게 문의</b></td></tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+<footer>
+  <span>생명 마블 · 제작. 용인삼계고 교사 배성용</span>
+  <span><a href="index.html">게임 화면으로 →</a></span>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>생명 마블 — 용인삼계고 교사 배성용</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8D%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+<!-- ===== VOLUME PANEL (shown during gameplay) ===== -->
+<div id="volume-panel" class="hidden">
+  <span class="vol-icon" id="btn-mute" title="음소거">🔊</span>
+  <div class="vol-row">
+    <span class="vol-label">BGM</span>
+    <input type="range" id="bgm-volume" min="0" max="1" step="0.05" value="0.4">
+  </div>
+  <div class="vol-row">
+    <span class="vol-label">효과음</span>
+    <input type="range" id="sfx-volume" min="0" max="1" step="0.05" value="0.7">
+  </div>
+  <span class="vol-track-name" id="bgm-track-name">♪</span>
+  <span class="vol-icon" id="btn-collapse" title="접기">✕</span>
+</div>
+<button id="volume-peek" title="볼륨 조절 열기">🎵</button>
+
+<!-- ===== SETUP SCREEN ===== -->
+<div id="setup-screen">
+  <div class="title-row">
+    <span class="title-emoji">🌍</span>
+    <h1>생명 마블</h1>
+    <span class="title-by">제작. 용인삼계고 교사 배성용</span>
+  </div>
+  <div class="setup-box">
+    <label>참가 모둠 수</label>
+    <select id="player-count" onchange="updatePlayerInputs()">
+      <option value="2">2 모둠</option>
+      <option value="3">3 모둠</option>
+      <option value="4" selected>4 모둠</option>
+    </select>
+    <div id="player-inputs" class="player-name-inputs"></div>
+    <button id="btn-start-game" onclick="startGame()">🎮 게임 시작!</button>
+    <div class="setup-footer">
+      <a href="guide.html">📖 처음 하시나요? 가이드 보기</a>
+      <a href="admin.html">⚙️ 문제 관리자 페이지</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="game-screen">
+  <div id="board"></div>
+</div>
+
+<!-- ===== MODAL (small) ===== -->
+<div id="modal-overlay"><div id="modal"></div></div>
+
+<!-- ===== QUIZ FULL-SCREEN OVERLAY ===== -->
+<div id="quiz-overlay"></div>
+
+<!-- ===== COUNTDOWN OVERLAY ===== -->
+<div id="countdown-overlay">
+  <div id="countdown-number">3</div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<!-- data-cfasync="false" opts out of Cloudflare Rocket Loader, which can break
+     async timing and inline handlers -->
+<script data-cfasync="false" src="js/audio.js"></script>
+<script data-cfasync="false" src="js/quiz.js"></script>
+<script data-cfasync="false" src="js/render.js"></script>
+<script data-cfasync="false" src="js/game-core.js"></script>
+<script data-cfasync="false">
+  // Bootstrap
+  (async function() {
+    AudioMgr.init();
+    await QuizPool.init();
+
+    // Initialize setup screen
+    updatePlayerInputs();
+
+    // Volume panel wiring
+    const panel     = document.getElementById('volume-panel');
+    const peek      = document.getElementById('volume-peek');
+    const bgmSlider = document.getElementById('bgm-volume');
+    const sfxSlider = document.getElementById('sfx-volume');
+    const muteBtn   = document.getElementById('btn-mute');
+    const collapseBtn = document.getElementById('btn-collapse');
+    const st = AudioMgr.getState();
+    bgmSlider.value = st.bgmVolume;
+    sfxSlider.value = st.sfxVolume;
+    muteBtn.textContent = st.muted ? '🔇' : '🔊';
+
+    bgmSlider.addEventListener('input', e => AudioMgr.setBgmVolume(parseFloat(e.target.value)));
+    sfxSlider.addEventListener('input', e => AudioMgr.setSfxVolume(parseFloat(e.target.value)));
+    muteBtn.addEventListener('click', () => {
+      const muted = AudioMgr.toggleMute();
+      muteBtn.textContent = muted ? '🔇' : '🔊';
+    });
+
+    // Collapse / expand
+    function collapsePanel() {
+      panel.classList.add('hidden');
+      peek.classList.add('show');
+    }
+    function expandPanel() {
+      panel.classList.remove('hidden');
+      peek.classList.remove('show');
+    }
+    collapseBtn.addEventListener('click', collapsePanel);
+    peek.addEventListener('click', expandPanel);
+
+    // On game start: minimized by default (only the 🎵 peek button shows)
+    const origStart = window.startGame;
+    window.startGame = async function() {
+      try {
+        await origStart.apply(this, arguments);
+      } catch (e) {
+        console.error('[bio-marble] startGame error:', e);
+      }
+      collapsePanel();
+    };
+  })();
+</script>
+</body>
+</html>

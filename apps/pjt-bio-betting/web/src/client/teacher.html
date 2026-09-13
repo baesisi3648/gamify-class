@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>애니멀 더비 — 교사</title>
+<!-- ⚠️ 외부 글꼴·CDN 링크를 넣지 마세요. 학교망에서 막히면 수업이 멈춥니다 -->
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="./shared/base.css">
+<link rel="stylesheet" href="./teacher/teacher.css">
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══ S1 시작 화면 ══ -->
+<div id="s1">
+  <h1>🐆 애니멀 더비 <span id="ver-badge" style="font-size:18px;color:var(--muted);font-weight:400">버전 확인 중…</span></h1>
+  <p class="tagline">문제를 풀고 힌트를 모아 우승 동물을 예측하는 전략 퀴즈 게임</p>
+  <div class="tabs">
+    <button id="tab-new" class="on" data-pane="new">새 판 만들기</button>
+    <button id="tab-resume" data-pane="resume">판 코드로 이어하기</button>
+  </div>
+
+  <div id="pane-new" class="card">
+    <!-- ⚠️ 판 만들기에도 관리자 비밀번호가 필요합니다 (2026-09-05 사용자 결정).
+         예전에는 인증이 없어서, 주소만 아는 학생이 빈 판을 만들어 '최근 판' 목록을
+         어지럽힐 수 있었습니다. 값은 sessionStorage 에 두고 '이어하기'의 입력란과
+         같은 값을 가리킵니다 — 한 번만 넣으면 /admin 까지 함께 열립니다 (shared/pw.ts) -->
+    <div class="admin-row">
+      <label for="cadmin">관리자 비밀번호</label>
+      <input id="cadmin" type="password" autocomplete="current-password">
+      <div class="qrhint">판을 만들 때만 확인합니다. 학생은 필요 없습니다</div>
+      <!-- ⚠️ 토스트가 아니라 여기 남깁니다. 거절 사유는 고칠 때까지 보여야 합니다 -->
+      <div id="create-msg" class="stop hidden"></div>
+    </div>
+    <!-- 어떤 과목이든 문제은행만 바꾸면 되는 게임이라, 문제 준비가 첫 단계다 (RENEWAL §4-1) -->
+    <a class="startcard" href="/admin" target="_blank" rel="noopener">
+      <span class="sc-step">1</span>
+      <span class="sc-body"><b>먼저 문제를 준비하세요</b><br>문제 관리자에서 문제 세트를 넣거나 JSON 으로 가져옵니다</span>
+      <span class="sc-go">문제 관리자 열기 ↗</span>
+    </a>
+    <label for="cls">방 제목</label><input id="cls" placeholder="2학년 3반 세포와 물질대사 · 중간고사 총정리">
+    <label for="unit">문제 세트</label><select id="unit"></select>
+    <div id="no-questions" class="warn hidden">
+      📋 <b>문제가 하나도 없습니다.</b>
+
+      위의 <b>문제 관리자</b>에서 문제를 먼저 넣어주세요. JSON 파일로 한 번에 가져올 수도 있습니다.
+      넣으신 뒤 아래 버튼을 누르면 목록이 갱신됩니다.
+      <button class="btn-pause" style="margin-top:12px" id="btn-reload">다시 불러오기</button>
+    </div>
+    <label for="cnt">모둠 수</label><select id="cnt"></select>
+    <label>모둠 이름 (비우면 1모둠, 2모둠…)</label>
+    <div id="names" class="names"></div>
+    <!-- 사기 라운드 스위치 (RENEWAL §1). 기본 켬. 켜면 학생 폰에 공지가 뜬다 — 몰래 속이는 게 아니라
+         "어느 라운드가 거짓인지 추리하라"는 놀이다 -->
+    <label class="switch">
+      <input type="checkbox" id="fraud" checked>
+      <span class="sw-title">🎭 사기 라운드</span>
+      <span class="sw-desc" id="fraud-desc">2~4라운드 중 한 라운드는 힌트가 거짓입니다 — 학생에게 공지됩니다</span>
+    </label>
+    <div id="check"></div>
+    <button class="primary" id="btn-create">게임 방 만들기</button>
+  </div>
+
+  <div id="pane-resume" class="card hidden">
+    <label for="rcode">판 코드 4자리</label><input id="rcode" maxlength="4" style="text-transform:uppercase">
+    <!-- ⚠️ 교사 열쇠는 판을 만든 브라우저에만 저장된다. 기기를 바꿨거나 기록을 지웠으면
+         관리자 비밀번호로 되찾는다 (MIGRATION §10 — 사용자 결정).
+         앱스 스크립트판의 "스프레드시트 메뉴에서 확인" 안내는 이 흐름으로 대체됐다 -->
+    <div id="key-row" class="hidden">
+      <label for="radmin">관리자 비밀번호</label>
+      <input id="radmin" type="password" autocomplete="current-password">
+      <div class="qrhint">이 기기에 저장된 교사 열쇠가 없습니다.<br>
+        관리자 비밀번호를 넣으면 이 판의 열쇠를 되찾아 이어갑니다.</div>
+    </div>
+    <button class="primary" id="btn-resume">이어하기</button>
+    <h2 style="margin-top:26px">최근 판</h2>
+    <table><tbody id="recent"></tbody></table>
+    <!-- ⚠️ 이 문장이 없으면 "어제 만든 판이 왜 없어졌냐" 가 반드시 나온다.
+         숫자는 src/server/cleanup.ts 의 RETENTION 과 **같아야 한다** — 거기를 고치는 날
+         이 줄도 같이 고칩니다 (MIGRATION §5 trackCells 함정) -->
+    <div class="qrhint" style="font-size:18px">🕒 정산한 판은 30일, 정산 안 한 판은 90일 뒤 자동으로 지워집니다.</div>
+  </div>
+
+  <!-- 문제은행 관리 (5단계). ⚠️ 링크 하나뿐입니다 — 관리 코드를 이 번들에 넣지 마세요.
+       admin.html 이 별도 진입점인 이유가 그것입니다 (vite.config.ts) -->
+  <div class="adminlink">
+    <a href="/admin">🗂 문제은행 관리</a>
+    <span>문제·동물·설정을 고칩니다. 고친 것은 <b>새로 만드는 판</b>부터 적용됩니다.</span>
+  </div>
+</div>
+
+<!-- ══ 배포 안내 ══ -->
+<div id="handout" class="hidden">
+  <div class="card">
+    <div class="room-title" id="out-title"></div>
+    <h2>칠판에 적어주세요</h2>
+    <div class="code" id="out-code"></div>
+    <div id="fraud-note" class="warn hidden">🎭 <b>사기 라운드가 켜져 있습니다.</b> 2~4라운드 중 한 라운드는 힌트가 전부 거짓입니다.
+학생들에게 미리 말해 주세요 — 폰에도 같은 안내가 뜹니다. 어느 라운드인지는 정산 때 공개됩니다.</div>
+    <div class="qrwrap" style="margin-top:16px">
+      <div class="qrbox" id="out-qr"></div>
+      <div style="max-width:620px">
+        <h2>학생 주소</h2>
+        <div class="url" id="out-url"></div>
+        <div id="url-warn" class="stop hidden">⚠️ 이 주소는 학생이 못 엽니다.<br>배포 주소(https://…)로 접속한 뒤 다시 만들어주세요.</div>
+        <div class="qrhint">폰 카메라로 QR을 비추면 바로 열립니다.<br>
+          그다음 판 코드 <b id="qr-code-echo" style="color:var(--gold)"></b> 를 넣으면 돼요.</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>모둠별 암호 — 모둠장에게만 종이로 주세요</h2>
+    <div class="pinhint noprint">🔒 가려져 있습니다. 암호를 누르면 그것만 보입니다. 인쇄하면 전부 보입니다.</div>
+    <table><thead><tr><th>모둠</th><th>이름</th><th>암호</th></tr></thead><tbody id="out-pins"></tbody></table>
+    <div class="controls noprint" style="margin-top:20px">
+      <button class="btn-pause" id="btn-reveal-pins">전부 보기</button>
+      <button class="btn-pause" id="btn-print">인쇄하기</button>
+      <button class="btn-red" id="btn-go-play">진행 화면으로</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S2 진행 화면 — 5구획 (RENEWAL §4-2) ══
+     구획 1 헤더 · 구획 2 경마장 · 구획 3 동물 현황 · 구획 4 모둠 현황 · 구획 5 하단.
+     ⚠️ **모둠별 베팅 내역은 이 화면 어디에도 없다** (RENEWAL §1 결정표 — 기획안 구획 3·4의
+        "어느 모둠이 몇 코인"은 실수였다). 그게 보이면 토론이 망가진다 -->
+<div id="s2" class="hidden">
+
+  <!-- ══ 구획 1 — 헤더 ══ -->
+  <div class="hdr">
+    <!-- 방 제목은 길어지면 줄임표. 사기 라운드 배지도 이 줄에 둔다 — 따로 한 줄을 쓰면
+         한 화면 모드(teacher.css "한 화면 모드")에서 그만큼 트랙이 줄어든다.
+         **어느 라운드인지는 여기 없다** — 정산 때까지 서버도 안 알려준다 -->
+    <div class="hd-name">🐆 애니멀 더비 <span class="hd-room" id="p-room"></span>
+      <span id="fraud-badge" class="fraud-badge hidden">🎭 사기 라운드 ON</span></div>
+    <!-- 라운드 진행표 ① ② … ⑩ — 지난 라운드는 채우고 지금은 강조한다.
+         ⚠️ 칸 수는 ROUNDS(10) 고정이다. lastRound 로 그리면 안 된다 (지금은 늘 10 이지만 옛 판은 9) —
+            그건 3등이 언제 들어오는지를 TV 로 알려주는 것이다 (main.ts drawRounds 주석) -->
+    <div class="rounds" id="p-rounds"></div>
+    <div class="hd-right">
+      <div class="timer num" id="p-timer"></div>
+      <button class="hdr-btn" id="btn-pause">⏸ 일시정지</button>
+      <!-- 조기 종료 (MIGRATION §8-3). 문제·토론·베팅에서만 보인다 — 대기·경주 중에는
+           감춘다(비활성이 아니라). 경주 20초는 학생이 결과를 보는 시간이라 넘길 것이 아니다 -->
+      <button class="hdr-btn skip hidden" id="btn-skip">⏩ 빠른 진행</button>
+      <!-- 소리는 교사 화면만 (RENEWAL §4-4). 패널 마크업은 shared/audio.ts 가 만든다 -->
+      <button class="hdr-btn sound" id="btn-sound" title="소리">🎵</button>
+      <!-- 전체화면 (2026-09-07). 브라우저 UI 가 사라지면 그만큼 트랙이 커진다 — 한 화면 모드가
+           높이를 따라간다 (main.ts applyFit). 지원 안 하는 브라우저(iOS Safari)에서는 감춘다 -->
+      <button class="hdr-btn full" id="btn-full" title="전체화면 (F 키)">⛶ 전체화면</button>
+    </div>
+  </div>
+
+  <!-- ══ 구획 2 — 경마장 ══
+       PixiJS 경주 무대 (teacher/stage.ts). 켜지면 아래 #track 을 숨긴다.
+       ⚠️ reduced-motion 이거나 WebGL 이 없으면 무대는 안 만들어지고 #track 이 그대로 남는다.
+          **둘은 같은 방향(좌→우)·같은 칸수여야 한다** — 어느 쪽이든 게임은 돈다 (§11-1) -->
+  <div class="card track-card">
+    <div id="race-stage" class="hidden"></div>
+    <!-- "n라운드 준비" — 트랙 **위에 얹힌** 알약이다 (absolute). 트랙 아래 한 줄로 두면 한 화면
+         모드에서 그 줄만큼 레인이 낮아진다. 관중석 띠 위, 가운데에 떠서 말과 겹치지 않는다 -->
+    <div id="phase-note" class="phase-big hidden"></div>
+    <div id="track"></div>
+  </div>
+
+  <!-- ══ 구획 3 — 동물 현황 (한 줄 8카드) ══ -->
+  <div class="card">
+    <div class="sect-head">
+      <h2>🐾 동물 현황</h2>
+      <!-- 지금 걸린 코인 총합 — 베팅 단계에만 강조된다 (MIGRATION §11-3).
+           어느 모둠이 걸었는지는 절대 표시하지 않는다 (05 §4-3) -->
+      <div id="tote-total"><span class="lbl">지금 걸린 코인 총합</span><span class="n num" id="tote-total-n">0</span></div>
+    </div>
+    <div class="acards" id="odds"></div>
+  </div>
+
+  <!-- ══ 구획 4 — 모둠 현황 (가로 카드) ══
+       제출 여부와 남은 코인만. **정답 여부도, 어느 동물에 걸었는지도 없다** -->
+  <div class="card">
+    <h2>👥 모둠 현황</h2>
+    <div class="tcards" id="prog"></div>
+  </div>
+
+  <!-- ══ 구획 5 — 하단 ══ -->
+  <div class="card controls">
+    <button class="btn-red" id="btn-round">▶ ROUND 1 시작</button>
+    <!-- 모든 모둠이 끝나면 서버가 마감을 당긴다. 그 사실을 글자로 적는 자리 -->
+    <span class="skip-note hidden" id="skip-note"></span>
+    <span style="flex:1"></span>
+    <button class="btn-small" id="btn-handout">학생 주소·암호</button>
+    <button class="btn-small" id="btn-reveal">정답 순위 보기</button>
+    <button class="btn-gold" id="btn-finalize">🏁 결과 확인</button>
+  </div>
+  <div id="reveal" class="reveal hidden"></div>
+</div>
+
+<!-- ══ S3 정산 화면 ══ -->
+<div id="s3" class="hidden">
+  <h1>🏁 최종 결과</h1>
+  <div class="card"><div class="step" id="r-step"></div>
+    <button class="btn-red" id="r-next">다음</button></div>
+  <div id="r-body"></div>
+</div>
+
+<div class="ver" id="ver"></div>
+<div id="toast" class="hidden"></div>
+</div>
+
+<script type="module" src="./teacher/main.ts"></script>
+</body>
+</html>

@@ -2,12 +2,18 @@
 
 교사가 직접 만든 수업 게임과 교실 도구를 모아 두는 페이지.
 
-저장소는 `baesisi3648/gamify-class`. 빌드 도구도 프레임워크도 없습니다.
-HTML 세 장과 CSS 한 장이 전부입니다.
+저장소는 `YongTeacher/gamify-class`이며, 원본 `baesisi3648/gamify-class`를 upstream으로
+연결합니다. 사이트 자체에는 빌드 도구나 프레임워크가 없습니다. 사이트가 소개하는
+게임의 원본 코드는 `apps/` 아래에 함께 보관합니다.
 
 ```
 index.html        /      — 검정 배경 브랜드 소개 랜딩
-apps/index.html   /apps  — 흰 배경 앱 라이브러리 (사이드바 + 카드)
+apps/
+  index.html             — `/apps` 앱 라이브러리 (사이드바 + 카드)
+  eco-map/               — ECO QUEST 생태지도 인터랙티브 초안
+  bio-marble/            — 생명 마블 정적 웹 게임 원본
+  pjt-bio-betting/       — 애니멀 더비 원본 (Cloudflare Workers 앱 포함)
+  GAMES.md               — 게임 원본 저장소와 가져온 커밋 기록
 404.html                 — 없는 주소일 때 (Pages가 자동으로 씁니다)
 assets/base.css          — 두 페이지가 같이 쓰는 색·폰트·버튼
 assets/og.jpg            — 카톡·SNS 공유 대표 이미지 (1200×630)
@@ -115,6 +121,13 @@ https://developers.kakao.com/tool/debugger — "카카오톡 URL 메타정보 �
 
 애니멀 더비(예전 이름 와일드 더비)는 2026-09-05부터 Cloudflare Workers에서 돕니다. 주소가 고정이라 재배포해도 바뀌지 않습니다.
 예전 Apps Script 판은 이 페이지에서 더 링크하지 않습니다.
+
+## 게임 소스
+
+두 게임의 소스는 이 저장소의 `apps/` 아래에 일반 파일로 포함합니다. 원본 저장소와
+가져온 커밋은 [`apps/GAMES.md`](apps/GAMES.md)에 기록합니다. 생명 마블은 정적
+파일이지만, 애니멀 더비의 현재 버전은 Workers·Durable Objects·D1이 필요하므로
+`gamify-class`의 정적 Pages 배포만으로는 실행되지 않습니다.
 
 ## 배포
 

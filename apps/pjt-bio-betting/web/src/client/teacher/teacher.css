@@ -1,0 +1,428 @@
+/* apps-script/Teacher.html 의 <style> 이식.
+   TV용 — 교실 뒤 8m에서 읽혀야 한다 */
+body{background:var(--bg);color:var(--text);font-size:24px}
+.wrap{max-width:1900px;margin:0 auto;padding:16px}
+h1{font-size:34px;margin-bottom:14px}
+h2{font-size:28px;margin-bottom:10px}
+.card{background:var(--card);border-radius:14px;padding:20px;margin-bottom:16px}
+
+/* 시작 화면 */
+.tabs{display:flex;gap:10px;margin-bottom:18px}
+.tabs button{padding:14px 26px;font-size:22px;background:var(--card);color:var(--muted)}
+.tabs button.on{background:var(--gold);color:#1B2734;font-weight:700}
+label{display:block;margin:14px 0 6px;font-size:20px;color:var(--muted)}
+input,select{width:100%;padding:14px;font-size:22px;border-radius:8px;border:2px solid #33475A;
+             background:#0B131B;color:var(--text)}
+.names{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+/* 관리자 비밀번호는 이 폼에서 성격이 다른 한 칸이다 — 수업 설정이 아니라 권한 확인이라
+   선을 그어 묶어 둔다. 첫 label 의 margin-top 은 상자 자체가 대신한다 */
+.admin-row{border-bottom:1px solid #33475A;padding-bottom:16px;margin-bottom:6px}
+.tagline{color:var(--muted);font-size:20px;margin:-6px 0 14px}
+/* 첫 단계 카드 — 문제 준비. 링크 하나뿐이고 관리 코드는 이 번들에 없다 (admin.html 별도 진입점) */
+.startcard{display:flex;align-items:center;gap:16px;margin:16px 0 6px;padding:16px 18px;border-radius:12px;
+  background:#16212C;border:2px solid #2C3D4E;color:var(--text);text-decoration:none}
+.startcard:hover{border-color:var(--run)}
+.sc-step{flex:none;width:40px;height:40px;border-radius:50%;background:var(--run);color:#0F1720;font-weight:900;font-size:22px;
+  display:flex;align-items:center;justify-content:center}
+.sc-body{flex:1;font-size:19px;line-height:1.45;color:var(--muted)} .sc-body b{color:var(--text);font-size:21px}
+.sc-go{flex:none;color:var(--run);font-weight:700;font-size:19px}
+/* 사기 라운드 스위치 */
+.switch{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:center;margin-top:18px;padding:14px 16px;
+  border-radius:10px;background:#16212C;cursor:pointer}
+.switch input{grid-row:1/3;width:26px;height:26px;accent-color:var(--gold);cursor:pointer}
+.sw-title{font-size:21px;font-weight:700} .sw-desc{font-size:17px;color:var(--muted)}
+.room-title{font-size:22px;color:var(--muted);margin-bottom:6px}
+.admin-row>label:first-child{margin-top:0}
+.primary{background:var(--gold);color:#1B2734;padding:18px 34px;font-size:24px;font-weight:700;margin-top:20px}
+.warn{background:#3A2E12;border-left:6px solid var(--wait);padding:14px;border-radius:8px;margin-top:14px;font-size:20px;white-space:pre-line}
+.stop{background:#3A1A1A;border-left:6px solid var(--goal);padding:14px;border-radius:8px;margin-top:14px;font-size:20px;white-space:pre-line}
+
+/* 배포 안내 */
+.code{font-size:96px;font-weight:900;color:var(--gold);letter-spacing:10px;text-align:center;margin:10px 0}
+.url{font-size:32px;font-weight:700;word-break:break-all;color:var(--run);line-height:1.35}
+.qrwrap{display:flex;gap:28px;align-items:center;justify-content:center;flex-wrap:wrap}
+.qrbox{background:#fff;padding:14px;border-radius:12px;line-height:0}
+.qrhint{font-size:20px;color:var(--muted);margin-top:12px;line-height:1.5}
+
+/* 암호는 가려두고 눌러야 보인다 — 이 화면이 TV에 연결돼 있을 수 있다 */
+.pin{font-size:32px;font-weight:900;color:var(--gold);letter-spacing:4px;cursor:pointer;
+     filter:blur(9px);user-select:none;transition:filter .15s;display:inline-block;min-width:120px}
+.pin:hover{filter:blur(7px)}
+.pin.show{filter:none;cursor:default}
+.pinhint{font-size:18px;color:var(--muted);margin-bottom:10px}
+@media print{ .pin{filter:none !important} .noprint{display:none !important} }
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:24px}
+th,td{padding:12px;border-bottom:1px solid #2C3E50;text-align:left}
+th{color:var(--muted);font-size:20px}
+/* '최근 판'의 판 지우기 (2026-09-07). ⚠️ 눈에 띄되 손가락이 미끄러지지 않을 만큼만 —
+   되돌릴 수 없는 버튼이라 목록의 다른 칸(줄을 누르면 코드가 채워진다)보다 조용해야 한다.
+   그래도 44px 은 넘긴다: 교실 노트북은 터치스크린인 경우가 많다 */
+.recent-del{background:transparent;color:var(--muted);font-size:22px;padding:8px 12px;min-width:46px;line-height:1}
+.recent-del:hover{background:#3A1E1E;color:var(--bad,#E05A5A)}
+
+/* ══════════════════════════════════════════════════════════
+   진행 화면 — 5구획 (RENEWAL §4-2)
+   구획 1 헤더 · 2 경마장 · 3 동물 현황 · 4 모둠 현황 · 5 하단
+   ══════════════════════════════════════════════════════════ */
+
+/* ── 구획 1 헤더 ── */
+.hdr{display:grid;grid-template-columns:minmax(0,auto) 1fr auto;align-items:center;gap:18px;margin-bottom:10px}
+/* 이름 칸은 방 제목부터 줄인다 — 진행표·타이머는 절대 밀려나면 안 된다 */
+.hd-name{font-size:26px;font-weight:800;white-space:nowrap;display:flex;align-items:center;gap:10px;min-width:0}
+.hd-room{color:var(--muted);font-weight:600;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.hd-right{display:flex;align-items:center;gap:10px;justify-self:end}
+.hdr-btn{background:#3E5468;color:#fff;padding:12px 18px;font-size:19px;font-weight:700;
+         border-radius:10px;white-space:nowrap}
+/* 조기 종료 — 일시정지(회색)와도 결과 확인(금색)과도 다른 색이어야 손이 잘못 가지 않는다.
+   ⚠️ 색은 거들 뿐이다. ⏩ 와 '빠른 진행'이라는 글자가 뜻을 다 말하고 있어야 한다 (§11-1) */
+.hdr-btn.skip{background:var(--run);color:#0F1720;font-weight:800}
+.hdr-btn.sound{font-size:23px;padding:10px 15px}
+
+/* 라운드 진행표 ① ② … ⑩.
+   ⚠️ 색만으로 뜻을 전하지 않는다 (§11-1) — 지난 라운드는 **채워진 원문자**가 아니라
+      밝기와 밑줄로도 구분되고, 현재 라운드는 커진다. 8m 밖에서 "지금 몇 라운드"를
+      묻지 않게 하는 것이 이 줄의 유일한 일이다 */
+.rounds{display:flex;gap:8px;justify-content:center;align-items:center}
+.rounds i{font-style:normal;font-size:34px;line-height:1;font-weight:900;color:#3E5265;
+          padding:2px 0 6px;border-bottom:4px solid transparent;transition:color .2s}
+.rounds i.done{color:#9FB2C4;border-bottom-color:#3E5468}
+.rounds i.now{color:var(--gold);font-size:46px;border-bottom-color:var(--gold)}
+
+.timer{font-size:42px;font-weight:900;color:var(--gold);white-space:nowrap}
+.timer.urgent{color:var(--goal)}
+
+/* 사기 라운드가 켜진 판. **어느 라운드인지는 여기 없다** — 정산 때 공개된다 (§2-3) */
+.fraud-badge{display:inline-block;flex:none;background:#3A2E12;border:2px solid var(--gold);color:var(--gold);
+             border-radius:999px;padding:3px 12px;font-size:17px;font-weight:800}
+/* 자동 단축으로 마감이 당겨지면 숫자가 61 → 5 로 튄다. 그 순간 한 번 튕겨서
+   "뭔가 바뀌었다"가 8m 밖에서도 보이게 한다.
+   ⚠️ keyframe 은 아래 배당판의 oddsPop 을 **그대로 재사용**한다 — 같은 뜻(값이 바뀌었다)에
+      화면마다 다른 동작을 붙이면 보는 사람이 매번 새로 배워야 한다.
+      base.css 의 prefers-reduced-motion 규칙이 이 애니메이션도 같이 눌러 준다.
+   ⚠️ transform-origin 은 오른쪽이어야 한다 — 이 숫자는 화면 오른쪽 끝에 붙어 있어서,
+      가운데에서 키우면 커진 만큼 밖으로 삐져나가 마지막 글자가 잘린다 (실제로 잘렸다) */
+.timer.pop{animation:oddsPop .5s ease-out;transform-origin:right center}
+/* ══ 구획 2 — 경마장 (CSS 폴백 트랙) ══
+   PixiJS 무대가 못 서는 자리(reduced-motion · WebGL 없는 TV)에서 이게 대신 돈다.
+   트랙은 판이 시작될 때 한 번만 만들고, 그 뒤엔 말의 left 값만 바꾼다.
+   ⚠️ innerHTML로 매번 다시 그리면 DOM이 새로 생겨서 transition이 걸릴 대상이 사라진다.
+      (예전 코드가 그래서 말이 순간이동했다)
+
+   ⚠️ **진행 방향은 왼쪽 → 오른쪽이다. START 가 왼쪽, GOAL 이 오른쪽** (RENEWAL §1·§4-2).
+      3단계까지는 반대였다 — 그때 이유는 "동물 이모지가 대부분 왼쪽을 본다"였는데,
+      4단계에서 **이모지를 `scaleX(-1)` 로 좌우 반전**하기로 정해 그 이유가 사라졌다.
+      읽는 방향과 달리는 방향이 같은 쪽이 8m 밖에서 낫다.
+      ⚠️ 세 렌더러 — 이 CSS 트랙 · PixiJS 무대(stage.ts) · 폰 미니 트랙(mini.ts) — 는
+         **반드시 같은 방향·같은 칸수**여야 한다. 하나만 되돌리면 reduced-motion 폴백에서
+         TV 와 폰이 서로 반대로 달린다 (MIGRATION §11-2 가 막으려던 바로 그 그림).
+      ⚠️ `.horse` 의 `scaleX(-1)` 은 gallop keyframe 안에도 들어 있어야 한다.
+         빼먹으면 달리는 동안만 말이 뒤를 돌아본다.
+
+   레인 배치: **왼쪽(출발선 쪽)에 배지·이름, 오른쪽(GOAL 옆)에 `n/20`.**
+   이름이 출발선 옆·칸수가 결승선 옆인 짝은 방향을 뒤집기 전과 같다. */
+/* 위 44px 은 무대의 관중석 띠에 해당하는 빈 띠다 — "n라운드 준비" 알약(.phase-big)이 거기 앉는다.
+   없으면 알약이 1번 레인의 말을 가린다 (실제로 가렸다). main.ts fitTrack 이 이 padding 을 뺀다 */
+#track{padding:44px 0 0;border-radius:10px;overflow:hidden;background:#121B24}
+/* --lane-h 는 한 화면 모드에서 main.ts fitTrack 이 남는 높이에 맞춰 정한다. 없으면 78px */
+.lane{display:flex;align-items:center;gap:12px;height:var(--lane-h,78px)}
+.lane-tag{width:290px;flex:none;display:flex;align-items:center;gap:11px;padding-left:6px}
+/* 레인 배지 — 색이 안 보여도 번호로 구분된다. 낡은 TV와 색각이상 둘 다를 위해 */
+.silk{width:44px;height:44px;flex:none;border-radius:10px;display:flex;align-items:center;
+      justify-content:center;font-size:25px;font-weight:900;color:#0F1720;background:#8FA3B5}
+.s0{background:#F2B441} .s1{background:#4FC3F7} .s2{background:#8BC34A} .s3{background:#EF5350}
+.s4{background:#BA68C8} .s5{background:#FF8A65} .s6{background:#4DB6AC} .s7{background:#DCE775}
+/* 실시간 등수 — **배지와 이름 사이 한 줄**이다 (`[3] 3위 얼룩말`, 2026-09-07 결정).
+   PixiJS 무대의 레인과 같은 자리·같은 글자다 (stage.ts paintRank).
+   ⚠️ 폭을 **고정**한다. 글자 폭대로 흘려 쓰면 '2위' ↔ '공동2위' 가 오갈 때마다 이름이
+      좌우로 흔들리고 8줄의 이름 머리가 안 맞는다. 이름 칸(.lane-tag) 폭은 그대로이므로
+      등수가 들어온 만큼 **이름이 줄어든다**(줄임표) — 무대와 같은 규칙이다.
+   ⚠️ 색만으로 뜻을 전하지 않는다 (§11-1). 금·은·동은 거들 뿐이고 '1위'라는 글자가 정본이다 */
+.lane-rank{width:82px;flex:none;font-size:20px;font-weight:900;color:#C9D6E2;white-space:nowrap;
+           overflow:hidden;text-overflow:clip}
+.lane-rank .tie{font-size:14px;font-weight:700;color:var(--muted);margin-right:2px}
+/* 왕관 색 — shared/theme.ts 의 MEDAL 과 같은 값이다. 같이 고칠 것 */
+.lane-rank.r1{color:#F2B441} .lane-rank.r2{color:#D8E0E8} .lane-rank.r3{color:#CD7F32}
+.lane-name{font-size:28px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lane-pos{width:116px;flex:none;text-align:left;font-size:22px;font-weight:800;color:#8FA3B5;padding-left:12px}
+.lane.finished .lane-name{color:var(--gold)}
+.lane.finished .lane-pos{color:var(--gold)}
+
+/* 잔디 — **한 칸 걸러 한 칸**이 두 톤이다. 20칸이라 한 칸이 5%, 두 톤 한 주기가 10%.
+   ⚠️ 이 줄무늬가 곧 칸 눈금이다. 색값은 shared/theme.ts 의 C.grass·C.grassAlt 와
+      같아야 한다 (무대와 폴백이 다른 잔디를 그리면 접근성 설정을 켠 순간 화면이 달라진다) */
+.course{position:relative;flex:1;height:calc(var(--lane-h,78px) - 12px);overflow:hidden;
+        background:repeating-linear-gradient(90deg,#2F6B37 0 5%,#387A3F 5% 10%)}
+/* 흰 레인 경계선 + 위·아래 울타리 */
+.lane .course{border-top:1px solid rgba(238,244,240,.42)}
+.lane:first-child .course{border-top:3px solid #C8D4DE}
+.lane:last-child .course{border-bottom:3px solid #C8D4DE}
+/* 5칸마다 흰 표시 — 8m 밖에서 칸을 셀 때 눈이 짚는 자리 (경마장의 펄롱 표시) */
+.course::before{content:'';position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;
+        background:repeating-linear-gradient(90deg,transparent 0 calc(25% - 2px),
+                   rgba(238,244,240,.42) calc(25% - 2px) 25%)}
+/* 결승선까지 3칸 남은 구간. 20칸 트랙은 17칸부터 베팅 금지다. */
+.no-bet-zone{position:absolute;top:0;bottom:0;pointer-events:none;
+        left:calc(32px + (100% - 56px) * var(--no-bet-start));right:24px;
+        background:repeating-linear-gradient(135deg,rgba(239,83,80,.48) 0 10px,rgba(183,28,28,.36) 10px 20px);
+        border-left:3px solid rgba(255,205,210,.9)}
+/* 지나온 자국 — **출발선(왼쪽)에 붙어** 말 쪽(오른쪽)으로 자란다.
+   ⚠️ 파란 막대를 얹으면 잔디 위에서 "물이 찼다"로 읽힌다. 밟혀 바랜 흰색이다 */
+.covered{position:absolute;left:32px;top:0;bottom:0;width:0;background:rgba(255,255,255,.16);
+         transition:width 1.15s cubic-bezier(.33,.86,.36,1)}
+.lane.finished .covered{background:rgba(242,180,65,.30)}
+
+/* START 기둥(왼쪽) — 흰 기준선. 여기가 0칸이다 */
+.start{position:absolute;left:0;top:0;bottom:0;width:7px;background:#EEF4F0}
+/* GOAL 체크무늬(오른쪽) — gradient 두 장으로. 외부 이미지를 쓰지 않는다.
+   ⚠️ 빨간 선은 말이 오는 쪽(왼쪽) 모서리에 둔다 */
+.finish{position:absolute;right:0;top:0;bottom:0;width:34px;border-left:3px solid var(--goal);
+        background-color:#16212C;
+        background-image:linear-gradient(45deg,#EAF0F5 25%,transparent 25%,transparent 75%,#EAF0F5 75%),
+                         linear-gradient(45deg,#EAF0F5 25%,transparent 25%,transparent 75%,#EAF0F5 75%);
+        background-size:14px 14px;background-position:0 0,7px 7px;opacity:.92}
+
+/* 말은 크기 0짜리 기준점에 얹는다 — left(이동)와 transform(질주 동작)이 서로 안 싸우게.
+   ⚠️ runway 는 출발선 쪽 32px · 결승선 쪽 24px 를 들여쓴다.
+      합이 56px 이고 main.ts 의 coveredW() 가 그 56 을 그대로 쓴다 — 같이 고칠 것 */
+.runway{position:absolute;top:0;bottom:0;left:32px;right:24px}
+.runner{position:absolute;left:0;top:50%;width:0;height:0;
+        transition:left 1.15s cubic-bezier(.33,.86,.36,1)}
+/* ⚠️ scaleX(-1) — 이모지가 달리는 쪽(오른쪽)을 보게 한다. gallop keyframe 에도 있다 */
+.horse{position:absolute;left:0;top:0;font-size:calc(var(--lane-h,78px) * .67);line-height:1;
+       transform:translate(-50%,-50%) scaleX(-1);filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
+/* 1~3위 왕관 — 말 기준점 안에 있어서 **말과 함께 움직인다** (질주 중에도).
+   ⚠️ 이모지는 색을 못 바꾼다. 그래서 여기서는 금·은·동을 구분하지 않고, 그 구분은
+      왼쪽 등수 글자 색(.lane-rank.r1/.r2/.r3)이 맡는다. 무대(PixiJS)는 왕관을
+      Graphics 로 그려 색만 바꾸므로 왕관 자체가 금·은·동이다 (stage.ts crownTex).
+   ⚠️ 레인을 넘지 않는 크기다. 잔디(.course)가 overflow:hidden 이라 넘치면 잘린다 */
+.crown{position:absolute;left:0;top:0;line-height:1;pointer-events:none;
+       font-size:calc(var(--lane-h,78px) * .30);transform:translate(-50%,-115%);
+       filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))}
+/* 속도선은 말 **뒤(왼쪽)** 로 뻗는다 */
+.trail{position:absolute;right:16px;top:50%;width:0;height:7px;border-radius:4px;opacity:0;
+       transform:translateY(-50%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.85))}
+.runner.galloping .horse{animation:gallop .32s ease-in-out infinite}
+.runner.galloping .trail{animation:trail .32s linear infinite}
+@keyframes gallop{
+  0%,100%{transform:translate(-50%,-50%) scaleX(-1) rotate(-4deg)}
+  50%    {transform:translate(-50%,-64%) scaleX(-1) rotate(4deg)}
+}
+@keyframes trail{0%{opacity:0;width:18px}50%{opacity:.9;width:54px}100%{opacity:0;width:18px}}
+@keyframes goalFlash{
+  0%  {box-shadow:inset 0 0 0 3px var(--gold),0 0 0 0 rgba(242,180,65,.65)}
+  100%{box-shadow:inset 0 0 0 3px var(--gold),0 0 0 24px rgba(242,180,65,0)}
+}
+.lane.justFinished .course{animation:goalFlash 1s ease-out 2}
+
+/* ══ 구획 3 — 동물 현황 (한 줄 8카드) ══
+   3단계까지의 배당률 '표'를 카드로 바꾼 것이다 (RENEWAL §4-2 구획 3).
+   ⚠️ **모둠별 베팅은 여기 없다.** 어느 모둠이 어디에 걸었는지가 보이면 토론이 망가진다
+      (RENEWAL §1 결정표 · 05 §4-3). 카드에 있는 것은 판돈 **합계**뿐이다.
+   ⚠️ **인기순으로 정렬하지 않는다.** 카드 순서는 언제나 동물 순서다 (05 §4-2) */
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;gap:20px;flex-wrap:wrap}
+/* 1920 폭에서 8개가 한 줄. 좁아지면 4×2 로 접는다 (§4-2) */
+.acards{display:grid;grid-template-columns:repeat(8,1fr);gap:10px}
+@media (max-width:1560px){ .acards{grid-template-columns:repeat(4,1fr)} }
+.acard{background:#16212C;border:2px solid #243546;border-radius:12px;padding:9px 10px 8px;
+       display:flex;flex-direction:column;gap:5px;min-width:0}
+.acard.fin{border-color:var(--gold);background:#1E2418}
+.ac-top{display:flex;align-items:center;gap:7px;min-width:0}
+.acard .silk{width:34px;height:34px;border-radius:8px;font-size:20px}
+/* ⚠️ scaleX(-1) — 트랙의 말과 같은 방향을 본다. 카드에서만 반대로 보면 같은 동물로 안 읽힌다 */
+.ac-emoji{font-size:32px;line-height:1;display:inline-block;transform:scaleX(-1);flex:none}
+.ac-name{font-size:21px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-mid{display:flex;align-items:baseline;justify-content:space-between;gap:6px;min-width:0}
+/* 현재 순위 — **현 위치 기준**이다. 정산 전 최종 순위가 아니고, 골인은 등수 없이 '🏁 골인' */
+.ac-rank{font-size:21px;font-weight:900;color:#C9D6E2;white-space:nowrap}
+.ac-rank .tie{font-size:15px;font-weight:700;color:var(--muted);margin-right:3px}
+.ac-rank.fin{color:var(--gold)}
+.ac-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:16px}
+.pool-wrap{position:relative;height:14px;background:#0F1720;border-radius:4px;overflow:hidden}
+.pool-fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:4px;
+           background:linear-gradient(90deg,#7A5C18,#F2B441);transition:width .7s ease}
+/* 코인 수는 막대 밖에 둔다 — 금색 막대 위에 글자를 얹으면 어떤 색을 써도 대비가 무너진다 */
+.t-coins{white-space:nowrap;font-size:20px;font-weight:800;color:#C9D6E2}
+.t-coins .u{font-size:14px;color:var(--muted);margin-left:3px;font-weight:600}
+.odds{font-size:29px;font-weight:900;color:var(--gold);display:inline-block}
+.delta{font-size:18px;font-weight:800;margin-left:4px;display:inline-block;width:22px;text-align:left}
+.delta.up{color:#8ADB96} .delta.down{color:#FF9E93}
+@keyframes oddsPop{0%{transform:scale(1)}35%{transform:scale(1.18)}100%{transform:scale(1)}}
+.odds.pop{animation:oddsPop .5s ease-out}
+
+/* ══ 구획 4 — 모둠 현황 (가로 카드) ══
+   ⚠️ 문제는 **제출 여부만**. 정답인지는 안 보인다 (RENEWAL §4-2 구획 4) — 그게 보이면
+      맞힌 모둠이 누구인지 교실이 알고, 힌트의 값어치가 새어 나간다.
+   ⚠️ 어느 동물에 걸었는지도 없다. 남은 코인만 */
+.tcards{display:flex;flex-wrap:wrap;gap:10px}
+.tcard{flex:1 1 260px;background:#16212C;border:2px solid #243546;border-radius:12px;
+       padding:10px 14px;display:flex;align-items:center;gap:14px;min-width:0}
+.tc-name{font-size:22px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc-st{font-size:19px;font-weight:800;white-space:nowrap}
+.tc-coins{font-size:22px;font-weight:900;color:var(--gold);white-space:nowrap}
+.tc-coins .u{font-size:14px;color:var(--muted);margin-left:3px;font-weight:600}
+.ok{color:var(--ok)} .wait{color:var(--wait)}
+
+/* ══ 구획 5 — 하단 ══ */
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+/* ▶ ROUND n 시작 — 이 화면에서 제일 큰 버튼이다. 선생님이 8m 앞에서도 손이 가야 한다 */
+.btn-red{background:var(--goal);color:#fff;padding:20px 40px;font-size:30px;font-weight:800}
+.btn-gold{background:var(--gold);color:#1B2734;padding:16px 26px;font-size:22px;font-weight:800}
+.btn-pause{background:#3E5468;color:#fff;padding:18px 28px;font-size:22px}
+/* '모둠이 다 끝났어요' — ✅ 와 글자가 뜻을 말하고, 초록은 거들 뿐이다.
+   8m 에서 읽혀야 하므로 22px 아래로 내리지 말 것 */
+.skip-note{font-size:22px;font-weight:800;color:var(--ok);white-space:nowrap}
+.btn-small{background:transparent;color:var(--muted);font-size:17px;padding:10px;text-decoration:underline}
+/* "n라운드 준비" 알약 — 트랙 카드 위에 떠 있다 (teacher.html 주석). 관중석 띠 자리, 가운데 */
+.track-card{position:relative}
+.phase-big{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:2;pointer-events:none;
+           white-space:nowrap;text-align:center;font-size:34px;font-weight:800;padding:8px 32px;
+           border-radius:999px;background:rgba(15,23,32,.86);border:2px solid #33475A}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#000;color:#fff;
+       padding:16px 26px;border-radius:10px;font-size:22px;z-index:98}
+.reveal{background:#241A08;border:3px solid var(--gold);padding:20px;border-radius:12px;font-size:28px;margin-top:14px}
+.step{margin:20px 0;font-size:34px}
+.podium{font-size:44px;font-weight:900;text-align:center;line-height:1.6}
+details{margin:10px 0;background:#16202B;border-radius:10px;padding:12px}
+summary{font-size:26px;font-weight:700;cursor:pointer}
+details .line{font-size:20px;color:var(--muted);margin:6px 0 0 14px}
+
+/* ══════════════════════════════════════════════════════════
+   4b 연출 (MIGRATION §11). 여기부터는 전부 "거들 뿐"이다 —
+   base.css 의 prefers-reduced-motion 규칙이 애니메이션을 전부 0.01ms 로 눌러 버려도
+   레이아웃과 숫자는 그대로 읽힌다.
+   ══════════════════════════════════════════════════════════ */
+
+/* ── 경주 무대 (PixiJS) ──
+   ⚠️ 무대가 켜지면 #track 은 숨겨진다 (main.ts ensureStage).
+      캔버스에는 배경색을 주지 않는다 — Pixi 가 카드색으로 칠한다 */
+#race-stage{border-radius:10px;overflow:hidden;line-height:0}
+#race-stage canvas{display:block;width:100%}
+
+/* ── 라이브 배당판 (§11-3) ── */
+/* 지금 걸린 코인 총합. 베팅 단계에만 금색으로 커진다.
+   ⚠️ 8카드 **위**에 있다 (RENEWAL §4-2 구획 3 "위에 지금 걸린 코인 총합") */
+#tote-total{display:flex;align-items:baseline;gap:12px}
+#tote-total .lbl{font-size:20px;color:var(--muted)}
+#tote-total .n{font-size:40px;font-weight:900;color:#8FA3B5;transition:color .3s,font-size .3s}
+#tote-total.live .n{color:var(--gold);font-size:52px}
+
+/* 칩이 걸린 줄로 날아와 쌓인다. ⚠️ 어느 모둠인지는 표시하지 않는다 (05 §4-3) */
+.tchips{display:flex;flex-wrap:wrap;gap:3px;min-height:12px;align-items:center;flex:1;min-width:0}
+.tchip{width:12px;height:12px;border-radius:50%;
+       background:radial-gradient(circle at 35% 30%,#FFD97A,#DFA01E);
+       box-shadow:0 1px 2px rgba(0,0,0,.45),inset 0 -2px 0 rgba(0,0,0,.2)}
+.tchip.fly{animation:chipFly .5s cubic-bezier(.2,1.4,.45,1) backwards}
+@keyframes chipFly{
+  from{transform:translate(-180px,-46px) scale(.4) rotate(-90deg);opacity:0}
+  to  {transform:none;opacity:1}
+}
+.tmore{font-size:16px;font-weight:800;color:var(--gold);margin-left:4px}
+
+/* ── 정산 드럼롤 (§11-4) ── */
+/* 무대가 어두워지고 한 마리에만 빛이 떨어진다. 등수는 이 순간에만 나온다 */
+.spot{position:relative;overflow:hidden;border-radius:14px;background:#0A1017;
+      padding:34px 20px 30px;text-align:center;isolation:isolate}
+.spot .beam{position:absolute;left:50%;top:-40%;width:78%;height:190%;transform:translateX(-50%);
+            background:radial-gradient(ellipse 45% 55% at 50% 46%,rgba(242,180,65,.34),rgba(242,180,65,0) 70%);
+            animation:beamIn .8s ease-out}
+@keyframes beamIn{from{opacity:0;transform:translateX(-50%) scaleY(.3)}to{opacity:1}}
+.spot .star{position:relative;animation:starIn .55s cubic-bezier(.2,1.5,.4,1)}
+@keyframes starIn{from{transform:scale(.55);opacity:0}to{transform:none;opacity:1}}
+.spot .medal{font-size:56px;line-height:1}
+.spot .face{font-size:104px;line-height:1.1;filter:drop-shadow(0 6px 14px rgba(0,0,0,.7))}
+.spot .nm{font-size:52px;font-weight:900;color:var(--gold);margin-top:6px}
+.sofar{margin-top:14px;text-align:center}
+.sofar .past{font-size:30px;font-weight:700;color:#9FB2C4;line-height:1.6}
+
+/* 모둠 코인이 오르내린다 — 폰의 coinPop 감각을 TV 로 */
+.tally{font-weight:900}
+.tally.up{color:var(--ok)}
+.tally.down{color:var(--goal)}
+
+/* 우승 컨페티. 글자 위를 덮지만 클릭은 통과시킨다 */
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:97}
+.confetti i{position:absolute;top:-24px;display:block;border-radius:2px;
+            animation-name:fall;animation-timing-function:linear;animation-fill-mode:both}
+@keyframes fall{
+  from{transform:translateY(-30px) rotate(0deg);opacity:1}
+  to  {transform:translateY(105vh) rotate(760deg);opacity:.15}
+}
+
+/* ── 거짓 라운드 공개 (RENEWAL §1 · §4-2) ──
+   드럼롤이 다 끝난 뒤에만. 학생이 열 라운드 동안 세운 추리를 확인하는 순간이라
+   결과표보다 크다. 스위치를 안 켠 판에서는 아예 안 그린다 */
+.fraud-reveal{margin-top:18px;background:#3A2E12;border:3px solid var(--gold);border-radius:14px;
+              padding:24px;text-align:center}
+.fraud-reveal .fr-big{font-size:42px;font-weight:900;color:var(--gold);line-height:1.35}
+.fraud-reveal .fr-sub{font-size:22px;color:#D9C79A;margin-top:8px}
+
+/* ── 🎵 볼륨 패널 (RENEWAL §4-4) ──
+   마크업은 shared/audio.ts 가 만든다 (사본을 두지 않기 위해 — MIGRATION §5).
+   ⚠️ 열어 두면 트랙을 가리므로 바깥을 누르면 닫힌다. 여기서는 자리만 잡아 준다 */
+#vol-panel{position:fixed;top:86px;right:20px;z-index:96;width:290px;
+           background:#0E1822;border:2px solid #33475A;border-radius:12px;padding:12px 16px 16px;
+           box-shadow:0 10px 28px rgba(0,0,0,.55)}
+.vp-row{display:flex;align-items:center;gap:10px;margin:10px 0 0}
+.vp-lbl{font-size:17px;color:var(--muted);width:62px;flex:none}
+.vp-mute{background:#243546;color:#fff;font-size:22px;padding:5px 11px;border-radius:8px;line-height:1.2}
+.vp-track{font-size:16px;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ⚠️ 이 파일 위쪽의 `input{width:100%;padding:14px;border:2px…}` 가 슬라이더에도 걸린다.
+      되돌리면 막대가 사각형 상자 안에 갇혀 손잡이가 안 보인다 */
+#vol-panel input[type=range]{flex:1;width:auto;min-width:0;padding:0;border:none;background:none;
+                             accent-color:var(--gold);cursor:pointer}
+
+/* ── 문제은행 관리 링크 (5단계) ──
+   ⚠️ 링크뿐이다. 관리 화면은 별도 진입점(admin.html)이고, 그 코드는 이 번들에 없다 */
+.adminlink{margin-top:22px;padding-top:16px;border-top:1px solid #263745;
+           display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+.adminlink a{color:var(--run);font-size:22px;font-weight:700;text-decoration:none}
+.adminlink a:hover{text-decoration:underline}
+.adminlink span{color:var(--muted);font-size:18px}
+
+/* ══════════════════════════════════════════════════════════
+   한 화면 모드 + 전체화면 (2026-09-07 사용자 요청 "교사화면을 한 화면에 다 나오게")
+   ══════════════════════════════════════════════════════════
+   진행 화면(S2)은 원래 1080p 에서 세로로 1600px 이 넘어 스크롤이 생겼다. TV 에 띄우는 화면에
+   스크롤은 곤란하다. 그래서 —
+
+   1. **S2 는 언제나 1920×1080 을 기준으로 배치**하고, 실제 화면 높이에 맞춰 통째로 `zoom` 한다
+      (main.ts applyFit 이 --z 와 높이를 넣는다). 1366×768 노트북을 TV 에 미러링해도 배치가
+      1080p 와 똑같고, 픽셀만 작아진다 — 그 화면은 TV 에서 어차피 그만큼 크게 늘어난다.
+      ⚠️ 글자 크기 하한(MIGRATION §11-1 의 8m 가독성)은 **1080p 기준 px** 로 지키면 된다.
+   2. 다섯 구획을 세로 grid 로 두고 **트랙(구획 2)만 남는 높이를 채운다.** 무대(stage.ts build)와
+      CSS 폴백 트랙(main.ts fitTrack)이 호스트 높이를 읽어 레인 높이를 정한다.
+   3. 창이 아주 작으면(폭 900 · 높이 500 미만) 이 모드를 풀고 예전처럼 스크롤한다.
+
+   ⚠️ 이 블록은 `body.fit` 아래에만 산다. S1·배포 안내·S3 는 그대로 스크롤 화면이다. */
+body.fit{overflow:hidden}
+body.fit .wrap{padding:8px 16px}
+body.fit .ver{position:fixed;right:10px;bottom:0;padding:2px 0;font-size:11px}
+body.fit #s2{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto auto auto;
+             zoom:var(--z,1);height:var(--s2h,auto)}
+body.fit #s2 .hdr{margin-bottom:0}
+body.fit #s2 > .card{margin:6px 0 0;padding:8px 16px}
+body.fit #s2 .reveal{margin-top:8px;padding:12px 16px;font-size:24px}
+/* 구획 2 — 카드가 세로 flex, 무대(또는 폴백 트랙)가 남는 높이를 다 가진다.
+   ⚠️ min-height:0 이 없으면 캔버스 높이가 카드를 밀어 올려 grid 가 무너진다 */
+body.fit .track-card{display:flex;flex-direction:column;min-height:0}
+body.fit #race-stage,body.fit #track{flex:1;min-height:0;overflow:hidden;
+                                     display:flex;flex-direction:column;justify-content:center}
+body.fit #race-stage canvas{flex:none}
+/* 구획 3·4 — 제목을 줄이고 카드 여백을 조인다. 글자 크기(이름 21 · 배당 29 · 코인 22)는 그대로 */
+body.fit #s2 h2{font-size:22px;margin-bottom:6px}
+body.fit #tote-total .n{font-size:32px}
+body.fit #tote-total.live .n{font-size:40px}
+body.fit .acards{grid-template-columns:repeat(8,1fr)}   /* 기준 폭이 1600 이상이라 늘 한 줄 */
+body.fit .acard{padding:7px 10px 6px;gap:4px}
+/* 모둠 카드 — 8모둠까지 한 줄. 아홉부터는 두 줄이고 그만큼 트랙이 낮아진다 */
+body.fit .tcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+body.fit .tcard{padding:8px 12px;gap:10px}
+/* 모둠이 여섯 넘으면(main.ts drawTeams → .many) 카드 하나가 215px 뿐이라 한 줄에 다 못 쓴다 —
+   이름·코인을 윗줄, 제출·베팅을 아랫줄로. 이름이 밀려 안 보이던 것을 실제로 봤다 (2026-09-07) */
+body.fit .tcards.many .tcard{display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+body.fit .tcards.many .tc-name{grid-column:1;grid-row:1}
+body.fit .tcards.many .tc-coins{grid-column:2;grid-row:1;text-align:right}
+body.fit .tcards.many .tc-st{grid-row:2}
+/* 구획 5 */
+body.fit .btn-red{padding:14px 34px;font-size:28px}
+body.fit .btn-gold{padding:12px 22px}
