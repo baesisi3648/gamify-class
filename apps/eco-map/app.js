@@ -10,6 +10,11 @@
   var dexLimit = 3;
   var currentClass = "all";
   var currentFilter = "all";
+  var kakaoMap;
+  var kakaoMapLoading = false;
+  var currentLocationMarker;
+  var observationMarkers = [];
+  var schoolPosition = { lat: 37.2947967, lng: 127.2404688 };
 
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, function (character) {
@@ -93,6 +98,7 @@
       button.classList.toggle("active", button.dataset.view === name);
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
+    if (name === "map") window.setTimeout(ensureKakaoMap, 0);
   }
 
   document.getElementById("login-form").addEventListener("submit", function (event) {
@@ -121,7 +127,74 @@
     if (goButton && !studentApp.hidden) setView(goButton.dataset.go);
   });
 
-  /* Map tabs and filters */
+  /* Kakao map, tabs and filters */
+  function showMapLoadError(message) {
+    var loading = document.getElementById("map-loading");
+    loading.classList.add("error");
+    loading.innerHTML = '<span class="compass-icon">!</span><b>카카오맵을 불러오지 못했습니다</b><small>' + escapeHtml(message) + '<br>위의 “카카오맵에서 열기”로 학교 위치를 확인할 수 있습니다.</small>';
+  }
+
+  function renderSchoolInspector() {
+    document.getElementById("map-inspector").innerHTML =
+      '<div class="inspector-content">' +
+        '<div class="place-visual"><span>⌂</span></div>' +
+        '<span class="pixel-label">EXPEDITION BASE</span>' +
+        '<h3>용인삼계고등학교</h3>' +
+        '<p>생태 탐사의 기준 위치입니다. 학생 관찰이 등록되면 실제 발견 지점에 핀이 생성됩니다.</p>' +
+        '<div class="species-list"><h4>학교 주소</h4><span>경기도 용인시 처인구 포곡읍 백옥대로1898번길 34-42</span></div>' +
+      '</div>';
+  }
+
+  function ensureKakaoMap() {
+    if (kakaoMap) {
+      kakaoMap.relayout();
+      return;
+    }
+    if (kakaoMapLoading) return;
+    if (!window.kakao || !window.kakao.maps || typeof window.kakao.maps.load !== "function") {
+      showMapLoadError("JavaScript 키 또는 등록 도메인을 확인해 주세요.");
+      return;
+    }
+
+    kakaoMapLoading = true;
+    window.kakao.maps.load(function () {
+      try {
+        var center = new window.kakao.maps.LatLng(schoolPosition.lat, schoolPosition.lng);
+        kakaoMap = new window.kakao.maps.Map(document.getElementById("kakao-map"), {
+          center: center,
+          level: 4
+        });
+        kakaoMap.addControl(new window.kakao.maps.MapTypeControl(), window.kakao.maps.ControlPosition.TOPRIGHT);
+        kakaoMap.addControl(new window.kakao.maps.ZoomControl(), window.kakao.maps.ControlPosition.RIGHT);
+
+        var schoolMarker = new window.kakao.maps.Marker({
+          map: kakaoMap,
+          position: center,
+          title: "용인삼계고등학교"
+        });
+        var label = document.createElement("button");
+        label.className = "school-map-label";
+        label.type = "button";
+        label.textContent = "용인삼계고등학교";
+        label.addEventListener("click", renderSchoolInspector);
+        new window.kakao.maps.CustomOverlay({
+          map: kakaoMap,
+          position: center,
+          content: label,
+          yAnchor: 0
+        });
+        window.kakao.maps.event.addListener(schoolMarker, "click", renderSchoolInspector);
+
+        document.getElementById("map-loading").hidden = true;
+        kakaoMapLoading = false;
+        updateMarkers();
+      } catch (error) {
+        kakaoMapLoading = false;
+        showMapLoadError("지도 초기화 중 오류가 발생했습니다.");
+      }
+    });
+  }
+
   document.querySelectorAll(".class-tabs button").forEach(function (button) {
     button.addEventListener("click", function () {
       currentClass = button.dataset.class;
@@ -146,35 +219,40 @@
 
   function updateMarkers() {
     var visibleCount = 0;
-    document.querySelectorAll(".map-marker").forEach(function (marker) {
-      var classes = marker.dataset.classList.split(",");
+    observationMarkers.forEach(function (item) {
+      var classes = item.classes;
       var classMatches = currentClass === "all" || classes.indexOf(currentClass) !== -1;
-      var kindMatches = currentFilter === "all" || marker.dataset.kind === currentFilter;
+      var kindMatches = currentFilter === "all" || item.kind === currentFilter;
       var visible = classMatches && kindMatches;
-      marker.classList.toggle("filtered", !visible);
-      if (visible) visibleCount += Number(marker.dataset.count || 0);
+      item.overlay.setMap(visible ? kakaoMap : null);
+      if (visible) visibleCount += Number(item.count || 0);
     });
     var classText = currentClass === "all" ? "9개 반" : currentClass + "반";
     var filterText = currentFilter === "all" ? "전체 분류" : document.querySelector('[data-filter="' + currentFilter + '"]').textContent.trim();
-    document.getElementById("map-summary").textContent = classText + " · " + filterText + " · 화면의 관찰 " + visibleCount + "건";
+    document.getElementById("map-summary").textContent = classText + " · " + filterText + " · 관찰 " + visibleCount + "건";
+    document.getElementById("map-total-count").textContent = visibleCount;
     document.getElementById("map-inspector").innerHTML = '<div class="inspector-placeholder"><span class="compass-icon">⌖</span><h3>핀을 선택해 보세요</h3><p>현재 필터에 맞는 장소의 생물 기록을 확인할 수 있습니다.</p></div>';
   }
 
-  document.querySelectorAll(".map-marker").forEach(function (marker) {
-    marker.addEventListener("click", function () {
-      var icon = marker.dataset.kind === "plant" ? "✿" : marker.dataset.kind === "insect" ? "◆" : marker.dataset.kind === "bird" ? "⌁" : marker.dataset.kind === "unknown" ? "?" : "♞";
-      var classCount = marker.dataset.classList.split(",").length;
-      var species = marker.dataset.species.split(" · ").map(function (name) { return "<span>" + name + "</span>"; }).join("");
-      document.getElementById("map-inspector").innerHTML =
-        '<div class="inspector-content">' +
-          '<div class="place-visual"><span>' + icon + '</span></div>' +
-          '<span class="pixel-label">BIODIVERSITY SPOT</span>' +
-          '<h3>' + marker.dataset.title + '</h3>' +
-          '<p>여러 학급의 승인된 공동 관찰이 모인 장소입니다.</p>' +
-          '<div class="inspector-stats"><div><b>' + marker.dataset.count + '건</b><small>관찰 기록</small></div><div><b>' + classCount + '개 반</b><small>참여 학급</small></div></div>' +
-          '<div class="species-list"><h4>주요 발견 생물</h4>' + species + '</div>' +
-        '</div>';
-    });
+  document.getElementById("locate-button").addEventListener("click", function () {
+    ensureKakaoMap();
+    if (!navigator.geolocation) {
+      showToast("이 브라우저에서는 현재 위치를 사용할 수 없습니다.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(function (position) {
+      if (!kakaoMap) {
+        showToast("지도를 불러온 뒤 다시 시도해 주세요.");
+        return;
+      }
+      var location = new window.kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
+      if (currentLocationMarker) currentLocationMarker.setMap(null);
+      currentLocationMarker = new window.kakao.maps.Marker({ map: kakaoMap, position: location, title: "내 위치" });
+      kakaoMap.panTo(location);
+      showToast("현재 위치로 이동했습니다.");
+    }, function () {
+      showToast("위치 권한을 허용하면 현재 위치로 이동할 수 있습니다.");
+    }, { enableHighAccuracy: true, timeout: 10000 });
   });
 
   /* Photo selection */
