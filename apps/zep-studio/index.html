@@ -289,17 +289,30 @@
         </div>
         <div class="ai-result">
           <div class="ai-result-stage" id="aiResultStage">
-            <div class="ai-placeholder" id="aiPlaceholder"><span>✦</span><b>생성된 이미지가 여기에 나타납니다</b><small>맵은 바닥 레이어로, 오브젝트는 배경 제거 후 가져올 수 있어요.</small></div>
+            <div class="ai-placeholder" id="aiPlaceholder"><span>✦</span><b>생성된 결과가 여기에 나타납니다</b><small>맵은 바닥·오브젝트·윗배경으로 나뉘어 생성됩니다.</small></div>
             <img id="aiResultImage" alt="AI가 생성한 ZEP용 이미지" hidden />
             <div class="ai-loading" id="aiLoading" hidden><i></i><b>ZEP용 이미지를 만드는 중…</b><span>보통 수 초에서 수십 초가 걸립니다.</span></div>
           </div>
+          <div class="ai-layer-tabs" id="aiLayerTabs" hidden>
+            <button class="active" data-ai-layer="composite" type="button">전체</button>
+            <button data-ai-layer="floor" type="button">바닥</button>
+            <button data-ai-layer="object" type="button">오브젝트</button>
+            <button data-ai-layer="top" type="button">윗배경</button>
+            <button data-ai-layer="collision" type="button">충돌</button>
+          </div>
+          <div class="ai-layer-downloads" id="aiLayerDownloads" hidden>
+            <button class="button ghost" data-download-ai-layer="floor" type="button">바닥 PNG</button>
+            <button class="button ghost" data-download-ai-layer="object" type="button">오브젝트 PNG</button>
+            <button class="button ghost" data-download-ai-layer="top" type="button">윗배경 PNG</button>
+            <button class="button ghost" data-download-ai-layer="collision" type="button">충돌 PNG</button>
+          </div>
           <div class="ai-result-actions">
-            <button class="button accent" id="applyAIMapButton" type="button" disabled>바닥 레이어로 가져오기</button>
+            <button class="button accent" id="applyAIMapButton" type="button" disabled>분리 레이어 가져오기</button>
             <button class="button" id="applyAIObjectButton" type="button" disabled>오브젝트로 가져오기</button>
             <button class="button ghost" id="downloadAIButton" type="button" disabled>원본 저장</button>
             <button class="button ghost ai-delete-result" id="deleteAIResultButton" type="button" disabled>결과 삭제</button>
           </div>
-          <p class="ai-result-help">AI 맵은 초안입니다. 가져온 뒤 윗배경과 충돌 영역을 직접 표시하면 ZEP에서 더 자연스럽게 사용할 수 있습니다.</p>
+          <p class="ai-result-help">전체·바닥·오브젝트·윗배경을 각각 확인하고 PNG로 저장할 수 있습니다. 가져오면 편집실의 대응 레이어에 그대로 배치됩니다.</p>
         </div>
       </div>
     </div>

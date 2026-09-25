@@ -1,4 +1,5 @@
 const MODEL = "@cf/black-forest-labs/flux-1-schnell";
+const PLAN_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8";
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -13,7 +14,8 @@ export async function onRequest(context) {
       ok: true,
       ready: Boolean(env.AI),
       protected: Boolean(env.ZEP_AI_ACCESS_CODE),
-      model: MODEL
+      model: MODEL,
+      layeredMapModel: PLAN_MODEL
     }, { headers });
   }
 
@@ -56,8 +58,12 @@ export async function onRequest(context) {
     return Response.json({ ok: false, code: "PROMPT_REQUIRED", message: "만들고 싶은 장면을 세 글자 이상 적어 주세요." }, { status: 400, headers });
   }
 
-  const finalPrompt = buildPrompt({ kind, prompt, scene, season, view, direction });
   try {
+    if (kind === "map") {
+      const plan = await generateLayerPlan(env.AI, { prompt, scene, season, view, direction });
+      return Response.json({ ok: true, kind, type: "layered-map", plan, model: PLAN_MODEL }, { headers });
+    }
+    const finalPrompt = buildPrompt({ kind, prompt, scene, season, view, direction });
     const result = await env.AI.run(MODEL, { prompt: finalPrompt, steps: 4 });
     const image = await normalizeImage(result);
     if (!image) throw new Error("EMPTY_IMAGE");
@@ -71,6 +77,42 @@ export async function onRequest(context) {
       message: quota ? "오늘의 무료 AI 생성 한도에 도달했거나 모델이 잠시 혼잡합니다." : "이미지를 만들지 못했습니다. 잠시 후 다시 시도해 주세요."
     }, { status: quota ? 429 : 502, headers });
   }
+}
+
+async function generateLayerPlan(ai, request) {
+  const schema = {
+    type: "object",
+    properties: {
+      name: { type: "string" },
+      palette: {
+        type: "object",
+        properties: {
+          ground: { type: "string" }, path: { type: "string" }, water: { type: "string" },
+          roof: { type: "string" }, wall: { type: "string" }, tree: { type: "string" }, accent: { type: "string" }
+        },
+        required: ["ground", "path", "water", "roof", "wall", "tree", "accent"]
+      },
+      paths: { type: "array", items: { type: "object", properties: { x1:{type:"number"}, y1:{type:"number"}, x2:{type:"number"}, y2:{type:"number"}, width:{type:"number"} }, required:["x1","y1","x2","y2","width"] } },
+      waters: { type: "array", items: { type: "object", properties: { x:{type:"number"}, y:{type:"number"}, w:{type:"number"}, h:{type:"number"} }, required:["x","y","w","h"] } },
+      buildings: { type: "array", items: { type: "object", properties: { x:{type:"number"}, y:{type:"number"}, w:{type:"number"}, h:{type:"number"}, style:{type:"string"} }, required:["x","y","w","h","style"] } },
+      trees: { type: "array", items: { type: "object", properties: { x:{type:"number"}, y:{type:"number"}, size:{type:"number"} }, required:["x","y","size"] } },
+      objects: { type: "array", items: { type: "object", properties: { type:{type:"string"}, x:{type:"number"}, y:{type:"number"}, size:{type:"number"} }, required:["type","x","y","size"] } }
+    },
+    required: ["name","palette","paths","waters","buildings","trees","objects"]
+  };
+  const result = await ai.run(PLAN_MODEL, {
+    messages: [
+      { role: "system", content: "You design playable ZEP-style school RPG maps as structured JSON. All x,y,w,h,size,width values are percentages from 0 to 100. Keep every shape inside the map. Use 2-4 buildings, 2-5 paths, 0-2 waters, 5-14 trees, and 3-10 small objects. Object type must be bench, flower, rock, sign, lamp, or bush. Buildings belong to the top layer, trees and small objects belong to the object layer, and ground/path/water belong to the floor layer. Return valid hex colors. Avoid overlaps that block every path." },
+      { role: "user", content: `Create a map plan. Request: ${request.prompt}. Scene: ${request.scene}. Season: ${request.season}. View: ${request.view}. Direction: ${request.direction}.` }
+    ],
+    response_format: { type: "json_schema", json_schema: schema },
+    max_tokens: 1800,
+    temperature: 0.65
+  });
+  const raw = result?.response ?? result;
+  const plan = typeof raw === "string" ? JSON.parse(raw.replace(/^```json\s*|\s*```$/g, "")) : raw;
+  if (!plan || !Array.isArray(plan.buildings) || !Array.isArray(plan.trees)) throw new Error("INVALID_LAYER_PLAN");
+  return plan;
 }
 
 function buildPrompt({ kind, prompt, scene, season, view, direction }) {
