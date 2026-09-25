@@ -195,10 +195,23 @@
     return { workspace:state.workspace,activeLayer:state.activeLayer,layers:Object.fromEntries(Object.entries(state.layers).map(([k,c])=>[k,c.toDataURL()])),object:state.objectCanvas.toDataURL() };
   }
   function pushHistory() { state.history.push(snapshot());if(state.history.length>20)state.history.shift();state.redoHistory=[]; }
-  async function restoreSnapshot(s) { for(const[k,url]of Object.entries(s.layers))await drawDataURL(state.layers[k],url,true);await drawDataURL(state.objectCanvas,s.object,true);state.activeLayer=s.activeLayer||'floor';syncActiveLayer();render(); }
+  async function restoreSnapshot(s) { for(const[k,url]of Object.entries(s.layers))await drawDataURL(state.layers[k],url,true);await drawDataURL(state.objectCanvas,s.object,true);state.activeLayer=s.activeLayer||'floor';state.hasContent=Object.values(state.layers).some(hasPixels);syncActiveLayer();render(); }
   async function undo(){if(!state.history.length)return toast('되돌릴 내용이 없습니다.');state.redoHistory.push(snapshot());await restoreSnapshot(state.history.pop());scheduleSave();}
   async function redo(){if(!state.redoHistory.length)return toast('다시 실행할 내용이 없습니다.');state.history.push(snapshot());await restoreSnapshot(state.redoHistory.pop());scheduleSave();}
   function changed(){if(state.workspace==='map')state.hasContent=true;render();scheduleSave();}
+  function trashMap(){
+    if(!confirm('나의 ZEP 맵을 완전히 비우고 새로 시작할까요?\n바닥·오브젝트·윗배경·충돌 레이어가 모두 삭제됩니다.'))return;
+    pushHistory();
+    Object.values(state.layers).forEach(layer=>layer.getContext('2d').clearRect(0,0,layer.width,layer.height));
+    state.hasContent=false;
+    state.selection=null;
+    state.stamp=null;
+    state.activeLayer='floor';
+    syncActiveLayer();
+    render();
+    scheduleSave();
+    toast('맵을 비웠습니다. 실행 취소로 복구할 수 있어요.');
+  }
 
   function loadImageFile(file,target,fit=true){if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{pushHistory();const c=target.getContext('2d');if(fit){c.clearRect(0,0,target.width,target.height);const scale=Math.min(target.width/img.width,target.height/img.height),w=img.width*scale,h=img.height*scale;c.drawImage(img,(target.width-w)/2,(target.height-h)/2,w,h);}else c.drawImage(img,0,0);changed();toast('이미지를 불러왔습니다.');};img.src=reader.result;};reader.readAsDataURL(file);}
   function drawDataURL(target,url,clear=false){return new Promise(resolve=>{const img=new Image();img.onload=()=>{const c=target.getContext('2d');if(clear)c.clearRect(0,0,target.width,target.height);c.drawImage(img,0,0);resolve();};img.onerror=resolve;img.src=url;});}
@@ -271,7 +284,7 @@
     $('#colorInput').addEventListener('input',e=>setColor(e.target.value));$('#colorText').addEventListener('change',e=>{if(/^#[0-9a-f]{6}$/i.test(e.target.value))setColor(e.target.value);else e.target.value=state.color.toUpperCase();});
     $('#palette').addEventListener('click',e=>{if(e.target.dataset.color)setColor(e.target.dataset.color);});
     $('#resizeMapButton').addEventListener('click',()=>{const w=Math.max(64,Math.min(4096,+$('#mapWidth').value||640)),h=Math.max(64,Math.min(4096,+$('#mapHeight').value||480));if(confirm('기존 그림을 유지하면서 캔버스 크기를 바꿀까요?')){pushHistory();setupLayers(w,h,true);changed();}});
-    $('#newMapButton').addEventListener('click',()=>{if(confirm('현재 맵 레이어를 모두 비울까요? 프로젝트 저장을 먼저 권장합니다.')){setupLayers(+$('#mapWidth').value||640,+$('#mapHeight').value||480);state.hasContent=false;state.history=[];state.redoHistory=[];render();scheduleSave();}});
+    $('#newMapButton').addEventListener('click',trashMap);$('#trashMapButton').addEventListener('click',trashMap);
     $('#resizeObjectButton').addEventListener('click',()=>{const w=Math.max(8,Math.min(1024,+$('#objectWidth').value||96)),h=Math.max(8,Math.min(1024,+$('#objectHeight').value||96));setupObject(w,h,true);changed();});
     $('#clearObjectButton').addEventListener('click',()=>{if(confirm('오브젝트 캔버스를 비울까요?')){pushHistory();currentContext().clearRect(0,0,state.objectWidth,state.objectHeight);changed();}});
     $('#mapImageInput').addEventListener('change',e=>{loadImageFile(e.target.files[0],state.layers[state.activeLayer]);e.target.value='';});
