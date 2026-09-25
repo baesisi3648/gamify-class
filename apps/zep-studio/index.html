@@ -271,6 +271,12 @@
               </select>
             </label>
           </div>
+          <label class="ai-prompt-label" id="aiMapModeLabel">생성 방식
+            <select id="aiMapMode">
+              <option value="quality" selected>고품질 AI 맵 — 추천</option>
+              <option value="layered">자동 분리 타일 맵 — 실험 기능</option>
+            </select>
+          </label>
           <label class="ai-prompt-label">무엇을 만들까요?
             <textarea id="aiPrompt" rows="6" maxlength="700" placeholder="예: 중앙에 3층 학교 건물, 오른쪽에는 생태 연못, 왼쪽에는 숲길이 있고 길이 모두 연결된 학교 맵"></textarea>
           </label>
@@ -289,7 +295,7 @@
         </div>
         <div class="ai-result">
           <div class="ai-result-stage" id="aiResultStage">
-            <div class="ai-placeholder" id="aiPlaceholder"><span>✦</span><b>생성된 결과가 여기에 나타납니다</b><small>맵은 바닥·오브젝트·윗배경으로 나뉘어 생성됩니다.</small></div>
+            <div class="ai-placeholder" id="aiPlaceholder"><span>✦</span><b>생성된 결과가 여기에 나타납니다</b><small>추천 모드는 먼저 완성도 높은 맵을 만들고, 편집실에서 필요한 부분만 레이어로 나눕니다.</small></div>
             <img id="aiResultImage" alt="AI가 생성한 ZEP용 이미지" hidden />
             <div class="ai-loading" id="aiLoading" hidden><i></i><b>ZEP용 이미지를 만드는 중…</b><span>보통 수 초에서 수십 초가 걸립니다.</span></div>
           </div>
@@ -312,7 +318,7 @@
             <button class="button ghost" id="downloadAIButton" type="button" disabled>원본 저장</button>
             <button class="button ghost ai-delete-result" id="deleteAIResultButton" type="button" disabled>결과 삭제</button>
           </div>
-          <p class="ai-result-help">전체·바닥·오브젝트·윗배경을 각각 확인하고 PNG로 저장할 수 있습니다. 가져오면 편집실의 대응 레이어에 그대로 배치됩니다.</p>
+          <p class="ai-result-help">고품질 맵은 편집실에서 선택한 부분을 오브젝트·윗배경으로 옮길 수 있습니다. 자동 분리 타일 맵은 빠른 시제품용 실험 기능입니다.</p>
         </div>
       </div>
     </div>

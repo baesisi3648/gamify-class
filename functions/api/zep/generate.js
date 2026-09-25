@@ -54,12 +54,13 @@ export async function onRequest(context) {
   const season = String(body.season || "bright-day").trim().slice(0, 40);
   const view = String(body.view || "topdown").trim().slice(0, 30);
   const direction = String(body.direction || "auto").trim().slice(0, 30);
+  const mapMode = body.mapMode === "layered" ? "layered" : "quality";
   if (prompt.length < 3) {
     return Response.json({ ok: false, code: "PROMPT_REQUIRED", message: "만들고 싶은 장면을 세 글자 이상 적어 주세요." }, { status: 400, headers });
   }
 
   try {
-    if (kind === "map") {
+    if (kind === "map" && mapMode === "layered") {
       const contextText = `${prompt} ${scene}`;
       const indoor = /내부|실내|연구실|실험실|교실|과학실|도서관|laboratory|classroom|interior|indoor|library|lab\b/i.test(contextText);
       const spaceType = /도서관|library/i.test(contextText) ? "library" : /교실|classroom/i.test(contextText) && !/과학|생명|실험|lab/i.test(contextText) ? "classroom" : indoor ? "laboratory" : "campus";
@@ -152,11 +153,16 @@ function buildPrompt({ kind, prompt, scene, season, view, direction }) {
       moods[season] || moods["bright-day"], common
     ].join(" ");
   }
+  const indoorRequest = /내부|실내|연구실|실험실|과학실|교실|도서관|laboratory|classroom|interior|indoor|library|lab\b/i.test(`${prompt} ${scene}`);
+  const environmentRules = indoorRequest
+    ? "This is strictly an indoor room map, not a campus exterior. Show one coherent enclosed room from wall to wall. Put windows only in the perimeter wall, never floating over furniture. Arrange laboratory benches, sinks, microscopes, storage cabinets and safety equipment on one consistent tile grid, with matching scale and camera angle and wide walkable aisles. Do not show grass, outdoor paths, exterior buildings, sky, gardens or duplicate rooms."
+    : "This is an outdoor environment map. Keep every structure, path and prop on one consistent tile grid with plausible spacing and clear walkable routes.";
   return [
     "Create a complete map background for a ZEP-style 2D social game.",
     scenes[scene] || scenes.custom,
     `User request: ${prompt}.`,
     `Camera geometry: ${views[view] || views.topdown}. Orientation: ${mapDirections[direction] || mapDirections.auto}.`,
+    environmentRules,
     "Coherent 32-pixel tile grid matching the requested camera geometry, clear walkable paths, readable building footprints, consistent scale, clean boundaries, no perspective horizon, no cutaway layers.",
     "Keep important structures away from the outermost edge. Make the whole composition useful as a playable map rather than a poster.",
     moods[season] || moods["bright-day"], common
