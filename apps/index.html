@@ -543,11 +543,23 @@ body {
 <script>
 /* ═══════════════════════════════════════════════════════════
    앱 데이터 — 새 게임/도구는 여기 항목 하나만 추가하면 됩니다.
-   category: "class" (학급 경영) | "classroom" (수업) | "etc" (기타)
+   category: "class" (학급 경영) | "classroom" (수업) | "zep" (ZEP) | "etc" (기타)
    status:   "available" | "building"
    links:    카드 안에 함께 노출할 보조 링크 (없으면 생략)
    ═══════════════════════════════════════════════════════════ */
 var APPS = [
+  {
+    id: "zep-map-studio",
+    title: "ZEP 맵 공방",
+    description: "이미지를 바닥·윗배경·충돌 영역으로 나누고, 맵과 오브젝트를 직접 그려 ZEP용 PNG로 만드는 무료 창작 도구입니다.",
+    category: "zep",
+    tags: ["MAP EDITOR", "PIXEL ART", "LAYER"],
+    url: "/apps/zep-studio/",
+    thumbnail: "/assets/zep-studio.svg",
+    thumbAlt: "픽셀 학교 맵의 바닥, 오브젝트, 윗배경 레이어를 편집하는 ZEP 맵 공방 화면",
+    status: "available",
+    external: false
+  },
   {
     id: "eco-quest",
     title: "생태월드",
@@ -598,6 +610,7 @@ var CATEGORIES = [
   { id: "all",       en: "All",               ko: "전체",      desc: "교사가 직접 만든 수업 게임과 교실 도구입니다." },
   { id: "class",     en: "Class Management",  ko: "학급 경영", desc: "학급 운영에 바로 사용할 수 있는 도구입니다." },
   { id: "classroom", en: "Classroom",         ko: "수업",      desc: "수업에서 바로 활용할 수 있는 게임입니다." },
+  { id: "zep",       en: "ZEP Studio",        ko: "ZEP",       desc: "ZEP 스페이스에 사용할 맵과 오브젝트를 직접 만드는 창작 도구입니다." },
   { id: "etc",       en: "Etc.",              ko: "기타",      desc: "타이머, 랜덤 도구 같은 교실용 웹 도구입니다." }
 ];
 

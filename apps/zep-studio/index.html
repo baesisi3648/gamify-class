@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#15172b" />
+  <title>ZEP 맵 공방 — GAMIFY CLASS</title>
+  <meta name="description" content="비용 없이 브라우저에서 ZEP용 맵과 오브젝트를 만들고 레이어를 분리하는 픽셀 편집기" />
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/PretendardVariable.woff2" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/apps/#zep" aria-label="Gamify Class 앱으로 돌아가기">
+      <span class="brand-mark" aria-hidden="true">Z</span>
+      <span><b>ZEP 맵 공방</b><small>GAMIFY CLASS</small></span>
+    </a>
+    <div class="top-actions">
+      <span class="save-state" id="saveState"><i></i> 기기에 자동 저장됨</span>
+      <button class="button ghost" id="helpButton" type="button">사용법</button>
+      <button class="button primary" id="exportProjectButton" type="button">프로젝트 저장</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <aside class="sidebar left-panel">
+      <div class="workspace-tabs" role="tablist" aria-label="작업실 선택">
+        <button class="workspace-tab active" data-workspace="map" role="tab" aria-selected="true">맵 편집실</button>
+        <button class="workspace-tab" data-workspace="object" role="tab" aria-selected="false">오브젝트 공방</button>
+      </div>
+
+      <section class="panel-section map-only">
+        <div class="section-title"><h2>맵 프로젝트</h2><span id="mapSizeLabel">640 × 480</span></div>
+        <div class="field-row">
+          <label>가로 <input id="mapWidth" type="number" min="64" max="4096" step="32" value="640" /></label>
+          <label>세로 <input id="mapHeight" type="number" min="64" max="4096" step="32" value="480" /></label>
+        </div>
+        <div class="button-row">
+          <button class="button" id="resizeMapButton" type="button">크기 적용</button>
+          <button class="button" id="newMapButton" type="button">새 맵</button>
+        </div>
+        <label class="upload-button full">
+          <input id="mapImageInput" type="file" accept="image/png,image/jpeg,image/webp" />
+          이미지 불러오기
+        </label>
+        <p class="hint">현재 선택한 레이어에 캔버스 크기로 맞춰 들어갑니다.</p>
+      </section>
+
+      <section class="panel-section object-only hidden">
+        <div class="section-title"><h2>오브젝트 캔버스</h2><span id="objectSizeLabel">96 × 96</span></div>
+        <div class="field-row">
+          <label>가로 <input id="objectWidth" type="number" min="8" max="1024" value="96" /></label>
+          <label>세로 <input id="objectHeight" type="number" min="8" max="1024" value="96" /></label>
+        </div>
+        <div class="button-row">
+          <button class="button" id="resizeObjectButton" type="button">크기 적용</button>
+          <button class="button" id="clearObjectButton" type="button">비우기</button>
+        </div>
+        <label class="upload-button full">
+          <input id="objectImageInput" type="file" accept="image/png,image/jpeg,image/webp" />
+          오브젝트 이미지 불러오기
+        </label>
+      </section>
+
+      <section class="panel-section map-only">
+        <div class="section-title"><h2>레이어</h2><span>아래 → 위</span></div>
+        <div class="layer-list" id="layerList"></div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-title"><h2>그리기 도구</h2><span id="shortcutHint">단축키 B</span></div>
+        <div class="tool-grid" id="toolGrid">
+          <button class="tool active" data-tool="brush" title="펜 (B)"><span>✎</span>펜</button>
+          <button class="tool" data-tool="eraser" title="지우개 (E)"><span>⌫</span>지우개</button>
+          <button class="tool" data-tool="line" title="선 (L)"><span>╱</span>선</button>
+          <button class="tool" data-tool="rect" title="사각형 (R)"><span>□</span>사각형</button>
+          <button class="tool" data-tool="ellipse" title="원 (O)"><span>○</span>원</button>
+          <button class="tool" data-tool="fill" title="채우기 (F)"><span>▣</span>채우기</button>
+          <button class="tool" data-tool="picker" title="색 추출 (I)"><span>⌾</span>색 추출</button>
+          <button class="tool map-only" data-tool="wand" title="영역 선택 (W)"><span>✦</span>영역 선택</button>
+        </div>
+        <div class="control-block">
+          <div class="control-label"><label for="brushSize">굵기</label><output id="brushSizeValue">8 px</output></div>
+          <input id="brushSize" type="range" min="1" max="96" value="8" />
+        </div>
+        <div class="control-block map-only" id="toleranceControl">
+          <div class="control-label"><label for="tolerance">선택 허용 범위</label><output id="toleranceValue">24</output></div>
+          <input id="tolerance" type="range" min="0" max="120" value="24" />
+        </div>
+        <div class="color-row">
+          <label class="color-picker" title="그리기 색">
+            <input id="colorInput" type="color" value="#5c8f4f" />
+            <span id="colorSwatch"></span>
+          </label>
+          <input id="colorText" class="color-text" value="#5C8F4F" maxlength="7" aria-label="색상 코드" />
+          <div class="palette" id="palette" aria-label="추천 색상"></div>
+        </div>
+      </section>
+
+      <section class="panel-section map-only selection-panel hidden" id="selectionPanel">
+        <div class="section-title"><h2>선택 영역</h2><span id="selectionCount">0 px</span></div>
+        <p class="hint strong">파란 영역을 원하는 레이어로 옮길 수 있습니다.</p>
+        <label class="check-row"><input id="cutSource" type="checkbox" checked /> 원본 레이어에서 잘라내기</label>
+        <button class="button full accent" data-selection-target="top" type="button">윗배경으로 보내기</button>
+        <button class="button full" data-selection-target="object" type="button">일반 오브젝트로 보내기</button>
+        <button class="button full ghost" id="clearSelectionButton" type="button">선택 해제</button>
+      </section>
+
+      <section class="panel-section object-only hidden">
+        <div class="section-title"><h2>오브젝트 사용</h2><span>투명 PNG</span></div>
+        <label class="text-field">이름 <input id="objectName" value="새 오브젝트" maxlength="40" /></label>
+        <div class="button-row stack-mobile">
+          <button class="button primary" id="placeObjectButton" type="button">맵에 배치</button>
+          <button class="button" id="downloadObjectButton" type="button">PNG 저장</button>
+        </div>
+        <button class="button full" id="saveObjectLibraryButton" type="button">내 오브젝트 보관함에 저장</button>
+        <div class="object-library" id="objectLibrary"></div>
+      </section>
+    </aside>
+
+    <section class="editor-area">
+      <div class="editor-toolbar">
+        <div class="project-name-wrap">
+          <span class="status-dot"></span>
+          <input id="projectName" value="나의 ZEP 맵" aria-label="프로젝트 이름" />
+        </div>
+        <div class="toolbar-group">
+          <button class="icon-button" id="undoButton" type="button" title="실행 취소 (Ctrl+Z)">↶</button>
+          <button class="icon-button" id="redoButton" type="button" title="다시 실행 (Ctrl+Y)">↷</button>
+          <span class="divider"></span>
+          <label class="compact-label">격자 <input id="gridToggle" type="checkbox" checked /></label>
+          <label class="compact-label">타일 <select id="tileSize"><option>16</option><option selected>32</option><option>48</option><option>64</option></select></label>
+          <span class="divider"></span>
+          <button class="icon-button" id="zoomOutButton" type="button" aria-label="축소">−</button>
+          <output id="zoomValue">100%</output>
+          <button class="icon-button" id="zoomInButton" type="button" aria-label="확대">＋</button>
+          <button class="button small" id="fitButton" type="button">화면 맞춤</button>
+        </div>
+      </div>
+
+      <div class="stage-scroller" id="stageScroller">
+        <div class="stage-wrap" id="stageWrap">
+          <canvas id="editorCanvas" width="640" height="480" aria-label="ZEP 맵 편집 캔버스"></canvas>
+        </div>
+        <div class="empty-callout" id="emptyCallout">
+          <span class="callout-icon">✦</span>
+          <b>첫 맵을 시작해 보세요</b>
+          <p>이미지를 불러오거나 펜으로 직접 그릴 수 있습니다.</p>
+          <button class="button primary" id="quickUploadButton" type="button">배경 이미지 선택</button>
+        </div>
+      </div>
+
+      <footer class="statusbar">
+        <span id="cursorPosition">X 0 · Y 0</span>
+        <span id="activeLayerStatus">바닥 레이어</span>
+        <span class="privacy-note">이미지는 서버로 전송되지 않습니다</span>
+      </footer>
+    </section>
+
+    <aside class="sidebar right-panel">
+      <section class="panel-section preview-section map-only">
+        <div class="section-title"><h2>레이어 미리보기</h2><span>합성 결과</span></div>
+        <div class="mini-preview checker"><canvas id="previewCanvas" width="240" height="180"></canvas></div>
+        <div class="legend">
+          <span><i class="legend-floor"></i>바닥</span><span><i class="legend-object"></i>오브젝트</span>
+          <span><i class="legend-top"></i>윗배경</span><span><i class="legend-collision"></i>충돌</span>
+        </div>
+      </section>
+
+      <section class="panel-section map-only">
+        <div class="section-title"><h2>ZEP용 내보내기</h2><span>PNG</span></div>
+        <p class="hint">각 파일을 ZEP 맵 에디터의 대응 레이어에 올려 주세요.</p>
+        <div class="export-list">
+          <button class="export-item" data-export="floor" type="button"><i class="floor"></i><span><b>01 아랫배경</b><small>floor.png</small></span><em>↓</em></button>
+          <button class="export-item" data-export="object" type="button"><i class="object"></i><span><b>02 오브젝트</b><small>objects.png</small></span><em>↓</em></button>
+          <button class="export-item" data-export="top" type="button"><i class="top"></i><span><b>03 윗배경</b><small>top.png</small></span><em>↓</em></button>
+          <button class="export-item" data-export="collision" type="button"><i class="collision"></i><span><b>04 충돌 안내</b><small>collision.png</small></span><em>↓</em></button>
+          <button class="export-item" data-export="collision-json" type="button"><i class="json"></i><span><b>충돌 타일 좌표</b><small>collision.json</small></span><em>↓</em></button>
+        </div>
+        <button class="button full primary" id="exportAllButton" type="button">모든 레이어 저장</button>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-title"><h2>프로젝트 관리</h2><span>무료·로컬</span></div>
+        <div class="button-row stack">
+          <button class="button full" id="importProjectButton" type="button">프로젝트 파일 불러오기</button>
+          <input id="projectInput" type="file" accept="application/json,.zepmap" hidden />
+          <button class="button full ghost" id="clearAutosaveButton" type="button">자동 저장 초기화</button>
+        </div>
+        <p class="hint">다른 컴퓨터에서 이어서 작업하려면 <b>프로젝트 저장</b>으로 받은 <code>.zepmap</code> 파일을 옮겨 주세요.</p>
+      </section>
+    </aside>
+  </main>
+
+  <dialog id="helpDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" aria-label="닫기">×</button>
+      <span class="dialog-kicker">QUICK GUIDE</span>
+      <h2>ZEP 맵 공방 사용법</h2>
+      <ol class="guide-list">
+        <li><b>배경을 불러오세요.</b><span>맵 편집실의 바닥 레이어를 선택하고 이미지를 불러옵니다.</span></li>
+        <li><b>윗배경을 분리하세요.</b><span>영역 선택 도구로 지붕·나무처럼 캐릭터를 가릴 부분을 누르고 ‘윗배경으로 보내기’를 선택합니다.</span></li>
+        <li><b>통과 금지 구역을 칠하세요.</b><span>충돌 영역 레이어에서 건물 벽, 물, 장애물을 칠합니다. 빨간색은 편집 안내용입니다.</span></li>
+        <li><b>오브젝트를 만드세요.</b><span>오브젝트 공방에서 직접 그리거나 사진을 불러온 뒤 맵에 배치합니다.</span></li>
+        <li><b>파일을 저장하세요.</b><span>레이어별 PNG를 내려받아 ZEP에 적용합니다. 다시 편집할 원본은 .zepmap으로 보관하세요.</span></li>
+      </ol>
+      <div class="key-guide"><kbd>B</kbd> 펜 <kbd>E</kbd> 지우개 <kbd>W</kbd> 선택 <kbd>Ctrl+Z</kbd> 취소 <kbd>[ ]</kbd> 굵기</div>
+      <button class="button primary full" value="close">시작하기</button>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
