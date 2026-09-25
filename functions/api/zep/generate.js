@@ -1,4 +1,5 @@
-const MODEL = "@cf/black-forest-labs/flux-1-schnell";
+const MODEL = "@cf/black-forest-labs/flux-2-klein-4b";
+const FALLBACK_MODEL = "@cf/black-forest-labs/flux-1-schnell";
 const PLAN_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8";
 
 export async function onRequest(context) {
@@ -15,6 +16,7 @@ export async function onRequest(context) {
       ready: Boolean(env.AI),
       protected: Boolean(env.ZEP_AI_ACCESS_CODE),
       model: MODEL,
+      fallbackModel: FALLBACK_MODEL,
       layeredMapModel: PLAN_MODEL
     }, { headers });
   }
@@ -68,10 +70,8 @@ export async function onRequest(context) {
       return Response.json({ ok: true, kind, type: "layered-map", plan, model: PLAN_MODEL }, { headers });
     }
     const finalPrompt = buildPrompt({ kind, prompt, scene, season, view, direction });
-    const result = await env.AI.run(MODEL, { prompt: finalPrompt, steps: 4 });
-    const image = await normalizeImage(result);
-    if (!image) throw new Error("EMPTY_IMAGE");
-    return Response.json({ ok: true, image, kind, model: MODEL }, { headers });
+    const generated = await generateImage(env.AI, finalPrompt);
+    return Response.json({ ok: true, image: generated.image, kind, model: generated.model, degraded: generated.degraded }, { headers });
   } catch (error) {
     const message = String(error?.message || error || "");
     const quota = /quota|limit|capacity|neurons|3040|429/i.test(message);
@@ -80,6 +80,31 @@ export async function onRequest(context) {
       code: quota ? "AI_QUOTA_EXCEEDED" : "AI_GENERATION_FAILED",
       message: quota ? "오늘의 무료 AI 생성 한도에 도달했거나 모델이 잠시 혼잡합니다." : "이미지를 만들지 못했습니다. 잠시 후 다시 시도해 주세요."
     }, { status: quota ? 429 : 502, headers });
+  }
+}
+
+async function generateImage(ai, prompt) {
+  try {
+    const form = new FormData();
+    form.append("prompt", prompt);
+    form.append("width", "1024");
+    form.append("height", "768");
+    form.append("guidance", "4.5");
+    const serialized = new Response(form);
+    const result = await ai.run(MODEL, {
+      multipart: {
+        body: serialized.body,
+        contentType: serialized.headers.get("content-type")
+      }
+    });
+    const image = await normalizeImage(result);
+    if (!image) throw new Error("EMPTY_QUALITY_IMAGE");
+    return { image, model: MODEL, degraded: false };
+  } catch (qualityError) {
+    const result = await ai.run(FALLBACK_MODEL, { prompt, steps: 4 });
+    const image = await normalizeImage(result);
+    if (!image) throw qualityError;
+    return { image, model: FALLBACK_MODEL, degraded: true };
   }
 }
 
@@ -155,7 +180,7 @@ function buildPrompt({ kind, prompt, scene, season, view, direction }) {
   }
   const indoorRequest = /내부|실내|연구실|실험실|과학실|교실|도서관|laboratory|classroom|interior|indoor|library|lab\b/i.test(`${prompt} ${scene}`);
   const environmentRules = indoorRequest
-    ? "This is strictly an indoor room map, not a campus exterior. Show one coherent enclosed room from wall to wall. Put windows only in the perimeter wall, never floating over furniture. Arrange laboratory benches, sinks, microscopes, storage cabinets and safety equipment on one consistent tile grid, with matching scale and camera angle and wide walkable aisles. Do not show grass, outdoor paths, exterior buildings, sky, gardens or duplicate rooms."
+    ? "This is strictly an indoor room map, not a campus exterior. Show one coherent enclosed room from wall to wall. Put windows only inside the perimeter wall, never floating over or behind furniture. Arrange laboratory benches, sinks, microscopes, storage cabinets and safety equipment on one consistent tile grid, with matching scale and camera angle and wide walkable aisles. Every object must rest naturally on the floor or against a wall. Do not show grass, outdoor paths, exterior buildings, sky, gardens, isolated sprite sheets or duplicate rooms."
     : "This is an outdoor environment map. Keep every structure, path and prop on one consistent tile grid with plausible spacing and clear walkable routes.";
   return [
     "Create a complete map background for a ZEP-style 2D social game.",
@@ -163,7 +188,7 @@ function buildPrompt({ kind, prompt, scene, season, view, direction }) {
     `User request: ${prompt}.`,
     `Camera geometry: ${views[view] || views.topdown}. Orientation: ${mapDirections[direction] || mapDirections.auto}.`,
     environmentRules,
-    "Coherent 32-pixel tile grid matching the requested camera geometry, clear walkable paths, readable building footprints, consistent scale, clean boundaries, no perspective horizon, no cutaway layers.",
+    "Professional polished 2D pixel-art game environment with rich but controlled detail, cohesive art direction, deliberate lighting, harmonious color palette and hand-crafted ZEP map quality. Coherent 32-pixel tile grid matching the requested camera geometry, clear walkable paths, readable footprints, consistent scale, clean boundaries, no perspective horizon, no cutaway layers, no collage and no mismatched sprite angles.",
     "Keep important structures away from the outermost edge. Make the whole composition useful as a playable map rather than a poster.",
     moods[season] || moods["bright-day"], common
   ].join(" ");
