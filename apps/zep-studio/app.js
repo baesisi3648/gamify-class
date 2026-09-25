@@ -279,24 +279,24 @@
   function planColor(value,fallback){return /^#[0-9a-f]{6}$/i.test(String(value||''))?value:fallback;}
   let atlasPromise;
   function loadCampusAtlas(){
-    if(!atlasPromise)atlasPromise=new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('ZEP 전용 타일셋을 불러오지 못했습니다.'));image.src='assets/zep-campus-atlas.png';});
+    if(!atlasPromise)atlasPromise=new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('ZEP 전용 타일셋을 불러오지 못했습니다.'));image.src='assets/zep-campus-atlas-v2.png';});
     return atlasPromise;
   }
   function atlasCell(atlas,column,row){const cell=makeLayer(Math.floor(atlas.naturalWidth/4),Math.floor(atlas.naturalHeight/4)),context=cell.getContext('2d'),sw=atlas.naturalWidth/4,sh=atlas.naturalHeight/4;context.drawImage(atlas,column*sw,row*sh,sw,sh,0,0,cell.width,cell.height);return cell;}
   let labAtlasPromise;
   function loadLabAtlas(){
-    if(!labAtlasPromise)labAtlasPromise=new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('연구실 전용 타일셋을 불러오지 못했습니다.'));image.src='assets/zep-lab-atlas.png';});
+    if(!labAtlasPromise)labAtlasPromise=new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('연구실 전용 타일셋을 불러오지 못했습니다.'));image.src='assets/zep-lab-atlas-v2.png';});
     return labAtlasPromise;
   }
   function finishLayerCanvases(canvases){const composite=makeLayer(canvases.floor.width,canvases.floor.height),context=composite.getContext('2d');context.drawImage(canvases.floor,0,0);context.drawImage(canvases.object,0,0);context.drawImage(canvases.top,0,0);const urls={composite:composite.toDataURL('image/png')};Object.entries(canvases).forEach(([key,value])=>urls[key]=value.toDataURL('image/png'));return urls;}
   async function createIndoorLayeredMap(plan){
     const atlas=await loadLabAtlas(),sprites=Array.from({length:4},(_,row)=>Array.from({length:4},(_,column)=>atlasCell(atlas,column,row))),width=640,height=480,canvases={floor:makeLayer(width,height),object:makeLayer(width,height),top:makeLayer(width,height),collision:makeLayer(width,height)};
     const floor=canvases.floor.getContext('2d'),objects=canvases.object.getContext('2d'),top=canvases.top.getContext('2d'),collision=canvases.collision.getContext('2d');[floor,objects,top,collision].forEach(context=>{context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';});
-    floor.fillStyle='#cbd6da';floor.fillRect(0,0,width,height);for(let y=0;y<height;y+=124)for(let x=0;x<width;x+=124)floor.drawImage(sprites[0][0],x-4,y-4,132,132);
+    floor.fillStyle='#d8dcdd';floor.fillRect(0,0,width,height);floor.strokeStyle='rgba(71,91,101,.16)';floor.lineWidth=1;for(let y=-160;y<height+160;y+=32){floor.beginPath();floor.moveTo(0,y);floor.lineTo(width,y+width/2);floor.stroke();floor.beginPath();floor.moveTo(0,y);floor.lineTo(width,y-width/2);floor.stroke();}
     top.fillStyle='#25323b';top.fillRect(0,0,width,18);top.fillRect(0,height-15,width,15);top.fillRect(0,0,15,height);top.fillRect(width-15,0,15,height);for(let x=18;x<width-18;x+=154)top.drawImage(sprites[0][2],x,-12,150,105);
-    const defaults=[['lab-bench',18,30,10],['sink-bench',48,30,10],['growth-chamber',76,27,9],['specimen-cabinet',88,52,9],['student-table',25,68,10],['student-table',55,68,10],['dna-machine',78,72,9],['safety-station',92,78,7]];
+    const defaultSets={laboratory:[['lab-bench',18,30,9],['sink-bench',48,30,9],['growth-chamber',76,27,8],['specimen-cabinet',88,52,8],['student-table',25,68,9],['student-table',55,68,9],['dna-machine',78,72,8],['safety-station',92,78,7]],classroom:[['teacher-desk',50,22,9],['student-table',22,48,8],['student-table',48,48,8],['student-table',74,48,8],['student-table',22,72,8],['student-table',48,72,8],['student-table',74,72,8],['bookshelf',88,27,8]],library:[['bookshelf',14,25,8],['bookshelf',14,52,8],['bookshelf',86,25,8],['bookshelf',86,52,8],['student-table',36,48,8],['student-table',64,48,8],['student-table',36,72,8],['student-table',64,72,8]]};const defaults=defaultSets[plan.spaceType]||defaultSets.laboratory;
     const items=(plan.objects?.length?plan.objects:defaults.map(([type,x,y,size])=>({type,x,y,size}))).slice(0,16),mapping={'lab-bench':[0,1],'sink-bench':[1,1],'growth-chamber':[2,1],'specimen-cabinet':[3,1],'dna-machine':[0,2],incubator:[1,2],'chemical-cabinet':[2,2],bookshelf:[3,2],'teacher-desk':[0,3],'student-table':[1,3],plant:[2,3],'safety-station':[3,3]};
-    items.forEach(item=>{const cell=mapping[String(item.type||'student-table')]||mapping['student-table'],sprite=sprites[cell[1]][cell[0]],x=planNumber(item.x,7,93,50)*width/100,y=planNumber(item.y,15,90,55)*height/100,base=planNumber(item.size,4,14,8),w=Math.max(64,base*12),h=w;objects.drawImage(sprite,x-w/2,y-h*.58,w,h);collision.fillStyle='rgba(255,53,93,.7)';collision.fillRect(x-w*.34,y+h*.12,w*.68,h*.18);});
+    items.forEach(item=>{const cell=mapping[String(item.type||'student-table')]||mapping['student-table'],sprite=sprites[cell[1]][cell[0]],x=planNumber(item.x,7,93,50)*width/100,y=planNumber(item.y,15,90,55)*height/100,base=planNumber(item.size,4,14,8),w=Math.max(52,base*9),h=w;objects.drawImage(sprite,x-w/2,y-h*.58,w,h);collision.fillStyle='rgba(255,53,93,.7)';collision.fillRect(x-w*.32,y+h*.1,w*.64,h*.16);});
     return finishLayerCanvases(canvases);
   }
   async function createLayeredMap(plan){
@@ -306,7 +306,7 @@
     const colors={ground:planColor(p.ground,'#79ad58'),path:planColor(p.path,'#d7bd7b'),water:planColor(p.water,'#58a9c7'),roof:planColor(p.roof,'#b9564d'),wall:planColor(p.wall,'#e5c78f'),tree:planColor(p.tree,'#397a46'),accent:planColor(p.accent,'#f1d36b')};
     const floor=canvases.floor.getContext('2d'),objects=canvases.object.getContext('2d'),top=canvases.top.getContext('2d'),collision=canvases.collision.getContext('2d');
     [floor,objects,top,collision].forEach(context=>{context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';});
-    floor.fillStyle=colors.ground;floor.fillRect(0,0,width,height);for(let i=0;i<520;i++){const x=(i*83)%width,y=(i*157)%height;floor.fillStyle=i%3?'rgba(33,91,46,.16)':'rgba(255,255,255,.13)';floor.fillRect(x,y,2,2);if(i%7===0){floor.fillRect(x-2,y+3,1,4);floor.fillRect(x+2,y+3,1,4);}}
+    floor.fillStyle=colors.ground;floor.fillRect(0,0,width,height);for(let y=0;y<height;y+=156)for(let x=0;x<width;x+=156)floor.drawImage(sprites[3][0],x,y,158,158);
     const px=v=>planNumber(v,0,100,50)*width/100,py=v=>planNumber(v,0,100,50)*height/100;
     (plan.waters||[]).slice(0,3).forEach(item=>{const x=px(item.x),y=py(item.y),w=px(planNumber(item.w,3,35,16)),h=py(planNumber(item.h,3,35,12));floor.drawImage(sprites[3][2],x,y,w,h);collision.fillStyle='rgba(255,53,93,.72)';collision.beginPath();collision.ellipse(x+w/2,y+h/2,w*.38,h*.38,0,0,Math.PI*2);collision.fill();});
     floor.lineCap='round';(plan.paths||[]).slice(0,8).forEach(path=>{const lineWidth=Math.max(18,px(planNumber(path.width,2,15,6)));floor.strokeStyle=colors.path;floor.lineWidth=lineWidth;floor.beginPath();floor.moveTo(px(path.x1),py(path.y1));floor.lineTo(px(path.x2),py(path.y2));floor.stroke();const pattern=floor.createPattern(sprites[3][1],'repeat');if(pattern){floor.strokeStyle=pattern;floor.lineWidth=Math.max(10,lineWidth-7);floor.stroke();}});

@@ -60,8 +60,10 @@ export async function onRequest(context) {
 
   try {
     if (kind === "map") {
-      const indoor = /내부|실내|연구실|실험실|교실|과학실|도서관|laboratory|classroom|interior|indoor|lab\b/i.test(`${prompt} ${scene}`);
-      const plan = await generateLayerPlan(env.AI, { prompt, scene, season, view, direction, environment: indoor ? "indoor" : "outdoor" });
+      const contextText = `${prompt} ${scene}`;
+      const indoor = /내부|실내|연구실|실험실|교실|과학실|도서관|laboratory|classroom|interior|indoor|library|lab\b/i.test(contextText);
+      const spaceType = /도서관|library/i.test(contextText) ? "library" : /교실|classroom/i.test(contextText) && !/과학|생명|실험|lab/i.test(contextText) ? "classroom" : indoor ? "laboratory" : "campus";
+      const plan = await generateLayerPlan(env.AI, { prompt, scene, season, view, direction, environment: indoor ? "indoor" : "outdoor", spaceType });
       return Response.json({ ok: true, kind, type: "layered-map", plan, model: PLAN_MODEL }, { headers });
     }
     const finalPrompt = buildPrompt({ kind, prompt, scene, season, view, direction });
@@ -81,12 +83,13 @@ export async function onRequest(context) {
 }
 
 async function generateLayerPlan(ai, request) {
+  const allowedIndoorObjects = request.spaceType === "library" ? "bookshelf, student-table, teacher-desk, plant" : request.spaceType === "classroom" ? "teacher-desk, student-table, bookshelf, plant" : "lab-bench, sink-bench, growth-chamber, specimen-cabinet, dna-machine, incubator, chemical-cabinet, bookshelf, teacher-desk, student-table, plant, safety-station";
   const indoorGuide = request.environment === "indoor"
-    ? "This is an INDOOR map. Set environment to indoor. Do not create grass, outdoor roads, ponds, outdoor trees, or exterior buildings. Keep buildings, trees, waters, and paths as empty arrays. Create 8-14 furniture objects using only these types: lab-bench, sink-bench, growth-chamber, specimen-cabinet, dna-machine, incubator, chemical-cabinet, bookshelf, teacher-desk, student-table, plant, safety-station. Arrange clear walkable aisles and represent the user's requested room faithfully."
+    ? `This is an INDOOR ${request.spaceType} map. Set environment to indoor and spaceType to ${request.spaceType}. Do not create grass, outdoor roads, ponds, outdoor trees, or exterior buildings. Keep buildings, trees, waters, and paths as empty arrays. Create 8-14 furniture objects using only these types: ${allowedIndoorObjects}. Arrange clear walkable aisles and represent every concrete noun in the user's request when an allowed matching asset exists.`
     : "This is an OUTDOOR map. Set environment to outdoor. Use 2-4 buildings, 2-5 paths, 0-2 waters, 5-14 trees, and 3-10 small objects. Outdoor object type must be bench, flower, rock, sign, lamp, or bush.";
   const result = await ai.run(PLAN_MODEL, {
     messages: [
-      { role: "system", content: `You design playable ZEP-style school RPG maps. Return JSON only, without markdown. All x,y,w,h,size,width values are percentages from 0 to 100. Keep every shape inside the map and preserve walkable space. ${indoorGuide} Buildings belong to the top layer, trees and furniture belong to the object layer, and terrain belongs to the floor layer. Use this exact structure: {\"environment\":\"${request.environment}\",\"name\":\"map name\",\"palette\":{\"ground\":\"#79ad58\",\"path\":\"#d7bd7b\",\"water\":\"#58a9c7\",\"roof\":\"#b9564d\",\"wall\":\"#e5c78f\",\"tree\":\"#397a46\",\"accent\":\"#f1d36b\"},\"paths\":[],\"waters\":[],\"buildings\":[],\"trees\":[],\"objects\":[{\"type\":\"student-table\",\"x\":50,\"y\":55,\"size\":8}]}` },
+      { role: "system", content: `You design playable ZEP-style school RPG maps. Return JSON only, without markdown. All x,y,w,h,size,width values are percentages from 0 to 100. Keep every shape inside the map and preserve walkable space. ${indoorGuide} Buildings belong to the top layer, trees and furniture belong to the object layer, and terrain belongs to the floor layer. Use this exact structure: {\"environment\":\"${request.environment}\",\"spaceType\":\"${request.spaceType}\",\"name\":\"map name\",\"palette\":{\"ground\":\"#79ad58\",\"path\":\"#d7bd7b\",\"water\":\"#58a9c7\",\"roof\":\"#b9564d\",\"wall\":\"#e5c78f\",\"tree\":\"#397a46\",\"accent\":\"#f1d36b\"},\"paths\":[],\"waters\":[],\"buildings\":[],\"trees\":[],\"objects\":[{\"type\":\"student-table\",\"x\":50,\"y\":55,\"size\":8}]}` },
       { role: "user", content: `Create a map plan. Request: ${request.prompt}. Scene: ${request.scene}. Season: ${request.season}. View: ${request.view}. Direction: ${request.direction}.` }
     ],
     response_format: { type: "json_object" },
