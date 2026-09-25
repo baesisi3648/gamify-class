@@ -1,6 +1,8 @@
 # ZEP 맵 공방 — Workers AI 연결
 
-`/apps/zep-studio/`의 수동 편집 기능은 별도 설정 없이 작동합니다. 프롬프트 이미지 생성을 사용하려면 Gamify Class Cloudflare Pages 프로젝트에 Workers AI 바인딩을 한 번 추가합니다.
+`/apps/zep-studio/`의 수동 편집 기능은 별도 설정 없이 작동합니다. 저장소의 `wrangler.jsonc`가 Workers AI 바인딩 `AI`를 선언하므로 최신 Cloudflare Pages 빌드에서는 자동으로 연결됩니다.
+
+아래의 대시보드 설정은 상태 API에서 `"ready": false`가 계속 표시될 때만 사용합니다.
 
 ## 필수 설정
 
