@@ -60,7 +60,8 @@ export async function onRequest(context) {
 
   try {
     if (kind === "map") {
-      const plan = await generateLayerPlan(env.AI, { prompt, scene, season, view, direction });
+      const indoor = /내부|실내|연구실|실험실|교실|과학실|도서관|laboratory|classroom|interior|indoor|lab\b/i.test(`${prompt} ${scene}`);
+      const plan = await generateLayerPlan(env.AI, { prompt, scene, season, view, direction, environment: indoor ? "indoor" : "outdoor" });
       return Response.json({ ok: true, kind, type: "layered-map", plan, model: PLAN_MODEL }, { headers });
     }
     const finalPrompt = buildPrompt({ kind, prompt, scene, season, view, direction });
@@ -80,9 +81,12 @@ export async function onRequest(context) {
 }
 
 async function generateLayerPlan(ai, request) {
+  const indoorGuide = request.environment === "indoor"
+    ? "This is an INDOOR map. Set environment to indoor. Do not create grass, outdoor roads, ponds, outdoor trees, or exterior buildings. Keep buildings, trees, waters, and paths as empty arrays. Create 8-14 furniture objects using only these types: lab-bench, sink-bench, growth-chamber, specimen-cabinet, dna-machine, incubator, chemical-cabinet, bookshelf, teacher-desk, student-table, plant, safety-station. Arrange clear walkable aisles and represent the user's requested room faithfully."
+    : "This is an OUTDOOR map. Set environment to outdoor. Use 2-4 buildings, 2-5 paths, 0-2 waters, 5-14 trees, and 3-10 small objects. Outdoor object type must be bench, flower, rock, sign, lamp, or bush.";
   const result = await ai.run(PLAN_MODEL, {
     messages: [
-      { role: "system", content: "You design playable ZEP-style school RPG maps. Return JSON only, without markdown. All x,y,w,h,size,width values are percentages from 0 to 100. Keep every shape inside the map. Use 2-4 buildings, 2-5 paths, 0-2 waters, 5-14 trees, and 3-10 small objects. Object type must be bench, flower, rock, sign, lamp, or bush. Buildings belong to the top layer, trees and small objects belong to the object layer, and ground/path/water belong to the floor layer. Avoid overlaps that block every path. Use this exact structure: {\"name\":\"map name\",\"palette\":{\"ground\":\"#79ad58\",\"path\":\"#d7bd7b\",\"water\":\"#58a9c7\",\"roof\":\"#b9564d\",\"wall\":\"#e5c78f\",\"tree\":\"#397a46\",\"accent\":\"#f1d36b\"},\"paths\":[{\"x1\":0,\"y1\":50,\"x2\":100,\"y2\":50,\"width\":6}],\"waters\":[{\"x\":70,\"y\":20,\"w\":18,\"h\":14}],\"buildings\":[{\"x\":25,\"y\":15,\"w\":32,\"h\":22,\"style\":\"school\"}],\"trees\":[{\"x\":10,\"y\":10,\"size\":5}],\"objects\":[{\"type\":\"bench\",\"x\":50,\"y\":70,\"size\":3}]}" },
+      { role: "system", content: `You design playable ZEP-style school RPG maps. Return JSON only, without markdown. All x,y,w,h,size,width values are percentages from 0 to 100. Keep every shape inside the map and preserve walkable space. ${indoorGuide} Buildings belong to the top layer, trees and furniture belong to the object layer, and terrain belongs to the floor layer. Use this exact structure: {\"environment\":\"${request.environment}\",\"name\":\"map name\",\"palette\":{\"ground\":\"#79ad58\",\"path\":\"#d7bd7b\",\"water\":\"#58a9c7\",\"roof\":\"#b9564d\",\"wall\":\"#e5c78f\",\"tree\":\"#397a46\",\"accent\":\"#f1d36b\"},\"paths\":[],\"waters\":[],\"buildings\":[],\"trees\":[],\"objects\":[{\"type\":\"student-table\",\"x\":50,\"y\":55,\"size\":8}]}` },
       { role: "user", content: `Create a map plan. Request: ${request.prompt}. Scene: ${request.scene}. Season: ${request.season}. View: ${request.view}. Direction: ${request.direction}.` }
     ],
     response_format: { type: "json_object" },
