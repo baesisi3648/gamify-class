@@ -80,32 +80,12 @@ export async function onRequest(context) {
 }
 
 async function generateLayerPlan(ai, request) {
-  const schema = {
-    type: "object",
-    properties: {
-      name: { type: "string" },
-      palette: {
-        type: "object",
-        properties: {
-          ground: { type: "string" }, path: { type: "string" }, water: { type: "string" },
-          roof: { type: "string" }, wall: { type: "string" }, tree: { type: "string" }, accent: { type: "string" }
-        },
-        required: ["ground", "path", "water", "roof", "wall", "tree", "accent"]
-      },
-      paths: { type: "array", items: { type: "object", properties: { x1:{type:"number"}, y1:{type:"number"}, x2:{type:"number"}, y2:{type:"number"}, width:{type:"number"} }, required:["x1","y1","x2","y2","width"] } },
-      waters: { type: "array", items: { type: "object", properties: { x:{type:"number"}, y:{type:"number"}, w:{type:"number"}, h:{type:"number"} }, required:["x","y","w","h"] } },
-      buildings: { type: "array", items: { type: "object", properties: { x:{type:"number"}, y:{type:"number"}, w:{type:"number"}, h:{type:"number"}, style:{type:"string"} }, required:["x","y","w","h","style"] } },
-      trees: { type: "array", items: { type: "object", properties: { x:{type:"number"}, y:{type:"number"}, size:{type:"number"} }, required:["x","y","size"] } },
-      objects: { type: "array", items: { type: "object", properties: { type:{type:"string"}, x:{type:"number"}, y:{type:"number"}, size:{type:"number"} }, required:["type","x","y","size"] } }
-    },
-    required: ["name","palette","paths","waters","buildings","trees","objects"]
-  };
   const result = await ai.run(PLAN_MODEL, {
     messages: [
-      { role: "system", content: "You design playable ZEP-style school RPG maps as structured JSON. All x,y,w,h,size,width values are percentages from 0 to 100. Keep every shape inside the map. Use 2-4 buildings, 2-5 paths, 0-2 waters, 5-14 trees, and 3-10 small objects. Object type must be bench, flower, rock, sign, lamp, or bush. Buildings belong to the top layer, trees and small objects belong to the object layer, and ground/path/water belong to the floor layer. Return valid hex colors. Avoid overlaps that block every path." },
+      { role: "system", content: "You design playable ZEP-style school RPG maps. Return JSON only, without markdown. All x,y,w,h,size,width values are percentages from 0 to 100. Keep every shape inside the map. Use 2-4 buildings, 2-5 paths, 0-2 waters, 5-14 trees, and 3-10 small objects. Object type must be bench, flower, rock, sign, lamp, or bush. Buildings belong to the top layer, trees and small objects belong to the object layer, and ground/path/water belong to the floor layer. Avoid overlaps that block every path. Use this exact structure: {\"name\":\"map name\",\"palette\":{\"ground\":\"#79ad58\",\"path\":\"#d7bd7b\",\"water\":\"#58a9c7\",\"roof\":\"#b9564d\",\"wall\":\"#e5c78f\",\"tree\":\"#397a46\",\"accent\":\"#f1d36b\"},\"paths\":[{\"x1\":0,\"y1\":50,\"x2\":100,\"y2\":50,\"width\":6}],\"waters\":[{\"x\":70,\"y\":20,\"w\":18,\"h\":14}],\"buildings\":[{\"x\":25,\"y\":15,\"w\":32,\"h\":22,\"style\":\"school\"}],\"trees\":[{\"x\":10,\"y\":10,\"size\":5}],\"objects\":[{\"type\":\"bench\",\"x\":50,\"y\":70,\"size\":3}]}" },
       { role: "user", content: `Create a map plan. Request: ${request.prompt}. Scene: ${request.scene}. Season: ${request.season}. View: ${request.view}. Direction: ${request.direction}.` }
     ],
-    response_format: { type: "json_schema", json_schema: schema },
+    response_format: { type: "json_object" },
     max_tokens: 1800,
     temperature: 0.65
   });
