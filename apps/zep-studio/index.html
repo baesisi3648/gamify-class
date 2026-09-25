@@ -68,6 +68,17 @@
         <div class="layer-list" id="layerList"></div>
       </section>
 
+      <section class="panel-section map-only split-guide" id="splitGuidePanel">
+        <div class="section-title"><h2>AI 레이어 분리</h2><span id="splitModeStatus">대기</span></div>
+        <ol class="split-steps">
+          <li>분리 시작을 누릅니다.</li>
+          <li>맵에서 건물·나무 등 옮길 부분을 클릭합니다.</li>
+          <li>오브젝트 또는 윗배경으로 보냅니다.</li>
+        </ol>
+        <button class="button full accent" id="startSplitButton" type="button">분리 시작</button>
+        <button class="button full ghost hidden" id="finishSplitButton" type="button">분리 끝내기</button>
+      </section>
+
       <section class="panel-section">
         <div class="section-title"><h2>그리기 도구</h2><span id="shortcutHint">단축키 B</span></div>
         <div class="tool-grid" id="toolGrid">
@@ -102,6 +113,8 @@
         <div class="section-title"><h2>선택 영역</h2><span id="selectionCount">0 px</span></div>
         <p class="hint strong">파란 영역을 원하는 레이어로 옮길 수 있습니다.</p>
         <label class="check-row"><input id="cutSource" type="checkbox" checked /> 원본 레이어에서 잘라내기</label>
+        <label class="check-row"><input id="addSelection" type="checkbox" checked /> 다음 클릭 영역도 선택에 추가</label>
+        <button class="button full ghost" id="growSelectionButton" type="button">선택 경계 2px 넓히기</button>
         <button class="button full accent" data-selection-target="top" type="button">윗배경으로 보내기</button>
         <button class="button full" data-selection-target="object" type="button">일반 오브젝트로 보내기</button>
         <button class="button full ghost" id="clearSelectionButton" type="button">선택 해제</button>

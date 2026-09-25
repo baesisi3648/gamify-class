@@ -19,7 +19,7 @@
     beforeStroke: null, selection: null, selectionSource: 'floor', stamp: null,
     mapWidth: 640, mapHeight: 480, objectWidth: 96, objectHeight: 96,
     layers: {}, objectCanvas: document.createElement('canvas'), history: [], redoHistory: [],
-    library: [], hasContent: false, saveTimer: null, aiKind: 'map', aiResult: null
+    library: [], hasContent: false, saveTimer: null, aiKind: 'map', aiResult: null, splitMode: false
   };
   const palette = ['#1b1d2e','#ffffff','#5c8f4f','#8fcf68','#426a8a','#65b7c9','#8c654a','#d6b06f','#f1d36b','#db6a6a','#8b7cff','#493f67'];
 
@@ -178,14 +178,34 @@
     const source=state.layers[state.activeLayer],c=source.getContext('2d',{willReadFrequently:true}),img=c.getImageData(0,0,source.width,source.height),d=img.data,w=source.width,h=source.height,idx=(p.y*w+p.x)*4,target=[d[idx],d[idx+1],d[idx+2],d[idx+3]],mask=new Uint8Array(w*h),stack=[p.x,p.y];
     if(target[3]===0)return toast('투명한 영역은 선택할 수 없습니다.');let count=0;
     while(stack.length){const y=stack.pop(),x=stack.pop(),i=y*w+x;if(x<0||y<0||x>=w||y>=h||mask[i])continue;const q=i*4;if(colorDistance([d[q],d[q+1],d[q+2],d[q+3]],target)>state.tolerance)continue;mask[i]=1;count++;stack.push(x+1,y,x-1,y,x,y+1,x,y-1);}
-    state.selection=mask;state.selectionSource=state.activeLayer;$('#selectionPanel').classList.remove('hidden');$('#selectionCount').textContent=`${count.toLocaleString()} px`;render();
+    if(state.selection&&state.selectionSource===state.activeLayer&&$('#addSelection').checked){for(let i=0;i<mask.length;i++)if(mask[i])state.selection[i]=1;count=state.selection.reduce((sum,value)=>sum+value,0);}else{state.selection=mask;state.selectionSource=state.activeLayer;}
+    $('#selectionPanel').classList.remove('hidden');$('#selectionCount').textContent=`${count.toLocaleString()} px`;if(state.splitMode)$('#splitModeStatus').textContent='영역 선택됨';render();
+  }
+  function growSelection(){
+    if(!state.selection)return toast('먼저 맵에서 분리할 영역을 클릭해 주세요.');
+    const w=state.mapWidth,h=state.mapHeight,next=new Uint8Array(state.selection),source=state.selection;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;if(!source[i])continue;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const nx=x+dx,ny=y+dy;if(nx>=0&&ny>=0&&nx<w&&ny<h)next[ny*w+nx]=1;}}
+    state.selection=next;
+    $('#selectionCount').textContent=`${next.reduce((sum,value)=>sum+value,0).toLocaleString()} px`;
+    render();
+  }
+  function startLayerSplit(){
+    if(!hasPixels(state.layers.floor))return toast('먼저 AI 맵을 바닥 레이어로 가져와 주세요.');
+    setWorkspace('map');state.splitMode=true;state.activeLayer='floor';syncActiveLayer();setTool('wand');
+    $('#splitGuidePanel').classList.add('active');$('#splitModeStatus').textContent='선택 중';$('#startSplitButton').classList.add('hidden');$('#finishSplitButton').classList.remove('hidden');
+    toast('맵에서 오브젝트나 윗배경으로 옮길 부분을 클릭하세요.');
+  }
+  function finishLayerSplit(){
+    state.splitMode=false;clearSelection();setTool('brush');
+    $('#splitGuidePanel').classList.remove('active');$('#splitModeStatus').textContent='대기';$('#startSplitButton').classList.remove('hidden');$('#finishSplitButton').classList.add('hidden');
+    toast('레이어 분리를 마쳤습니다.');
   }
   function transferSelection(targetKey) {
     if(!state.selection)return;pushHistory();const source=state.layers[state.selectionSource],target=state.layers[targetKey],w=source.width,h=source.height,mask=makeLayer(w,h),mctx=mask.getContext('2d'),mi=mctx.createImageData(w,h);
     for(let i=0;i<state.selection.length;i++)if(state.selection[i])mi.data[i*4+3]=255;mctx.putImageData(mi,0,0);
     const temp=makeLayer(w,h),tctx=temp.getContext('2d');tctx.drawImage(source,0,0);tctx.globalCompositeOperation='destination-in';tctx.drawImage(mask,0,0);target.getContext('2d').drawImage(temp,0,0);
     if($('#cutSource').checked){const sctx=source.getContext('2d');sctx.save();sctx.globalCompositeOperation='destination-out';sctx.drawImage(mask,0,0);sctx.restore();}
-    clearSelection();state.activeLayer=targetKey;syncActiveLayer();changed();toast(`${layerMeta[targetKey].name} 레이어로 옮겼습니다.`);
+    clearSelection();state.activeLayer=state.splitMode?'floor':targetKey;syncActiveLayer();if(state.splitMode)$('#splitModeStatus').textContent='다음 영역 선택';changed();toast(`${layerMeta[targetKey].name} 레이어로 옮겼습니다.${state.splitMode?' 다음 영역을 클릭하세요.':''}`);
   }
   function clearSelection(){state.selection=null;$('#selectionPanel').classList.add('hidden');render();}
   function setColor(hex){state.color=hex.toLowerCase();$('#colorInput').value=state.color;$('#colorText').value=state.color.toUpperCase();$('#colorSwatch').style.background=state.color;}
@@ -267,7 +287,7 @@
     toggleAIResult(false);
     toast('생성 결과를 삭제했습니다.');
   }
-  async function applyAIMap(){if(!state.aiResult)return;const img=await imageFromURL(state.aiResult);setWorkspace('map');state.activeLayer='floor';syncActiveLayer();pushHistory();const target=state.layers.floor,c=target.getContext('2d'),scale=Math.max(target.width/img.width,target.height/img.height),w=img.width*scale,h=img.height*scale;c.clearRect(0,0,target.width,target.height);c.drawImage(img,(target.width-w)/2,(target.height-h)/2,w,h);state.hasContent=true;changed();$('#aiDialog').close();toast('AI 맵을 바닥 레이어로 가져왔습니다.');}
+  async function applyAIMap(){if(!state.aiResult)return;const img=await imageFromURL(state.aiResult);setWorkspace('map');state.activeLayer='floor';syncActiveLayer();pushHistory();const target=state.layers.floor,c=target.getContext('2d'),scale=Math.max(target.width/img.width,target.height/img.height),w=img.width*scale,h=img.height*scale;c.clearRect(0,0,target.width,target.height);c.drawImage(img,(target.width-w)/2,(target.height-h)/2,w,h);state.hasContent=true;changed();$('#aiDialog').close();startLayerSplit();}
   async function applyAIObject(){if(!state.aiResult)return;const img=await imageFromURL(state.aiResult),temp=makeLayer(512,512),tc=temp.getContext('2d');tc.drawImage(img,0,0,512,512);removeConnectedBackground(temp);const cropped=cropTransparent(temp,12);setupObject(cropped.width,cropped.height);state.objectCanvas.getContext('2d').drawImage(cropped,0,0);$('#objectName').value=$('#aiPrompt').value.trim().slice(0,40)||'AI 오브젝트';setWorkspace('object');changed();$('#aiDialog').close();toast('배경을 제거해 오브젝트 공방으로 가져왔습니다.');}
   function removeConnectedBackground(c){const x=c.getContext('2d',{willReadFrequently:true}),img=x.getImageData(0,0,c.width,c.height),d=img.data,w=c.width,h=c.height,corners=[[0,0],[w-1,0],[0,h-1],[w-1,h-1]].map(([cx,cy])=>{const p=(cy*w+cx)*4;return[d[p],d[p+1],d[p+2]];}),seen=new Uint8Array(w*h),queue=[];for(let px=0;px<w;px++){queue.push(px,0,px,h-1);}for(let py=1;py<h-1;py++){queue.push(0,py,w-1,py);}let head=0;while(head<queue.length){const px=queue[head++],py=queue[head++],i=py*w+px;if(px<0||py<0||px>=w||py>=h||seen[i])continue;seen[i]=1;const p=i*4,rgb=[d[p],d[p+1],d[p+2],d[p+3]],distance=Math.min(...corners.map(v=>Math.max(Math.abs(rgb[0]-v[0]),Math.abs(rgb[1]-v[1]),Math.abs(rgb[2]-v[2]))));if(distance>82)continue;d[p+3]=0;queue.push(px+1,py,px-1,py,px,py+1,px,py-1);}x.putImageData(img,0,0);}
   function cropTransparent(source,padding=8){const x=source.getContext('2d',{willReadFrequently:true}),d=x.getImageData(0,0,source.width,source.height).data;let minX=source.width,minY=source.height,maxX=-1,maxY=-1;for(let y=0;y<source.height;y++)for(let px=0;px<source.width;px++)if(d[(y*source.width+px)*4+3]>12){minX=Math.min(minX,px);minY=Math.min(minY,y);maxX=Math.max(maxX,px);maxY=Math.max(maxY,y);}if(maxX<0)return makeLayer(96,96);minX=Math.max(0,minX-padding);minY=Math.max(0,minY-padding);maxX=Math.min(source.width-1,maxX+padding);maxY=Math.min(source.height-1,maxY+padding);const rawW=maxX-minX+1,rawH=maxY-minY+1,scale=Math.min(1,256/Math.max(rawW,rawH)),w=Math.max(8,Math.ceil(rawW*scale/8)*8),h=Math.max(8,Math.ceil(rawH*scale/8)*8),out=makeLayer(w,h);out.getContext('2d').drawImage(source,minX,minY,rawW,rawH,0,0,w,h);return out;}
@@ -290,7 +310,7 @@
     $('#mapImageInput').addEventListener('change',e=>{loadImageFile(e.target.files[0],state.layers[state.activeLayer]);e.target.value='';});
     $('#objectImageInput').addEventListener('change',e=>{loadImageFile(e.target.files[0],state.objectCanvas);e.target.value='';});
     $('#quickUploadButton').addEventListener('click',()=>$('#mapImageInput').click());
-    $$('[data-selection-target]').forEach(b=>b.addEventListener('click',()=>transferSelection(b.dataset.selectionTarget)));$('#clearSelectionButton').addEventListener('click',clearSelection);
+    $$('[data-selection-target]').forEach(b=>b.addEventListener('click',()=>transferSelection(b.dataset.selectionTarget)));$('#clearSelectionButton').addEventListener('click',clearSelection);$('#growSelectionButton').addEventListener('click',growSelection);$('#startSplitButton').addEventListener('click',startLayerSplit);$('#finishSplitButton').addEventListener('click',finishLayerSplit);
     $('#gridToggle').addEventListener('change',e=>{state.grid=e.target.checked;render();});$('#tileSize').addEventListener('change',e=>{state.tileSize=+e.target.value;render();scheduleSave();});
     $('#zoomInButton').addEventListener('click',()=>{state.zoom=Math.min(4,state.zoom+.25);render();});$('#zoomOutButton').addEventListener('click',()=>{state.zoom=Math.max(.25,state.zoom-.25);render();});$('#fitButton').addEventListener('click',()=>{state.zoom=1;render();});
     $('#undoButton').addEventListener('click',undo);$('#redoButton').addEventListener('click',redo);
