@@ -239,6 +239,24 @@
               </select>
             </label>
           </div>
+          <div class="ai-fields ai-view-fields">
+            <label>맵·오브젝트 시점
+              <select id="aiView">
+                <option value="topdown">항공뷰 90°</option>
+                <option value="diagonal">대각선 탑다운뷰</option>
+                <option value="isometric">아이소메트릭 2:1</option>
+                <option value="oblique">낮은 대각선 RPG뷰</option>
+              </select>
+            </label>
+            <label id="aiDirectionLabel">맵 방향
+              <select id="aiDirection">
+                <option value="auto">자동 구성</option>
+                <option value="south">정문이 아래쪽</option>
+                <option value="southwest">정문이 왼쪽 아래</option>
+                <option value="southeast">정문이 오른쪽 아래</option>
+              </select>
+            </label>
+          </div>
           <label class="ai-prompt-label">무엇을 만들까요?
             <textarea id="aiPrompt" rows="6" maxlength="700" placeholder="예: 중앙에 3층 학교 건물, 오른쪽에는 생태 연못, 왼쪽에는 숲길이 있고 길이 모두 연결된 학교 맵"></textarea>
           </label>

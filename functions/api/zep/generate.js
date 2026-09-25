@@ -50,11 +50,13 @@ export async function onRequest(context) {
   const prompt = String(body.prompt || "").trim().slice(0, 700);
   const scene = String(body.scene || "custom").trim().slice(0, 40);
   const season = String(body.season || "bright-day").trim().slice(0, 40);
+  const view = String(body.view || "topdown").trim().slice(0, 30);
+  const direction = String(body.direction || "auto").trim().slice(0, 30);
   if (prompt.length < 3) {
     return Response.json({ ok: false, code: "PROMPT_REQUIRED", message: "만들고 싶은 장면을 세 글자 이상 적어 주세요." }, { status: 400, headers });
   }
 
-  const finalPrompt = buildPrompt({ kind, prompt, scene, season });
+  const finalPrompt = buildPrompt({ kind, prompt, scene, season, view, direction });
   try {
     const result = await env.AI.run(MODEL, { prompt: finalPrompt, steps: 4 });
     const image = await normalizeImage(result);
@@ -71,7 +73,7 @@ export async function onRequest(context) {
   }
 }
 
-function buildPrompt({ kind, prompt, scene, season }) {
+function buildPrompt({ kind, prompt, scene, season, view, direction }) {
   const scenes = {
     school: "a Korean school campus with classrooms, gym, athletic field, garden and connected walking paths",
     forest: "an ecology park with forest trails, stream, pond, meadow and observation areas",
@@ -89,12 +91,34 @@ function buildPrompt({ kind, prompt, scene, season }) {
     winter: "gentle snowy winter",
     night: "cozy moonlit night with readable paths"
   };
+  const views = {
+    topdown: "true 90-degree overhead orthographic view looking straight down, flat square tile grid",
+    diagonal: "high diagonal three-quarter top-down view, about 55 degrees above the ground, square-grid RPG perspective",
+    isometric: "classic 2:1 isometric orthographic view with 30-degree diamond-grid axes, no vanishing point",
+    oblique: "lower elevated oblique RPG view, about 35 degrees above the ground, showing fronts and roofs clearly"
+  };
+  const mapDirections = {
+    auto: "choose the clearest orientation for the layout",
+    south: "orient the main entrance toward the bottom center of the image",
+    southwest: "orient the main entrance toward the lower-left corner",
+    southeast: "orient the main entrance toward the lower-right corner"
+  };
+  const objectDirections = {
+    auto: "choose the most recognizable facing direction",
+    front: "show the front face toward the viewer",
+    "front-left": "show the front and left side equally",
+    "front-right": "show the front and right side equally",
+    left: "show the left side profile",
+    right: "show the right side profile",
+    back: "show the rear face away from the viewer"
+  };
   const common = "Original artwork only. No text, no letters, no numbers, no logos, no watermark, no characters, no UI frame.";
   if (kind === "object") {
     return [
       "Create one isolated game object for a ZEP-style map asset.",
       `Object requested by the user: ${prompt}.`,
-      "Strict top-down or three-quarter top-down pixel art, centered, complete object fully visible, crisp edges, consistent game sprite lighting.",
+      `Camera geometry: ${views[view] || views.topdown}. Facing direction: ${objectDirections[direction] || objectDirections.auto}.`,
+      "Centered original pixel-art game asset, complete object fully visible, crisp edges, consistent game sprite lighting. The geometry and camera angle must strictly match the requested view so it can be placed on a map generated with the same view setting.",
       "Place the object on a flat, perfectly uniform vivid magenta background (#ff00ff), with no floor, no scenery, no border and minimal shadow so the background can be removed automatically.",
       moods[season] || moods["bright-day"], common
     ].join(" ");
@@ -103,7 +127,8 @@ function buildPrompt({ kind, prompt, scene, season }) {
     "Create a complete map background for a ZEP-style 2D social game.",
     scenes[scene] || scenes.custom,
     `User request: ${prompt}.`,
-    "Strict orthographic top-down pixel art, coherent 32-pixel tile grid, clear walkable paths, readable building footprints, consistent scale, clean boundaries, no perspective horizon, no cutaway layers.",
+    `Camera geometry: ${views[view] || views.topdown}. Orientation: ${mapDirections[direction] || mapDirections.auto}.`,
+    "Coherent 32-pixel tile grid matching the requested camera geometry, clear walkable paths, readable building footprints, consistent scale, clean boundaries, no perspective horizon, no cutaway layers.",
     "Keep important structures away from the outermost edge. Make the whole composition useful as a playable map rather than a poster.",
     moods[season] || moods["bright-day"], common
   ].join(" ");
