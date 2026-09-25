@@ -113,8 +113,8 @@ https://developers.kakao.com/tool/debugger — "카카오톡 URL 메타정보 �
 
 | 게임 | 주소 |
 | --- | --- |
-| Bio Marble | `bio-marble.pages.dev` |
-| Bio Marble — 가이드 | `bio-marble.pages.dev/guide` |
+| 생명 마블 | `bio-marble.pages.dev` |
+| 생명 마블 — 가이드 | `bio-marble.pages.dev/guide` |
 | 애니멀 더비 — 교사 (TV) | `wilde-derby.baesisi3648.workers.dev/teacher` |
 | 애니멀 더비 — 학생 (폰) | `wilde-derby.baesisi3648.workers.dev/` |
 | 애니멀 더비 — 가이드 | `wilde-derby.baesisi3648.workers.dev/guide` |
