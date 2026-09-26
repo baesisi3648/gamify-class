@@ -8,9 +8,9 @@
   const preview = $('#previewCanvas');
   const pctx = preview.getContext('2d');
   const layerMeta = {
-    floor: { name: '바닥', sub: '캐릭터 아래', icon: 'F' },
+    floor: { name: '바닥', sub: '바닥·캐릭터 뒤쪽 벽', icon: 'F' },
     object: { name: '오브젝트', sub: '가구·장식', icon: 'O' },
-    top: { name: '윗배경', sub: '캐릭터를 가림', icon: 'T' },
+    top: { name: '윗배경', sub: '캐릭터 앞쪽 벽만', icon: 'T' },
     collision: { name: '충돌 영역', sub: '통과 금지', icon: '!' }
   };
   const state = {
@@ -353,16 +353,22 @@
   }
   function showAILayer(key){if(!state.aiLayers)return;$('#aiResultImage').src=state.aiLayers[key]||state.aiLayers.composite;$$('[data-ai-layer]').forEach(button=>button.classList.toggle('active',button.dataset.aiLayer===key));}
   async function compactAIReference(dataUrl){const img=await imageFromURL(dataUrl),scale=Math.min(1,512/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height)),canvas=makeLayer(Math.round((img.naturalWidth||img.width)*scale),Math.round((img.naturalHeight||img.height)*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.9);}
-  async function createAISeparatedLayers(images){
+  function clipIndoorTopToForeground(canvas){
+    const context=canvas.getContext('2d',{willReadFrequently:true}),image=context.getImageData(0,0,canvas.width,canvas.height),data=image.data,w=canvas.width,h=canvas.height;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const distance=Math.abs(x/w-.5)*2,cutoff=h*(.3+.34*(1-distance));if(y<cutoff)data[(y*w+x)*4+3]=0;}
+    context.putImageData(image,0,0);
+  }
+  async function createAISeparatedLayers(images,prompt){
     const floorImage=await imageFromURL(images.floor),width=floorImage.naturalWidth||floorImage.width,height=floorImage.naturalHeight||floorImage.height,canvases={floor:makeLayer(width,height),object:makeLayer(width,height),top:makeLayer(width,height),collision:makeLayer(width,height)};
     canvases.floor.getContext('2d').drawImage(floorImage,0,0,width,height);
     for(const key of ['object','top']){const img=await imageFromURL(images[key]);canvases[key].getContext('2d').drawImage(img,0,0,width,height);removeConnectedBackground(canvases[key]);}
+    if(/내부|실내|연구실|실험실|과학실|교실|도서관|laboratory|classroom|interior|indoor|library|lab\b/i.test(prompt))clipIndoorTopToForeground(canvases.top);
     return finishLayerCanvases(canvases);
   }
   async function requestAISeparatedLayers(reference,prompt){
     const res=await fetch('/api/zep/generate',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({operation:'split',kind:'map',prompt,scene:$('#aiScene').value,season:$('#aiSeason').value,view:$('#aiView').value,direction:$('#aiDirection').value,reference:await compactAIReference(reference),accessCode:$('#aiAccessCode').value})}),data=await res.json().catch(()=>({}));
     if(!res.ok||!data.layers)throw new Error(data.message||'자동 레이어 분리에 실패했습니다.');
-    return createAISeparatedLayers(data.layers);
+    return createAISeparatedLayers(data.layers,prompt);
   }
   async function generateAI(){const prompt=$('#aiPrompt').value.trim();if(prompt.length<3)return toast('만들고 싶은 장면을 조금 더 자세히 적어 주세요.');const usage=todayAICount();if(usage.count>=20)return toast('이 브라우저의 오늘 생성 횟수 20회를 모두 사용했습니다.');const button=$('#aiGenerateButton'),loading=$('#aiLoading'),loadingMessage=$('#aiLoading span'),placeholder=$('#aiPlaceholder'),image=$('#aiResultImage'),qualityMap=state.aiKind==='map'&&$('#aiMapMode').value==='quality';button.disabled=true;loading.hidden=false;loadingMessage.textContent='먼저 완성된 전체 맵을 만들고 있습니다.';placeholder.hidden=true;image.hidden=true;state.aiResult=null;state.aiResultKind=null;state.aiLayers=null;$('#aiLayerTabs').hidden=true;$('#aiLayerDownloads').hidden=true;toggleAIResult(false);try{const res=await fetch('/api/zep/generate',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({kind:state.aiKind,mapMode:$('#aiMapMode').value,prompt,scene:$('#aiScene').value,season:$('#aiSeason').value,view:$('#aiView').value,direction:$('#aiDirection').value,accessCode:$('#aiAccessCode').value})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.message||'결과를 만들지 못했습니다.');if(data.type==='layered-map'&&data.plan){state.aiLayers=await createLayeredMap(data.plan);state.aiResult=state.aiLayers.composite;state.aiResultKind='map';$('#aiLayerTabs').hidden=false;$('#aiLayerDownloads').hidden=false;showAILayer('composite');}else if(data.image){state.aiResult=data.image;state.aiResultKind=state.aiKind;if(qualityMap){loadingMessage.textContent='같은 구도로 바닥·오브젝트·윗배경을 각각 만드는 중입니다.';try{state.aiLayers=await requestAISeparatedLayers(data.image,prompt);state.aiResult=state.aiLayers.composite;$('#aiLayerTabs').hidden=false;$('#aiLayerDownloads').hidden=false;showAILayer('composite');}catch(splitError){image.src=data.image;toast(`${splitError.message} 전체 맵은 정상 생성되었습니다.`);}}else image.src=data.image;}else throw new Error('생성 결과가 비어 있습니다.');image.hidden=false;if(usage.key)localStorage.setItem(usage.key,String(usage.count+1));toggleAIResult(true);if(state.aiLayers)toast('바닥·오브젝트·윗배경이 각각 생성되었습니다.');else if(!qualityMap)toast('고품질 AI 이미지가 완성되었습니다.');}catch(error){placeholder.hidden=false;placeholder.innerHTML=`<span>!</span><b>생성하지 못했습니다</b><small>${String(error.message||error)}</small>`;toast(String(error.message||error));}finally{loading.hidden=true;loadingMessage.textContent='보통 수 초에서 수십 초가 걸립니다.';button.disabled=false;}}
   function toggleAIResult(enabled){const map=state.aiResultKind==='map',object=state.aiResultKind==='object';$('#applyAIMapButton').disabled=!enabled||!map;$('#applyAIMapButton').textContent=state.aiLayers?'분리 레이어 가져오기':'편집실로 가져와 분리';$('#applyAIObjectButton').disabled=!enabled||!object;$('#downloadAIButton').disabled=!enabled;$('#deleteAIResultButton').disabled=!enabled;}
