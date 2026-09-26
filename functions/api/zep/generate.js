@@ -57,11 +57,20 @@ export async function onRequest(context) {
   const view = String(body.view || "topdown").trim().slice(0, 30);
   const direction = String(body.direction || "auto").trim().slice(0, 30);
   const mapMode = body.mapMode === "layered" ? "layered" : "quality";
+  const operation = body.operation === "split" ? "split" : "generate";
   if (prompt.length < 3) {
     return Response.json({ ok: false, code: "PROMPT_REQUIRED", message: "만들고 싶은 장면을 세 글자 이상 적어 주세요." }, { status: 400, headers });
   }
 
   try {
+    if (kind === "map" && operation === "split") {
+      const reference = String(body.reference || "");
+      if (!/^data:image\/(?:jpeg|png|webp);base64,/i.test(reference) || reference.length > 1600000) {
+        return Response.json({ ok: false, code: "REFERENCE_REQUIRED", message: "레이어 분리에 사용할 기준 이미지를 읽을 수 없습니다." }, { status: 400, headers });
+      }
+      const layers = await generateSeparatedLayers(env.AI, reference, { prompt, scene, season, view, direction });
+      return Response.json({ ok: true, kind, type: "ai-separated-layers", layers, model: MODEL }, { headers });
+    }
     if (kind === "map" && mapMode === "layered") {
       const contextText = `${prompt} ${scene}`;
       const indoor = /내부|실내|연구실|실험실|교실|과학실|도서관|laboratory|classroom|interior|indoor|library|lab\b/i.test(contextText);
@@ -81,6 +90,48 @@ export async function onRequest(context) {
       message: quota ? "오늘의 무료 AI 생성 한도에 도달했거나 모델이 잠시 혼잡합니다." : "이미지를 만들지 못했습니다. 잠시 후 다시 시도해 주세요."
     }, { status: quota ? 429 : 502, headers });
   }
+}
+
+async function generateSeparatedLayers(ai, reference, request) {
+  const camera = `The canvas, crop, camera, perspective, scale and coordinates must exactly match reference image 0. Requested view: ${request.view}.`;
+  const shared = `Reference image 0 is a finished ZEP-style game map for: ${request.prompt}. ${camera} Do not redesign, rotate, resize, move or duplicate anything. No text, labels, logos, characters or UI.`;
+  const floorPrompt = `${shared} Create the FLOOR LAYER only. Remove every movable object, furniture item, laboratory instrument, plant, cabinet and foreground wall. Reconstruct the empty floor or ground underneath them seamlessly. Keep only continuous walkable terrain, floor tiles, paths and non-occluding ground markings. Output a complete 1024x768 image, edge to edge.`;
+  const objectPrompt = `${shared} Create the OBJECT LAYER only. Preserve every movable furniture item, laboratory bench, sink, microscope, cabinet, appliance, plant and small prop at the exact pixel position and size from image 0. Remove the floor, terrain, room walls, windows, doors, ceilings and background. Put all retained objects on one perfectly uniform vivid magenta background #ff00ff. No shadows extending onto the background.`;
+  const topPrompt = `${shared} Create the UPPER FOREGROUND LAYER only: retain perimeter walls, window frames, door frames, roofs, canopies and tall foreground structures that should visually cover a walking avatar. Keep their exact pixel positions and sizes from image 0. Remove all floor, terrain, furniture, equipment, plants and small props. Put the retained structures on one perfectly uniform vivid magenta background #ff00ff. No shadows extending onto the background.`;
+  const [floor, object, top] = await Promise.all([
+    generateReferenceImage(ai, floorPrompt, reference),
+    generateReferenceImage(ai, objectPrompt, reference),
+    generateReferenceImage(ai, topPrompt, reference)
+  ]);
+  return { floor, object, top };
+}
+
+async function generateReferenceImage(ai, prompt, reference) {
+  const form = new FormData();
+  form.append("prompt", prompt);
+  form.append("width", "1024");
+  form.append("height", "768");
+  form.append("guidance", "6");
+  form.append("input_image_0", dataUrlToBlob(reference), "reference.jpg");
+  const serialized = new Response(form);
+  const result = await ai.run(MODEL, {
+    multipart: {
+      body: serialized.body,
+      contentType: serialized.headers.get("content-type")
+    }
+  });
+  const image = await normalizeImage(result);
+  if (!image) throw new Error("EMPTY_LAYER_IMAGE");
+  return image;
+}
+
+function dataUrlToBlob(dataUrl) {
+  const [header, encoded] = dataUrl.split(",", 2);
+  const mime = header.match(/^data:([^;]+)/i)?.[1] || "image/jpeg";
+  const binary = atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
 }
 
 async function generateImage(ai, prompt) {

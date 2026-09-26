@@ -274,7 +274,7 @@
           </div>
           <label class="ai-prompt-label" id="aiMapModeLabel">생성 방식
             <select id="aiMapMode">
-              <option value="quality" selected>고품질 AI 맵 — 추천</option>
+              <option value="quality" selected>고품질 3레이어 AI 맵 — 추천</option>
               <option value="layered">자동 분리 타일 맵 — 실험 기능</option>
             </select>
           </label>
@@ -292,11 +292,11 @@
           </details>
           <div class="ai-status" id="aiStatus"><i></i><span>AI 서버 연결을 확인하고 있습니다.</span></div>
           <button class="button primary full ai-generate" id="aiGenerateButton" type="button"><span>✦</span> 이미지 생성</button>
-          <p class="ai-note">생성 결과는 자동 저장되지 않습니다. 마음에 들면 편집실로 가져오세요.</p>
+          <p class="ai-note">전체 맵을 만든 뒤 같은 구도로 3개 레이어를 생성하므로 약 1분 정도 걸릴 수 있습니다.</p>
         </div>
         <div class="ai-result">
           <div class="ai-result-stage" id="aiResultStage">
-            <div class="ai-placeholder" id="aiPlaceholder"><span>✦</span><b>생성된 결과가 여기에 나타납니다</b><small>추천 모드는 먼저 완성도 높은 맵을 만들고, 편집실에서 필요한 부분만 레이어로 나눕니다.</small></div>
+            <div class="ai-placeholder" id="aiPlaceholder"><span>✦</span><b>생성된 결과가 여기에 나타납니다</b><small>추천 모드는 같은 설계를 바탕으로 바닥·오브젝트·윗배경을 각각 생성합니다.</small></div>
             <img id="aiResultImage" alt="AI가 생성한 ZEP용 이미지" hidden />
             <div class="ai-loading" id="aiLoading" hidden><i></i><b>ZEP용 이미지를 만드는 중…</b><span>보통 수 초에서 수십 초가 걸립니다.</span></div>
           </div>
@@ -319,7 +319,7 @@
             <button class="button ghost" id="downloadAIButton" type="button" disabled>원본 저장</button>
             <button class="button ghost ai-delete-result" id="deleteAIResultButton" type="button" disabled>결과 삭제</button>
           </div>
-          <p class="ai-result-help">고품질 맵은 편집실에서 선택한 부분을 오브젝트·윗배경으로 옮길 수 있습니다. 자동 분리 타일 맵은 빠른 시제품용 실험 기능입니다.</p>
+          <p class="ai-result-help">전체와 각 레이어를 따로 확인하고 PNG로 저장할 수 있습니다. 자동 분리에 실패한 경우에는 전체 맵을 편집실에서 수동 분리할 수 있습니다.</p>
         </div>
       </div>
     </div>
