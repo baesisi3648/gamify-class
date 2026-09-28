@@ -78,7 +78,16 @@ export async function onRequest(context) {
       const plan = await generateLayerPlan(env.AI, { prompt, scene, season, view, direction, environment: indoor ? "indoor" : "outdoor", spaceType });
       return Response.json({ ok: true, kind, type: "layered-map", plan, model: PLAN_MODEL }, { headers });
     }
-    const finalPrompt = buildPrompt({ kind, prompt, scene, season, view, direction });
+    const indoor = kind === "map" && isIndoorRequest(`${prompt} ${scene}`);
+    let architectureBrief = "";
+    if (indoor) {
+      try {
+        architectureBrief = await generateIndoorArchitectureBrief(env.AI, { prompt, scene });
+      } catch {
+        architectureBrief = fallbackIndoorArchitectureBrief(prompt, scene);
+      }
+    }
+    const finalPrompt = buildPrompt({ kind, prompt, scene, season, view, direction, architectureBrief });
     const generated = await generateImage(env.AI, finalPrompt);
     return Response.json({ ok: true, image: generated.image, kind, model: generated.model, degraded: generated.degraded }, { headers });
   } catch (error) {
@@ -157,6 +166,43 @@ async function generateImage(ai, prompt) {
   }
 }
 
+function isIndoorRequest(text) {
+  return /내부|실내|연구실|실험실|과학실|교실|도서관|laboratory|classroom|interior|indoor|library|lab\b/i.test(String(text || ""));
+}
+
+async function generateIndoorArchitectureBrief(ai, request) {
+  const result = await ai.run(PLAN_MODEL, {
+    messages: [
+      {
+        role: "system",
+        content: "Convert the user's room request into a concise architecture-only brief for an EMPTY, UNFURNISHED, open-front isometric game room. Preserve only explicitly requested room type, room shape, wall colors/materials, floor colors/materials/pattern, window count/style/placement, door count/style/placement, architectural lighting, and atmosphere. Exclude and never mention furniture, lab equipment, appliances, cabinets, shelves, desks, chairs, plants, decorations, signs, displays, specimens, or props. Do not invent details the user did not request. Return JSON only with this exact structure: {\"roomType\":\"\",\"shape\":\"\",\"walls\":\"\",\"floor\":\"\",\"windows\":\"\",\"doors\":\"\",\"lighting\":\"\",\"atmosphere\":\"\"}. Every value must be a short English phrase or an empty string."
+      },
+      {
+        role: "user",
+        content: `Room request: ${request.prompt}\nPreset: ${request.scene}`
+      }
+    ],
+    response_format: { type: "json_object" },
+    max_tokens: 500,
+    temperature: 0.1
+  });
+  const raw = result?.response ?? result;
+  const data = typeof raw === "string" ? JSON.parse(raw.replace(/^```json\s*|\s*```$/g, "")) : raw;
+  const labels = { roomType: "room type", shape: "room shape", walls: "wall finish", floor: "floor finish", windows: "windows", doors: "doors", lighting: "architectural lighting", atmosphere: "atmosphere" };
+  const details = Object.entries(labels).map(([key, label]) => {
+    const value = String(data?.[key] || "").replace(/[\r\n]+/g, " ").trim().slice(0, 180);
+    return value ? `${label}: ${value}` : "";
+  }).filter(Boolean);
+  return details.length ? details.join("; ") : fallbackIndoorArchitectureBrief(request.prompt, request.scene);
+}
+
+function fallbackIndoorArchitectureBrief(prompt, scene) {
+  const text = `${prompt} ${scene}`;
+  if (/도서관|library/i.test(text)) return "room type: empty school library shell; wall finish: warm neutral colors; floor finish: quiet warm-toned tile";
+  if (/생명|과학|실험|연구|science|laboratory|lab\b/i.test(text)) return "room type: empty Korean school science classroom shell; wall finish: clean white and pale blue; floor finish: light laboratory-grade tile";
+  return "room type: empty Korean school classroom shell; wall finish: calm neutral colors; floor finish: clean light tile";
+}
+
 async function generateLayerPlan(ai, request) {
   const allowedIndoorObjects = request.spaceType === "library" ? "bookshelf, student-table, teacher-desk, plant" : request.spaceType === "classroom" ? "teacher-desk, student-table, bookshelf, plant" : "lab-bench, sink-bench, growth-chamber, specimen-cabinet, dna-machine, incubator, chemical-cabinet, bookshelf, teacher-desk, student-table, plant, safety-station";
   const indoorGuide = request.environment === "indoor"
@@ -177,7 +223,7 @@ async function generateLayerPlan(ai, request) {
   return plan;
 }
 
-function buildPrompt({ kind, prompt, scene, season, view, direction }) {
+function buildPrompt({ kind, prompt, scene, season, view, direction, architectureBrief = "" }) {
   const scenes = {
     school: "a Korean school campus with classrooms, gym, athletic field, garden and connected walking paths",
     forest: "an ecology park with forest trails, stream, pond, meadow and observation areas",
@@ -227,7 +273,7 @@ function buildPrompt({ kind, prompt, scene, season, view, direction }) {
       moods[season] || moods["bright-day"], common
     ].join(" ");
   }
-  const indoorRequest = /내부|실내|연구실|실험실|과학실|교실|도서관|laboratory|classroom|interior|indoor|library|lab\b/i.test(`${prompt} ${scene}`);
+  const indoorRequest = isIndoorRequest(`${prompt} ${scene}`);
   const indoorPurpose = /도서관|library/i.test(`${prompt} ${scene}`)
     ? "an empty unfurnished school library room shell with warm neutral wall finishes"
     : /생명|과학|실험|연구|science|laboratory|lab\b/i.test(`${prompt} ${scene}`)
@@ -237,6 +283,7 @@ function buildPrompt({ kind, prompt, scene, season, view, direction }) {
     return [
       "Create a completely EMPTY and UNFURNISHED open-front room shell for a ZEP-style 2D social game.",
       `Room identity: ${indoorPurpose}. This identity controls only wall colors and architectural finishes, never room contents.`,
+      architectureBrief ? `User-requested architectural brief: ${architectureBrief}. Follow these architectural details closely without adding any objects.` : "",
       `Camera geometry: ${views[view] || views.topdown}. Orientation: ${mapDirections[direction] || mapDirections.auto}.`,
       "The ONLY visible components are one continuous clean tiled floor and exactly two continuous full-height BACK walls: one along the upper-left edge and one along the upper-right edge.",
       "The two back walls must meet perfectly at one clean central back corner. Both walls must remain structurally continuous from the outer end to that shared corner, with no broken section, black void, missing panel, detached fragment, notch or unexplained opening.",
