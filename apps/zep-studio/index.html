@@ -51,14 +51,33 @@
         <div class="section-title"><h2>빈 방 템플릿 꾸미기</h2><span>무료 · 고정 구조</span></div>
         <label class="template-field">공간 분위기
           <select id="roomPreset">
-            <option value="laboratory" selected>생명과학 연구소</option>
-            <option value="classroom">교실</option>
-            <option value="library">도서관</option>
+            <optgroup label="과학·창작 공간">
+              <option value="laboratory" selected>생명과학 연구소</option>
+              <option value="scienceLab">과학 실험실</option>
+              <option value="computerLab">컴퓨터실</option>
+              <option value="makerRoom">메이커 공방</option>
+              <option value="artRoom">미술실</option>
+              <option value="musicRoom">음악실</option>
+            </optgroup>
+            <optgroup label="학교 생활 공간">
+              <option value="classroom">일반 교실</option>
+              <option value="library">도서관</option>
+              <option value="nurseOffice">보건실</option>
+              <option value="counselingRoom">상담실</option>
+              <option value="broadcastRoom">방송실</option>
+              <option value="cafeteria">급식실</option>
+              <option value="clubRoom">동아리실</option>
+            </optgroup>
+            <optgroup label="테마 공간">
+              <option value="greenhouse">생태 온실</option>
+              <option value="museum">자연사 전시실</option>
+              <option value="spaceLab">우주 관측실</option>
+            </optgroup>
             <option value="custom">직접 선택</option>
           </select>
         </label>
         <div class="template-grid material-selects">
-          <label>벽 재질<select id="roomWallMaterial"><option value="zep-blue-wallpaper" selected>ZEP 블루 다이아 벽지</option><option value="zep-white-wallpaper">ZEP 화이트 무늬 벽지</option><option value="lab-panel">연구소 금속 패널</option><option value="paint">무광 도장벽</option><option value="concrete">노출 콘크리트</option><option value="brick">밝은 벽돌</option><option value="wood">목재 패널</option><option value="glass">청색 유리벽</option></select></label>
+          <label>벽 재질<select id="roomWallMaterial"><option value="zep-blue-wallpaper" selected>ZEP 블루 다이아 벽지</option><option value="zep-white-wallpaper">ZEP 화이트 무늬 벽지</option><option value="zep-mint-wallpaper">ZEP 민트 잎사귀 벽지</option><option value="zep-cream-wallpaper">ZEP 크림 줄무늬 벽지</option><option value="zep-peach-wallpaper">ZEP 피치 꽃무늬 벽지</option><option value="zep-lavender-wallpaper">ZEP 라벤더 별무늬 벽지</option><option value="zep-navy-wallpaper">ZEP 네이비 도트 벽지</option><option value="lab-panel">연구소 금속 패널</option><option value="paint">무광 도장벽</option><option value="concrete">노출 콘크리트</option><option value="brick">밝은 벽돌</option><option value="wood">목재 패널</option><option value="glass">청색 유리벽</option></select></label>
           <label>바닥 재질<select id="roomFloorMaterial"><option value="zep-gray-tile" selected>ZEP 회색 정사각 타일</option><option value="epoxy">연구소 광택 타일</option><option value="light-tile">밝은 대형 타일</option><option value="blue-tile">청회색 타일</option><option value="concrete">연마 콘크리트</option><option value="wood">목재 바닥</option><option value="dark-tile">진회색 타일</option></select></label>
         </div>
         <div class="template-colors">
