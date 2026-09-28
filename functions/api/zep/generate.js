@@ -190,7 +190,19 @@ async function generateIndoorArchitectureBrief(ai, request) {
   if (!json) throw new Error("ARCHITECTURE_BRIEF_EMPTY");
   const data = JSON.parse(json);
   const labels = { roomType: "room type", shape: "room shape", walls: "wall finish", floor: "floor finish", windows: "windows", doors: "doors", lighting: "architectural lighting", atmosphere: "atmosphere" };
+  const source = String(request.prompt || "");
+  const explicitlyRequested = {
+    roomType: true,
+    shape: /형태|모양|구조|직사각|정사각|원형|넓|좁|긴|가로|세로|shape|rectang|square|round|wide|narrow|long/i.test(source),
+    walls: /벽|벽지|벽돌|페인트|색|마감|wall|brick|paint|color|finish/i.test(source),
+    floor: /바닥|타일|마루|콘크리트|카펫|무늬|floor|tile|wood|concrete|carpet|pattern/i.test(source),
+    windows: /창문|창|window/i.test(source),
+    doors: /출입문|출입구|문|door|entrance/i.test(source),
+    lighting: /조명|빛|밝|어두|채광|light|bright|dark/i.test(source),
+    atmosphere: /분위기|느낌|따뜻|차가|포근|미래|고전|mood|atmosphere|warm|cool|futuristic|classic/i.test(source)
+  };
   const details = Object.entries(labels).map(([key, label]) => {
+    if (!explicitlyRequested[key]) return "";
     const value = String(data?.[key] || "").replace(/[\r\n]+/g, " ").trim().slice(0, 180);
     return value ? `${label}: ${value}` : "";
   }).filter(Boolean);
@@ -289,8 +301,8 @@ function buildPrompt({ kind, prompt, scene, season, view, direction, architectur
       architectureBrief ? `MANDATORY USER ARCHITECTURE: ${architectureBrief}. Every non-empty detail in this brief is required and overrides all defaults. Follow exact colors, materials, patterns, counts and wall placements without adding any objects.` : "",
       `Camera geometry: ${views[view] || views.topdown}. Orientation: ${mapDirections[direction] || mapDirections.auto}.`,
       "The ONLY visible components are one broad continuous tiled floor and exactly two LOW CUTAWAY BACK walls: one along the upper-left edge and one along the upper-right edge.",
-      "ZEP MAP PROPORTIONS ARE MANDATORY: use a broad rectangular room footprint about 3:2 in plan, viewed from a high isometric angle. The visible floor must occupy at least 70% of the room artwork and must look much wider and deeper than the walls are tall. Wall height may be only about 20-25% of the visible floor depth. This must look like a wide playable map, never a cube, box, dollhouse or small room diorama.",
-      "Keep the upper wall tops well below the top edge of the canvas and leave generous visible floor space for many walking avatars. Show the complete floor footprint without tight cropping.",
+      "ZEP MAP PROPORTIONS ARE MANDATORY: use a very broad horizontal rectangular room footprint about 2:1 in plan, much longer left-to-right than front-to-back. Use a high orthographic isometric game-map camera about 65 degrees above the floor. The visible floor must occupy at least 75% of the room artwork and must look dramatically wider and deeper than the walls are tall. The projected wall height may occupy no more than 15-18% of the full image height. This must look like a large playable map, never a cube, box, dollhouse or small room diorama.",
+      "Place both wall base lines within the upper 35% of the image. Extend the open floor from those wall bases almost to the bottom edge, leaving generous space for many walking avatars. Keep the upper wall tops well below the top edge and show the complete wide floor footprint without tight cropping.",
       "The two back walls must meet perfectly at one clean central back corner. Both walls must remain structurally continuous from the outer end to that shared corner, with no broken section, black void, missing panel, detached fragment, notch or unexplained opening.",
       "Windows and framed doors may be embedded neatly within the two back walls, but may never interrupt their top trim, base trim, shared corner or structural continuity.",
       "The bottom-left and bottom-right edges facing the viewer are completely OPEN. The floor tiles continue cleanly to those open edges. There is no front wall, near wall, outer wall face, rim, border, railing, curb, parapet, lip, threshold or dark raised band.",
@@ -298,7 +310,7 @@ function buildPrompt({ kind, prompt, scene, season, view, direction, architectur
       "No ceiling, ceiling panel, roof, roof edge, soffit, overhead frame, beam, interior partition, diagonal wall, doubled wall, floating structure, exterior scenery, grass, path, sky, collage, sprite sheet or duplicate room. The entire area above the two low back walls is empty background.",
       "Professional polished 2D pixel-art game environment foundation, cohesive lighting, consistent scale, clean isometric geometry and coherent tile alignment, with no perspective horizon.",
       moods[season] || moods["bright-day"], common,
-      architectureBrief ? `FINAL CHECK: visibly apply all of these mandatory architectural details: ${architectureBrief}. Keep the room empty, with a large 3:2 floor occupying at least 70% of the room, two low intact back walls, no ceiling, zero front walls, zero furniture and zero objects.` : "FINAL CHECK: large 3:2 floor occupying at least 70% of the room, two low intact back walls, no ceiling, zero front walls, zero furniture and zero objects."
+      architectureBrief ? `FINAL CHECK: visibly apply all of these mandatory architectural details: ${architectureBrief}. Keep the room empty, with a wide 2:1 floor occupying at least 75% of the room, two very low intact back walls, no ceiling, zero front walls, zero furniture and zero objects.` : "FINAL CHECK: wide 2:1 floor occupying at least 75% of the room, two very low intact back walls, no ceiling, zero front walls, zero furniture and zero objects."
     ].join(" ");
   }
   const environmentRules = "This is an EMPTY outdoor environment foundation map. Keep only terrain, paths, water and permanent building architecture on one consistent tile grid with plausible spacing and clear walkable routes. ABSOLUTELY NO trees, plants, benches, signs, lamps, rocks, vehicles, furniture, decorations, equipment, props or other freestanding objects, even if the user mentions them.";
