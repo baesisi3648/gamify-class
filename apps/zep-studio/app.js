@@ -353,9 +353,24 @@
   }
   function showAILayer(key){if(!state.aiLayers)return;$('#aiResultImage').src=state.aiLayers[key]||state.aiLayers.composite;$$('[data-ai-layer]').forEach(button=>button.classList.toggle('active',button.dataset.aiLayer===key));}
   async function compactAIReference(dataUrl){const img=await imageFromURL(dataUrl),scale=Math.min(1,512/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height)),canvas=makeLayer(Math.round((img.naturalWidth||img.width)*scale),Math.round((img.naturalHeight||img.height)*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.9);}
+  function detectIndoorForegroundBoundary(data,w,h){
+    const raw=new Float32Array(w);
+    for(let x=0;x<w;x++){
+      const distance=Math.abs(x/(w-1)-.5)*2,expected=h*(.46+.37*(1-distance)),radius=Math.max(8,Math.round(h*.018));
+      let bestY=Math.round(expected),bestScore=Infinity,bestLuma=255;
+      for(let y=Math.max(0,Math.round(expected-radius));y<=Math.min(h-1,Math.round(expected+radius));y++){
+        const p=(y*w+x)*4,r=data[p],g=data[p+1],b=data[p+2],luma=.2126*r+.7152*g+.0722*b,score=luma+Math.abs(y-expected)*4;
+        if(score<bestScore){bestScore=score;bestY=y;bestLuma=luma;}
+      }
+      raw[x]=bestLuma<185?bestY:expected;
+    }
+    const smooth=new Float32Array(w),window=9;
+    for(let x=0;x<w;x++){const values=[];for(let offset=-window;offset<=window;offset++){const nx=Math.max(0,Math.min(w-1,x+offset));values.push(raw[nx]);}values.sort((a,b)=>a-b);smooth[x]=values[Math.floor(values.length/2)];}
+    return smooth;
+  }
   function clipIndoorTopToForeground(canvas){
-    const context=canvas.getContext('2d',{willReadFrequently:true}),image=context.getImageData(0,0,canvas.width,canvas.height),data=image.data,w=canvas.width,h=canvas.height;
-    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const distance=Math.abs(x/w-.5)*2,cutoff=h*(.34+.49*(1-distance));if(y<cutoff)data[(y*w+x)*4+3]=0;}
+    const context=canvas.getContext('2d',{willReadFrequently:true}),image=context.getImageData(0,0,canvas.width,canvas.height),data=image.data,w=canvas.width,h=canvas.height,boundary=detectIndoorForegroundBoundary(data,w,h);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(y<boundary[x])data[(y*w+x)*4+3]=0;
     context.putImageData(image,0,0);
   }
   function eraseLayerUnderMask(layer,mask,spread=24){
