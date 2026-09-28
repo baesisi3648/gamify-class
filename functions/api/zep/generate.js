@@ -138,7 +138,7 @@ async function generateImage(ai, prompt) {
     form.append("prompt", prompt);
     form.append("width", "1024");
     form.append("height", "768");
-    form.append("guidance", "4.5");
+    form.append("guidance", "7");
     const serialized = new Response(form);
     const result = await ai.run(MODEL, {
       multipart: {
@@ -228,9 +228,28 @@ function buildPrompt({ kind, prompt, scene, season, view, direction }) {
     ].join(" ");
   }
   const indoorRequest = /내부|실내|연구실|실험실|과학실|교실|도서관|laboratory|classroom|interior|indoor|library|lab\b/i.test(`${prompt} ${scene}`);
-  const environmentRules = indoorRequest
-    ? "This is strictly an EMPTY indoor open-front cutaway room map, not a furnished room and not a campus exterior. Generate one continuous walkable floor and ONLY the two FAR/BACK walls on the upper-left and upper-right boundaries, with structurally valid doors and windows on those back walls. The bottom-left and bottom-right sides facing the viewer must be completely OPEN: never draw a near wall, front wall, outer wall face, rim, border, railing, curb, parapet, lip, threshold or dark raised band there. The floor tiles must continue cleanly to both open lower edges. Never draw a ceiling, roof, overhead frame, unsupported beam, floating wall, interior partition, diagonal wall crossing the floor, doubled wall, or impossible intersecting architecture. ABSOLUTELY NO furniture, laboratory benches, sinks, microscopes, cabinets, appliances, tables, chairs, plants, equipment, decorations, props or loose objects, even if the user mentions them. Do not show grass, outdoor paths, exterior buildings, sky, gardens, isolated sprite sheets or duplicate rooms."
-    : "This is an EMPTY outdoor environment foundation map. Keep only terrain, paths, water and permanent building architecture on one consistent tile grid with plausible spacing and clear walkable routes. ABSOLUTELY NO trees, plants, benches, signs, lamps, rocks, vehicles, furniture, decorations, equipment, props or other freestanding objects, even if the user mentions them.";
+  const indoorPurpose = /도서관|library/i.test(`${prompt} ${scene}`)
+    ? "an empty unfurnished school library room shell with warm neutral wall finishes"
+    : /생명|과학|실험|연구|science|laboratory|lab\b/i.test(`${prompt} ${scene}`)
+      ? "an empty unfurnished Korean school science classroom shell with clean white and pale blue architectural finishes"
+      : "an empty unfurnished Korean school classroom shell with calm neutral architectural finishes";
+  if (indoorRequest) {
+    return [
+      "Create a completely EMPTY and UNFURNISHED open-front room shell for a ZEP-style 2D social game.",
+      `Room identity: ${indoorPurpose}. This identity controls only wall colors and architectural finishes, never room contents.`,
+      `Camera geometry: ${views[view] || views.topdown}. Orientation: ${mapDirections[direction] || mapDirections.auto}.`,
+      "The ONLY visible components are one continuous clean tiled floor and exactly two continuous full-height BACK walls: one along the upper-left edge and one along the upper-right edge.",
+      "The two back walls must meet perfectly at one clean central back corner. Both walls must remain structurally continuous from the outer end to that shared corner, with no broken section, black void, missing panel, detached fragment, notch or unexplained opening.",
+      "Windows and framed doors may be embedded neatly within the two back walls, but may never interrupt their top trim, base trim, shared corner or structural continuity.",
+      "The bottom-left and bottom-right edges facing the viewer are completely OPEN. The floor tiles continue cleanly to those open edges. There is no front wall, near wall, outer wall face, rim, border, railing, curb, parapet, lip, threshold or dark raised band.",
+      "No furniture and no freestanding objects of any kind: no laboratory benches, sinks, microscopes, cabinets, shelves, appliances, tables, chairs, plants, equipment, decorations, signs, displays, props or loose items.",
+      "No ceiling, roof, overhead frame, beam, interior partition, diagonal wall, doubled wall, floating structure, exterior scenery, grass, path, sky, collage, sprite sheet or duplicate room.",
+      "Professional polished 2D pixel-art game environment foundation, cohesive lighting, crisp 32-pixel tile grid, consistent scale, clean isometric geometry, no perspective horizon.",
+      moods[season] || moods["bright-day"], common,
+      "FINAL CHECK: empty floor, two intact back walls, zero front walls, zero furniture, zero objects."
+    ].join(" ");
+  }
+  const environmentRules = "This is an EMPTY outdoor environment foundation map. Keep only terrain, paths, water and permanent building architecture on one consistent tile grid with plausible spacing and clear walkable routes. ABSOLUTELY NO trees, plants, benches, signs, lamps, rocks, vehicles, furniture, decorations, equipment, props or other freestanding objects, even if the user mentions them.";
   return [
     "Create a complete map background for a ZEP-style 2D social game.",
     scenes[scene] || scenes.custom,
