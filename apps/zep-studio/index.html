@@ -274,7 +274,7 @@
           </div>
           <label class="ai-prompt-label" id="aiMapModeLabel">생성 방식
             <select id="aiMapMode">
-              <option value="quality" selected>빈 맵 바닥·윗배경 분리 — 추천</option>
+              <option value="quality" selected>앞면이 열린 빈 실내 맵 — 추천</option>
               <option value="layered">자동 분리 타일 맵 — 실험 기능</option>
             </select>
           </label>
@@ -296,7 +296,7 @@
         </div>
         <div class="ai-result">
           <div class="ai-result-stage" id="aiResultStage">
-            <div class="ai-placeholder" id="aiPlaceholder"><span>✦</span><b>생성된 결과가 여기에 나타납니다</b><small>오브젝트 없는 빈 공간을 만들고 바닥과 캐릭터 앞쪽 윗배경을 나눕니다.</small></div>
+            <div class="ai-placeholder" id="aiPlaceholder"><span>✦</span><b>생성된 결과가 여기에 나타납니다</b><small>오브젝트와 아래쪽 앞벽 없이 바닥과 화면 위쪽의 두 벽만 만듭니다.</small></div>
             <img id="aiResultImage" alt="AI가 생성한 ZEP용 이미지" hidden />
             <div class="ai-loading" id="aiLoading" hidden><i></i><b>ZEP용 이미지를 만드는 중…</b><span>보통 수 초에서 수십 초가 걸립니다.</span></div>
           </div>
@@ -319,7 +319,7 @@
             <button class="button ghost" id="downloadAIButton" type="button" disabled>원본 저장</button>
             <button class="button ghost ai-delete-result" id="deleteAIResultButton" type="button" disabled>결과 삭제</button>
           </div>
-          <p class="ai-result-help">바닥에는 이동 가능한 전체 맵이 들어가고, 화면 아래쪽 앞벽은 같은 위치의 윗배경에도 한 번 더 복제됩니다. ZEP에서는 캐릭터가 두 레이어 사이를 지나므로 앞벽 뒤로 자연스럽게 가려집니다.</p>
+          <p class="ai-result-help">실내 맵은 이동 가능한 바닥과 화면 위쪽의 뒤벽 두 개만 생성합니다. 아래쪽 앞벽은 만들지 않으며, 윗배경은 나중에 중간 벽이나 가림 구조가 필요할 때 직접 추가할 수 있습니다.</p>
         </div>
       </div>
     </div>
