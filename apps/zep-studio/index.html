@@ -62,13 +62,13 @@
           <label>바닥 재질<select id="roomFloorMaterial"><option value="zep-gray-tile" selected>ZEP 회색 정사각 타일</option><option value="epoxy">연구소 광택 타일</option><option value="light-tile">밝은 대형 타일</option><option value="blue-tile">청회색 타일</option><option value="concrete">연마 콘크리트</option><option value="wood">목재 바닥</option><option value="dark-tile">진회색 타일</option></select></label>
         </div>
         <div class="template-colors">
-          <label>벽 색<input id="roomWallColor" type="color" value="#e8f3f5" /></label>
-          <label>벽 테두리<input id="roomTrimColor" type="color" value="#547184" /></label>
-          <label>바닥 색<input id="roomFloorColor" type="color" value="#d9e3e6" /></label>
-          <label>타일 선<input id="roomGridColor" type="color" value="#789baa" /></label>
+          <label>벽 색<input id="roomWallColor" type="color" value="#eaf2f6" /></label>
+          <label>벽 테두리<input id="roomTrimColor" type="color" value="#596675" /></label>
+          <label>바닥 색<input id="roomFloorColor" type="color" value="#bfc6c9" /></label>
+          <label>타일 선<input id="roomGridColor" type="color" value="#e9eef0" /></label>
         </div>
         <div class="template-grid">
-          <label>타일 무늬<select id="roomTilePattern"><option value="small">작은 타일</option><option value="medium" selected>중간 타일</option><option value="large">큰 타일</option><option value="lab">연구소 패널</option><option value="none">민무늬</option></select></label>
+          <label>타일 무늬<select id="roomTilePattern"><option value="small">작은 타일</option><option value="medium">중간 타일</option><option value="large" selected>큰 타일</option><option value="lab">연구소 패널</option><option value="none">민무늬</option></select></label>
           <label>창문<select id="roomWindowCount"><option value="0">없음</option><option value="2">2개</option><option value="4" selected>4개</option></select></label>
           <label>출입문<select id="roomDoorSide"><option value="none">없음</option><option value="left">왼쪽 벽</option><option value="right" selected>오른쪽 벽</option></select></label>
           <label>바닥 비율<select id="roomFloorRatio"><option value="wide" selected>넓게 2:1</option><option value="deep">깊게 3:2</option></select></label>
@@ -76,8 +76,8 @@
         <button class="button full accent" id="createRoomTemplateButton" type="button">빈 방 만들기</button>
         <p class="hint">정확한 바닥과 위쪽 벽 두 개를 자동으로 만든 뒤, 아래 그림판 도구와 오브젝트 공방으로 자유롭게 꾸밀 수 있습니다.</p>
         <div class="wall-planner">
-          <div class="section-title"><h2>6×6 내부 벽 설계</h2><span>항공뷰 → 아이소메트릭</span></div>
-          <canvas id="roomPlanCanvas" width="240" height="240" aria-label="6×6 내부 벽 평면도"></canvas>
+          <div class="section-title"><h2>12×12 내부 벽 설계</h2><span>ZEP 격자 → 아이소메트릭</span></div>
+          <canvas id="roomPlanCanvas" width="288" height="288" aria-label="12×12 내부 벽 평면도"></canvas>
           <div class="button-row wall-plan-tools">
             <button class="button active" id="wallDrawModeButton" type="button">벽 그리기</button>
             <button class="button" id="wallEraseModeButton" type="button">지우개</button>
