@@ -182,12 +182,13 @@ async function generateIndoorArchitectureBrief(ai, request) {
         content: `Room request: ${request.prompt}\nPreset: ${request.scene}`
       }
     ],
-    response_format: { type: "json_object" },
     max_tokens: 500,
     temperature: 0.1
   });
-  const raw = result?.response ?? result;
-  const data = typeof raw === "string" ? JSON.parse(raw.replace(/^```json\s*|\s*```$/g, "")) : raw;
+  const raw = String(result?.response ?? "").trim();
+  const json = raw.match(/\{[\s\S]*\}/)?.[0];
+  if (!json) throw new Error("ARCHITECTURE_BRIEF_EMPTY");
+  const data = JSON.parse(json);
   const labels = { roomType: "room type", shape: "room shape", walls: "wall finish", floor: "floor finish", windows: "windows", doors: "doors", lighting: "architectural lighting", atmosphere: "atmosphere" };
   const details = Object.entries(labels).map(([key, label]) => {
     const value = String(data?.[key] || "").replace(/[\r\n]+/g, " ").trim().slice(0, 180);
@@ -198,9 +199,11 @@ async function generateIndoorArchitectureBrief(ai, request) {
 
 function fallbackIndoorArchitectureBrief(prompt, scene) {
   const text = `${prompt} ${scene}`;
-  if (/도서관|library/i.test(text)) return "room type: empty school library shell; wall finish: warm neutral colors; floor finish: quiet warm-toned tile";
-  if (/생명|과학|실험|연구|science|laboratory|lab\b/i.test(text)) return "room type: empty Korean school science classroom shell; wall finish: clean white and pale blue; floor finish: light laboratory-grade tile";
-  return "room type: empty Korean school classroom shell; wall finish: calm neutral colors; floor finish: clean light tile";
+  const safeRequest = String(prompt || "").split(/[.!?。！？\n]+/).map(part => part.trim()).filter(part => part && !/나중|따로\s*추가|오브젝트|가구|현미경|실험대|책상|의자|수납장|선반|화분|장비|기구|장식|furniture|microscope|bench|desk|chair|cabinet|shelf|plant|equipment|prop/i.test(part)).join("; ").slice(0, 500);
+  const requestDetail = safeRequest ? `; explicit user architecture request: ${safeRequest}` : "";
+  if (/도서관|library/i.test(text)) return `room type: empty school library shell${requestDetail}`;
+  if (/생명|과학|실험|연구|science|laboratory|lab\b/i.test(text)) return `room type: empty Korean school science classroom shell${requestDetail}`;
+  return `room type: empty Korean school classroom shell${requestDetail}`;
 }
 
 async function generateLayerPlan(ai, request) {
