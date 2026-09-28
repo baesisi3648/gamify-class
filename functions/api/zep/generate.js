@@ -96,14 +96,12 @@ async function generateSeparatedLayers(ai, reference, request) {
   const camera = `The canvas, crop, camera, perspective, scale and coordinates must exactly match reference image 0. Requested view: ${request.view}.`;
   const shared = `Reference image 0 is a finished ZEP-style game map for: ${request.prompt}. ${camera} Do not redesign, rotate, resize, move or duplicate anything. No text, labels, logos, characters or UI.`;
   const floorPrompt = `${shared} Create the BELOW-AVATAR BASE LAYER only. This is a depth split, not a category split. Keep the complete walkable floor and only the FAR/BACK walls located along the upper-left and upper-right edges of the isometric room, because a walking avatar appears in front of those walls. Keep windows and doors only when they belong to those far/back walls. Remove every NEAR/FRONT wall along the bottom-left and bottom-right edges, because those belong exclusively to the upper foreground layer. Remove all furniture, equipment, plants and props, then reconstruct the floor tiles underneath them. Never add a ceiling, roof, beam, floating wall, inner wall crossing the room, or impossible extra structure. Output a complete 1024x768 image with one structurally coherent open-top room.`;
-  const objectPrompt = `${shared} Create the OBJECT LAYER only. Preserve every movable furniture item, laboratory bench, sink, microscope, freestanding cabinet, appliance, plant and small prop at the exact pixel position and size from image 0. Remove absolutely all floor and terrain plus every continuous perimeter wall, foreground wall, room border, window, door, roof and ceiling. A continuous room boundary must not appear in this layer. Put only the isolated movable objects on one perfectly uniform vivid magenta background #ff00ff. No shadows extending onto the background.`;
   const topPrompt = `${shared} Create the ABOVE-AVATAR FOREGROUND LAYER only. This is a depth split, not a category split. Retain ONLY the two NEAR/FRONT wall segments along the bottom-left and bottom-right edges of the isometric room, including their visible outer faces and trim, because these are the only structures that should cover a walking avatar. Remove every FAR/BACK wall on the upper-left and upper-right edges. Remove the entire floor, all furniture, equipment, plants, props, ceilings, roofs, beams, floating walls and any structure crossing the room interior. The two foreground wall segments must follow the exact room boundary and must never extend diagonally through the walkable floor. Put the retained foreground walls on one perfectly uniform vivid magenta background #ff00ff with no cast shadows.`;
-  const [floor, object, top] = await Promise.all([
+  const [floor, top] = await Promise.all([
     generateReferenceImage(ai, floorPrompt, reference),
-    generateReferenceImage(ai, objectPrompt, reference),
     generateReferenceImage(ai, topPrompt, reference)
   ]);
-  return { floor, object, top };
+  return { floor, top };
 }
 
 async function generateReferenceImage(ai, prompt, reference) {
@@ -231,15 +229,15 @@ function buildPrompt({ kind, prompt, scene, season, view, direction }) {
   }
   const indoorRequest = /내부|실내|연구실|실험실|과학실|교실|도서관|laboratory|classroom|interior|indoor|library|lab\b/i.test(`${prompt} ${scene}`);
   const environmentRules = indoorRequest
-    ? "This is strictly an indoor open-top cutaway room map, not a campus exterior. Use one physically coherent isometric room footprint. The far walls may exist only on the upper-left and upper-right room boundaries; the near foreground walls may exist only on the bottom-left and bottom-right boundaries. Never draw a ceiling, roof, overhead frame, unsupported beam, floating wall, diagonal wall crossing the floor, doubled wall, or impossible intersecting architecture. Put windows only inside a perimeter wall, never floating over furniture. Arrange laboratory benches, sinks, microscopes, storage cabinets and safety equipment on one consistent tile grid, with matching scale and camera angle and wide walkable aisles. Every object must rest naturally on the floor or against a wall. Do not show grass, outdoor paths, exterior buildings, sky, gardens, isolated sprite sheets or duplicate rooms."
-    : "This is an outdoor environment map. Keep every structure, path and prop on one consistent tile grid with plausible spacing and clear walkable routes.";
+    ? "This is strictly an EMPTY indoor open-top cutaway room map, not a furnished room and not a campus exterior. Generate only the continuous floor, far/back perimeter walls, near/front perimeter walls, structurally valid doors and windows. Use one physically coherent isometric room footprint. The far walls may exist only on the upper-left and upper-right room boundaries; the near foreground walls may exist only on the bottom-left and bottom-right boundaries. Never draw a ceiling, roof, overhead frame, unsupported beam, floating wall, diagonal wall crossing the floor, doubled wall, or impossible intersecting architecture. ABSOLUTELY NO furniture, laboratory benches, sinks, microscopes, cabinets, appliances, tables, chairs, plants, equipment, decorations, props or loose objects, even if the user mentions them. Do not show grass, outdoor paths, exterior buildings, sky, gardens, isolated sprite sheets or duplicate rooms."
+    : "This is an EMPTY outdoor environment foundation map. Keep only terrain, paths, water and permanent building architecture on one consistent tile grid with plausible spacing and clear walkable routes. ABSOLUTELY NO trees, plants, benches, signs, lamps, rocks, vehicles, furniture, decorations, equipment, props or other freestanding objects, even if the user mentions them.";
   return [
     "Create a complete map background for a ZEP-style 2D social game.",
     scenes[scene] || scenes.custom,
     `User request: ${prompt}.`,
     `Camera geometry: ${views[view] || views.topdown}. Orientation: ${mapDirections[direction] || mapDirections.auto}.`,
     environmentRules,
-    "Professional polished 2D pixel-art game environment with rich but controlled detail, cohesive art direction, deliberate lighting, harmonious color palette and hand-crafted ZEP map quality. Coherent 32-pixel tile grid matching the requested camera geometry, clear walkable paths, readable footprints, consistent scale, clean boundaries, no perspective horizon, no cutaway layers, no collage and no mismatched sprite angles.",
+    "Professional polished 2D pixel-art game environment foundation with cohesive art direction, deliberate lighting, harmonious color palette and hand-crafted ZEP map quality. Keep the space empty so separately created objects can be added later. Coherent 32-pixel tile grid matching the requested camera geometry, clear walkable paths, readable footprints, consistent scale, clean boundaries, no perspective horizon, no collage and no mismatched sprite angles.",
     "Keep important structures away from the outermost edge. Make the whole composition useful as a playable map rather than a poster.",
     moods[season] || moods["bright-day"], common
   ].join(" ");

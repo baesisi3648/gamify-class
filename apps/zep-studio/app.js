@@ -288,7 +288,7 @@
   function syncAIModeUI(){
     const object=state.aiKind==='object',layered=$('#aiMapMode').value==='layered';
     $('#aiMapModeLabel').classList.toggle('hidden',object);
-    $('#aiGenerateButton').innerHTML=object?'<span>✦</span> 오브젝트 생성':layered?'<span>✦</span> 분리 맵 생성 (실험)':'<span>✦</span> 고품질 깊이 분리 맵 생성';
+    $('#aiGenerateButton').innerHTML=object?'<span>✦</span> 오브젝트 생성':layered?'<span>✦</span> 빈 타일 맵 생성 (실험)':'<span>✦</span> 빈 바닥·벽 맵 생성';
   }
   function setAIKind(kind){
     state.aiKind=kind;
@@ -296,8 +296,8 @@
     const object=kind==='object';
     $('#aiScene').closest('label').classList.toggle('hidden',object);
     syncAIModeUI();
-    $('#aiPrompt').placeholder=object?'예: 벚꽃이 핀 큰 나무, 아래에 작은 화단이 있는 오브젝트':'예: 중앙에 3층 학교 건물, 오른쪽에는 생태 연못, 왼쪽에는 숲길이 있고 길이 모두 연결된 학교 맵';
-    $('#promptExamples').innerHTML=(object?['벚꽃이 핀 큰 나무','과학실 실험대와 현미경','생태 연못 안내판']:['운동장과 생태 연못이 있는 학교','숲속 탐사 기지가 있는 생태공원','과학실과 온실이 연결된 연구소']).map(v=>`<button type="button">${v}</button>`).join('');
+    $('#aiPrompt').placeholder=object?'예: 벚꽃이 핀 큰 나무, 아래에 작은 화단이 있는 오브젝트':'예: 흰색 타일 바닥과 밝은 벽, 뒤쪽에 창문과 출입문이 있는 빈 생명과학실';
+    $('#promptExamples').innerHTML=(object?['벚꽃이 핀 큰 나무','과학실 실험대와 현미경','생태 연못 안내판']:['창문과 출입문이 있는 빈 생명과학실','넓은 타일 바닥의 빈 과학실','복도와 연결된 빈 연구실']).map(v=>`<button type="button">${v}</button>`).join('');
     const direction=$('#aiDirection');
     const previous=direction.value;
     $('#aiDirectionLabel').firstChild.textContent=object?'오브젝트 방향 ':'맵 방향 ';
@@ -331,7 +331,7 @@
     top.fillStyle='#e8edef';top.fillRect(0,0,width,88);top.fillStyle='#25323b';top.fillRect(0,78,width,12);top.fillRect(0,0,18,height);top.fillRect(width-18,0,18,height);top.fillRect(0,height-24,width*.43,24);top.fillRect(width*.57,height-24,width*.43,24);for(let x=18;x<width-18;x+=154)top.drawImage(sprites[0][2],x,-8,150,104);
     collision.fillStyle='rgba(255,53,93,.72)';collision.fillRect(0,0,width,82);collision.fillRect(0,0,18,height);collision.fillRect(width-18,0,18,height);collision.fillRect(0,height-24,width*.43,24);collision.fillRect(width*.57,height-24,width*.43,24);
     const defaultSets={laboratory:[['dna-machine',13,26,10],['teacher-desk',31,27,10],['growth-chamber',73,25,9],['specimen-cabinet',88,25,9],['lab-bench',27,49,11],['lab-bench',52,49,11],['chemical-cabinet',88,51,9],['incubator',73,51,9],['sink-bench',27,73,11],['student-table',52,73,11],['bookshelf',12,68,9],['plant',68,78,7],['safety-station',91,81,7]],classroom:[['teacher-desk',50,25,11],['bookshelf',88,27,9],['student-table',22,48,9],['student-table',48,48,9],['student-table',74,48,9],['student-table',22,72,9],['student-table',48,72,9],['student-table',74,72,9],['plant',88,78,7]],library:[['bookshelf',13,28,9],['bookshelf',13,55,9],['bookshelf',87,28,9],['bookshelf',87,55,9],['student-table',36,48,10],['student-table',64,48,10],['student-table',36,72,10],['student-table',64,72,10],['teacher-desk',50,24,9],['plant',88,80,7]]};const defaults=defaultSets[plan.spaceType]||defaultSets.laboratory;
-    const allowedTypes=new Set((plan.objects||[]).map(item=>String(item.type||''))),selected=plan.spaceType==='laboratory'?defaults:defaults.filter(([type])=>!allowedTypes.size||allowedTypes.has(type)||type==='student-table'||type==='teacher-desk'),items=selected.map(([type,x,y,size])=>({type,x,y,size})).sort((a,b)=>a.y-b.y),mapping={'lab-bench':[0,1],'sink-bench':[1,1],'growth-chamber':[2,1],'specimen-cabinet':[3,1],'dna-machine':[0,2],incubator:[1,2],'chemical-cabinet':[2,2],bookshelf:[3,2],'teacher-desk':[0,3],'student-table':[1,3],plant:[2,3],'safety-station':[3,3]};
+    const allowedTypes=new Set((plan.objects||[]).map(item=>String(item.type||''))),selected=plan.spaceType==='laboratory'?defaults:defaults.filter(([type])=>!allowedTypes.size||allowedTypes.has(type)||type==='student-table'||type==='teacher-desk'),items=[],mapping={'lab-bench':[0,1],'sink-bench':[1,1],'growth-chamber':[2,1],'specimen-cabinet':[3,1],'dna-machine':[0,2],incubator:[1,2],'chemical-cabinet':[2,2],bookshelf:[3,2],'teacher-desk':[0,3],'student-table':[1,3],plant:[2,3],'safety-station':[3,3]};
     items.forEach(item=>{const cell=mapping[item.type]||mapping['student-table'],sprite=sprites[cell[1]][cell[0]],x=item.x*width/100,y=item.y*height/100,w=Math.max(66,item.size*10.5),h=w;objects.drawImage(sprite,x-w/2,y-h*.62,w,h);collision.fillStyle='rgba(255,53,93,.7)';collision.fillRect(x-w*.32,y+h*.08,w*.64,h*.17);});
     return finishLayerCanvases(canvases);
   }
@@ -346,8 +346,8 @@
     const px=v=>planNumber(v,0,100,50)*width/100,py=v=>planNumber(v,0,100,50)*height/100;
     (plan.waters||[]).slice(0,3).forEach(item=>{const x=px(item.x),y=py(item.y),w=px(planNumber(item.w,3,35,16)),h=py(planNumber(item.h,3,35,12));floor.drawImage(sprites[3][2],x,y,w,h);collision.fillStyle='rgba(255,53,93,.72)';collision.beginPath();collision.ellipse(x+w/2,y+h/2,w*.38,h*.38,0,0,Math.PI*2);collision.fill();});
     floor.lineCap='round';(plan.paths||[]).slice(0,8).forEach(path=>{const lineWidth=Math.max(18,px(planNumber(path.width,2,15,6)));floor.strokeStyle=colors.path;floor.lineWidth=lineWidth;floor.beginPath();floor.moveTo(px(path.x1),py(path.y1));floor.lineTo(px(path.x2),py(path.y2));floor.stroke();const pattern=floor.createPattern(sprites[3][1],'repeat');if(pattern){floor.strokeStyle=pattern;floor.lineWidth=Math.max(10,lineWidth-7);floor.stroke();}});
-    (plan.trees||[]).slice(0,18).forEach((tree,index)=>{const x=px(tree.x),y=py(tree.y),s=Math.max(48,px(planNumber(tree.size,2,12,5))*2.5),sprite=sprites[1][index%3];objects.drawImage(sprite,x-s/2,y-s*.68,s,s);collision.fillStyle='rgba(255,53,93,.72)';collision.beginPath();collision.ellipse(x,y+s*.18,s*.16,s*.1,0,0,Math.PI*2);collision.fill();});
-    const objectCells={bench:[0,2],sign:[1,2],lamp:[2,2],rock:[3,2],bush:[3,1],flower:[3,3]};(plan.objects||[]).slice(0,14).forEach(item=>{const x=px(item.x),y=py(item.y),s=Math.max(34,px(planNumber(item.size,1,8,3))*2.2),cell=objectCells[String(item.type||'bush')]||objectCells.bush,sprite=sprites[cell[1]][cell[0]];objects.drawImage(sprite,x-s/2,y-s*.55,s,s);collision.fillStyle='rgba(255,53,93,.68)';collision.beginPath();collision.ellipse(x,y+s*.18,s*.2,s*.1,0,0,Math.PI*2);collision.fill();});
+    (plan.trees||[]).slice(0,0).forEach((tree,index)=>{const x=px(tree.x),y=py(tree.y),s=Math.max(48,px(planNumber(tree.size,2,12,5))*2.5),sprite=sprites[1][index%3];objects.drawImage(sprite,x-s/2,y-s*.68,s,s);collision.fillStyle='rgba(255,53,93,.72)';collision.beginPath();collision.ellipse(x,y+s*.18,s*.16,s*.1,0,0,Math.PI*2);collision.fill();});
+    const objectCells={bench:[0,2],sign:[1,2],lamp:[2,2],rock:[3,2],bush:[3,1],flower:[3,3]};(plan.objects||[]).slice(0,0).forEach(item=>{const x=px(item.x),y=py(item.y),s=Math.max(34,px(planNumber(item.size,1,8,3))*2.2),cell=objectCells[String(item.type||'bush')]||objectCells.bush,sprite=sprites[cell[1]][cell[0]];objects.drawImage(sprite,x-s/2,y-s*.55,s,s);collision.fillStyle='rgba(255,53,93,.68)';collision.beginPath();collision.ellipse(x,y+s*.18,s*.2,s*.1,0,0,Math.PI*2);collision.fill();});
     (plan.buildings||[]).slice(0,6).forEach((building,index)=>{const x=px(building.x),y=py(building.y),w=px(planNumber(building.w,8,42,22)),h=py(planNumber(building.h,8,35,18))*1.5,style=String(building.style||'').toLowerCase();let column=index%4;if(/lab|science|연구|과학/.test(style))column=1;else if(/green|온실/.test(style))column=2;else if(/gym|체육/.test(style))column=3;else if(/school|학교/.test(style))column=0;top.drawImage(sprites[0][column],x,y,w,h);collision.fillStyle='rgba(255,53,93,.72)';collision.fillRect(x+w*.08,y+h*.72,w*.84,h*.2);});
     return finishLayerCanvases(canvases);
   }
@@ -376,7 +376,7 @@
   async function createAISeparatedLayers(images,prompt){
     const floorImage=await imageFromURL(images.floor),width=floorImage.naturalWidth||floorImage.width,height=floorImage.naturalHeight||floorImage.height,canvases={floor:makeLayer(width,height),object:makeLayer(width,height),top:makeLayer(width,height),collision:makeLayer(width,height)},indoor=isIndoorMapPrompt(prompt);
     canvases.floor.getContext('2d').drawImage(floorImage,0,0,width,height);
-    for(const key of ['object','top']){const img=await imageFromURL(images[key]);canvases[key].getContext('2d').drawImage(img,0,0,width,height);removeConnectedBackground(canvases[key]);}
+    if(images.top){const img=await imageFromURL(images.top);canvases.top.getContext('2d').drawImage(img,0,0,width,height);removeConnectedBackground(canvases.top);}
     if(indoor){removeConnectedBackground(canvases.floor,24);clipIndoorTopToForeground(canvases.top);eraseLayerUnderMask(canvases.floor,canvases.top);}
     return finishLayerCanvases(canvases);
   }

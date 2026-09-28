@@ -274,7 +274,7 @@
           </div>
           <label class="ai-prompt-label" id="aiMapModeLabel">생성 방식
             <select id="aiMapMode">
-              <option value="quality" selected>고품질 바닥·윗배경 분리 — 추천</option>
+              <option value="quality" selected>빈 맵 바닥·윗배경 분리 — 추천</option>
               <option value="layered">자동 분리 타일 맵 — 실험 기능</option>
             </select>
           </label>
@@ -292,11 +292,11 @@
           </details>
           <div class="ai-status" id="aiStatus"><i></i><span>AI 서버 연결을 확인하고 있습니다.</span></div>
           <button class="button primary full ai-generate" id="aiGenerateButton" type="button"><span>✦</span> 이미지 생성</button>
-          <p class="ai-note">실내 맵은 완성 원본의 동일한 픽셀에서 앞쪽 벽을 윗배경으로 분리합니다.</p>
+          <p class="ai-note">맵에는 바닥·벽·문·창문만 생성합니다. 가구와 장식은 오브젝트 공방에서 별도로 추가하세요.</p>
         </div>
         <div class="ai-result">
           <div class="ai-result-stage" id="aiResultStage">
-            <div class="ai-placeholder" id="aiPlaceholder"><span>✦</span><b>생성된 결과가 여기에 나타납니다</b><small>추천 모드는 원본 픽셀을 그대로 사용해 바닥과 캐릭터 앞쪽 윗배경을 나눕니다.</small></div>
+            <div class="ai-placeholder" id="aiPlaceholder"><span>✦</span><b>생성된 결과가 여기에 나타납니다</b><small>오브젝트 없는 빈 공간을 만들고 바닥과 캐릭터 앞쪽 윗배경을 나눕니다.</small></div>
             <img id="aiResultImage" alt="AI가 생성한 ZEP용 이미지" hidden />
             <div class="ai-loading" id="aiLoading" hidden><i></i><b>ZEP용 이미지를 만드는 중…</b><span>보통 수 초에서 수십 초가 걸립니다.</span></div>
           </div>
@@ -319,7 +319,7 @@
             <button class="button ghost" id="downloadAIButton" type="button" disabled>원본 저장</button>
             <button class="button ghost ai-delete-result" id="deleteAIResultButton" type="button" disabled>결과 삭제</button>
           </div>
-          <p class="ai-result-help">바닥에는 이동면과 캐릭터 뒤쪽 벽이, 윗배경에는 캐릭터 앞을 가리는 화면 아래쪽 벽만 들어갑니다. 오브젝트는 편집실에서 필요한 것만 추가로 분리할 수 있습니다.</p>
+          <p class="ai-result-help">바닥에는 이동면과 캐릭터 뒤쪽 벽이, 윗배경에는 캐릭터 앞을 가리는 화면 아래쪽 벽만 들어갑니다. 오브젝트 레이어는 비워 두며 공방에서 만든 것을 나중에 배치합니다.</p>
         </div>
       </div>
     </div>
