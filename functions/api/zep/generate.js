@@ -89,7 +89,17 @@ export async function onRequest(context) {
     }
     const finalPrompt = buildPrompt({ kind, prompt, scene, season, view, direction, architectureBrief });
     const generated = await generateImage(env.AI, finalPrompt);
-    return Response.json({ ok: true, image: generated.image, kind, model: generated.model, degraded: generated.degraded, interpretedArchitecture: architectureBrief }, { headers });
+    let finalImage = generated.image;
+    let styled = false;
+    if (indoor && !generated.degraded) {
+      try {
+        finalImage = await styleIndoorArchitecture(env.AI, generated.image, { prompt, scene, architectureBrief });
+        styled = true;
+      } catch {
+        finalImage = generated.image;
+      }
+    }
+    return Response.json({ ok: true, image: finalImage, kind, model: generated.model, degraded: generated.degraded, styled, interpretedArchitecture: architectureBrief }, { headers });
   } catch (error) {
     const message = String(error?.message || error || "");
     const quota = /quota|limit|capacity|neurons|3040|429/i.test(message);
@@ -130,6 +140,28 @@ async function generateReferenceImage(ai, prompt, reference) {
   const image = await normalizeImage(result);
   if (!image) throw new Error("EMPTY_LAYER_IMAGE");
   return image;
+}
+
+function indoorPurposeArchitecture(prompt, scene) {
+  const text = `${prompt} ${scene}`;
+  if (/도서관|library/i.test(text)) return "an empty school library shell with warm wood wall trim, quiet acoustic wall panels and broad daylight windows, all permanently built into the walls";
+  if (/생명|과학|실험|연구|science|laboratory|lab\b/i.test(text)) return "an unmistakable modern biology research laboratory shell with hygienic white and cool pale-blue wall panels, seamless light-gray laboratory epoxy flooring, a restrained blue utility grid, one sealed blue-gray laboratory door, broad observation windows, small recessed ventilation grilles, flush wall utility connection panels and a few subtle floor drains";
+  return "a clean Korean school classroom shell using simple permanent architectural finishes";
+}
+
+async function styleIndoorArchitecture(ai, reference, request) {
+  const purpose = indoorPurposeArchitecture(request.prompt, request.scene);
+  const requested = request.architectureBrief ? `Mandatory user architecture: ${request.architectureBrief}. User-specified colors, materials, patterns, counts and placements override the default purpose styling.` : "";
+  const prompt = [
+    "Reference image 0 is an APPROVED ZEP room geometry template. Restyle surfaces only while preserving its geometry exactly.",
+    "Keep the exact same 1024x768 canvas, crop, high isometric camera, wide 2:1 floor footprint, floor boundary, wall height, and EXACTLY TWO back walls in their exact original positions. Do not add, remove, extend, rotate, split or move any wall. Keep both lower sides completely open. Do not add a third wall, side wall, front wall, ceiling, roof, border, rim or raised edge.",
+    `Architectural identity to apply: ${purpose}.`,
+    requested,
+    "Apply identity only as surface materials and small flush built-in details attached flat to the existing two walls or embedded in the existing floor. Keep the room fully empty and walkable.",
+    "No freestanding furniture or objects: no benches, sinks, microscopes, cabinets, shelves, tables, chairs, plants, equipment, decorations, displays or props. No text, letters, numbers, logos, labels, characters or UI.",
+    "Professional polished 2D ZEP-style pixel-art map, crisp coherent tile alignment and consistent scale. Final result must preserve the reference geometry exactly."
+  ].filter(Boolean).join(" ");
+  return generateReferenceImage(ai, prompt, reference);
 }
 
 function dataUrlToBlob(dataUrl) {
@@ -289,34 +321,21 @@ function buildPrompt({ kind, prompt, scene, season, view, direction, architectur
     ].join(" ");
   }
   const indoorRequest = isIndoorRequest(`${prompt} ${scene}`);
-  const indoorPurpose = /도서관|library/i.test(`${prompt} ${scene}`)
-    ? "an empty unfurnished school library room shell"
-    : /생명|과학|실험|연구|science|laboratory|lab\b/i.test(`${prompt} ${scene}`)
-      ? "an empty unfurnished Korean school science classroom shell"
-      : "an empty unfurnished Korean school classroom shell";
-  const purposeArchitecture = /도서관|library/i.test(`${prompt} ${scene}`)
-    ? "Use permanent library architecture only: warm wood wall trim, quiet acoustic wall panels and broad daylight windows, all built into the room shell."
-    : /생명|과학|실험|연구|science|laboratory|lab\b/i.test(`${prompt} ${scene}`)
-      ? "Make the empty shell unmistakably read as a modern biology research laboratory using PERMANENT BUILT-IN ARCHITECTURE only: hygienic white and cool pale-blue wall panels, a seamless light-gray laboratory epoxy floor with a restrained blue utility grid, one sealed blue-gray laboratory door, broad observation windows, small recessed ventilation grilles, flush wall utility connection panels and a few subtle floor drains. These features must be integrated flat into the walls or floor, never freestanding. Do not use text or hazard labels."
-      : "Use simple permanent Korean school classroom architecture built into the room shell.";
   if (indoorRequest) {
     return [
-      "Create a completely EMPTY and UNFURNISHED open-front room shell for a ZEP-style 2D social game.",
-      `Room identity: ${indoorPurpose}. This identity controls only wall colors and architectural finishes, never room contents.`,
-      `Purpose-specific built-in architecture: ${purposeArchitecture} Explicit user-requested colors or materials override these default finishes.`,
-      architectureBrief ? `MANDATORY USER ARCHITECTURE: ${architectureBrief}. Every non-empty detail in this brief is required and overrides all defaults. Follow exact colors, materials, patterns, counts and wall placements without adding any objects.` : "",
+      "Create a completely EMPTY, UNFURNISHED and NEUTRAL open-front room geometry template for a ZEP-style 2D social game. Do not add theme-specific decoration because styling will be applied in a separate pass.",
       `Camera geometry: ${views[view] || views.topdown}. Orientation: ${mapDirections[direction] || mapDirections.auto}.`,
       "The ONLY visible components are one broad continuous tiled floor and exactly two LOW CUTAWAY BACK walls: one along the upper-left edge and one along the upper-right edge.",
       "ZEP MAP PROPORTIONS ARE MANDATORY: use a very broad horizontal rectangular room footprint about 2:1 in plan, much longer left-to-right than front-to-back. Use a high orthographic isometric game-map camera about 65 degrees above the floor. The visible floor must occupy at least 75% of the room artwork and must look dramatically wider and deeper than the walls are tall. The projected wall height may occupy no more than 15-18% of the full image height. This must look like a large playable map, never a cube, box, dollhouse or small room diorama.",
       "Place both wall base lines within the upper 35% of the image. Extend the open floor from those wall bases almost to the bottom edge, leaving generous space for many walking avatars. Keep the upper wall tops well below the top edge and show the complete wide floor footprint without tight cropping.",
       "The two back walls must meet perfectly at one clean central back corner. Both walls must remain structurally continuous from the outer end to that shared corner, with no broken section, black void, missing panel, detached fragment, notch or unexplained opening.",
-      "Windows and framed doors may be embedded neatly within the two back walls, but may never interrupt their top trim, base trim, shared corner or structural continuity.",
+      "Use plain uninterrupted wall surfaces with no windows, doors or decorative details in this geometry template.",
       "The bottom-left and bottom-right edges facing the viewer are completely OPEN. The floor tiles continue cleanly to those open edges. There is no front wall, near wall, outer wall face, rim, border, railing, curb, parapet, lip, threshold or dark raised band.",
-      "No furniture and no freestanding objects of any kind: no laboratory benches, sinks, microscopes, cabinets, shelves, appliances, tables, chairs, plants, movable equipment, decorations, signs, displays, props or loose items. Only the permanent flush wall and floor fixtures explicitly allowed in the purpose-specific architecture may remain.",
+      "No furniture, fixtures or objects of any kind: no windows, doors, laboratory benches, sinks, microscopes, cabinets, shelves, appliances, tables, chairs, plants, equipment, decorations, signs, displays, props or loose items.",
       "No ceiling, ceiling panel, roof, roof edge, soffit, overhead frame, beam, interior partition, diagonal wall, doubled wall, floating structure, exterior scenery, grass, path, sky, collage, sprite sheet or duplicate room. The entire area above the two low back walls is empty background.",
       "Professional polished 2D pixel-art game environment foundation, cohesive lighting, consistent scale, clean isometric geometry and coherent tile alignment, with no perspective horizon.",
       moods[season] || moods["bright-day"], common,
-      architectureBrief ? `FINAL CHECK: visibly apply all of these mandatory architectural details: ${architectureBrief}. Keep the room empty, with a wide 2:1 floor occupying at least 75% of the room, two very low intact back walls, no ceiling, zero front walls, zero furniture and zero objects.` : "FINAL CHECK: wide 2:1 floor occupying at least 75% of the room, two very low intact back walls, no ceiling, zero front walls, zero furniture and zero objects."
+      "FINAL CHECK: neutral wide 2:1 floor occupying at least 75% of the room, exactly two very low intact blank back walls, no ceiling, no openings, zero front walls, zero furniture and zero objects."
     ].join(" ");
   }
   const environmentRules = "This is an EMPTY outdoor environment foundation map. Keep only terrain, paths, water and permanent building architecture on one consistent tile grid with plausible spacing and clear walkable routes. ABSOLUTELY NO trees, plants, benches, signs, lamps, rocks, vehicles, furniture, decorations, equipment, props or other freestanding objects, even if the user mentions them.";
