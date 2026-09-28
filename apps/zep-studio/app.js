@@ -44,6 +44,36 @@
     $('#objectWidth').value = w; $('#objectHeight').value = h; $('#objectSizeLabel').textContent = `${w} × ${h}`;
     render();
   }
+  const roomPresets={
+    laboratory:{wall:'#e8f3f5',trim:'#547184',floor:'#d9e3e6',grid:'#789baa',pattern:'lab',windows:'4',door:'right'},
+    classroom:{wall:'#f3edda',trim:'#6f765f',floor:'#d8c79c',grid:'#a69062',pattern:'medium',windows:'4',door:'right'},
+    library:{wall:'#eee2cc',trim:'#745841',floor:'#bd966f',grid:'#80654e',pattern:'large',windows:'2',door:'left'}
+  };
+  function applyRoomPreset(name){const preset=roomPresets[name];if(!preset)return;$('#roomWallColor').value=preset.wall;$('#roomTrimColor').value=preset.trim;$('#roomFloorColor').value=preset.floor;$('#roomGridColor').value=preset.grid;$('#roomTilePattern').value=preset.pattern;$('#roomWindowCount').value=preset.windows;$('#roomDoorSide').value=preset.door;}
+  function pointBetween(a,b,t){return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};}
+  function drawPolygon(context,points,fill,stroke,lineWidth=2){context.beginPath();context.moveTo(points[0].x,points[0].y);points.slice(1).forEach(point=>context.lineTo(point.x,point.y));context.closePath();if(fill){context.fillStyle=fill;context.fill();}if(stroke){context.strokeStyle=stroke;context.lineWidth=lineWidth;context.stroke();}}
+  function shadeColor(hex,amount){const value=parseInt(hex.slice(1),16),channel=shift=>Math.max(0,Math.min(255,((value>>shift)&255)+amount));return`#${[channel(16),channel(8),channel(0)].map(v=>v.toString(16).padStart(2,'0')).join('')}`;}
+  function wallPoint(wall,u,v){return pointBetween(pointBetween(wall.bottomStart,wall.bottomEnd,u),pointBetween(wall.topStart,wall.topEnd,u),v);}
+  function drawWallPanel(context,wall,u1,u2,v1,v2,fill,stroke){drawPolygon(context,[wallPoint(wall,u1,v1),wallPoint(wall,u2,v1),wallPoint(wall,u2,v2),wallPoint(wall,u1,v2)],fill,stroke,3);}
+  function drawWindow(context,wall,center,width,trim){const u1=center-width/2,u2=center+width/2;drawWallPanel(context,wall,u1,u2,.24,.72,'#9fdaea',trim);drawWallPanel(context,wall,u1+.018,u2-.018,.29,.67,'#bcecf5',shadeColor(trim,24));const mid=(u1+u2)/2,a=wallPoint(wall,mid,.27),b=wallPoint(wall,mid,.7);context.strokeStyle=trim;context.lineWidth=3;context.beginPath();context.moveTo(a.x,a.y);context.lineTo(b.x,b.y);context.stroke();}
+  function drawDoor(context,wall,center,trim){const width=.19,u1=center-width/2,u2=center+width/2;drawWallPanel(context,wall,u1,u2,0,.78,shadeColor(trim,20),trim);const knob=wallPoint(wall,u2-.035,.34);context.fillStyle='#e9ce79';context.beginPath();context.arc(knob.x,knob.y,4,0,Math.PI*2);context.fill();}
+  function createRoomTemplate(){
+    if(state.hasContent&&!confirm('현재 맵을 빈 방 템플릿으로 바꿀까요? 기존 그림은 실행 취소로 복구할 수 있습니다.'))return;
+    pushHistory();setupLayers(1024,768);Object.values(state.layers).forEach(layer=>layer.getContext('2d').clearRect(0,0,layer.width,layer.height));
+    const floor=state.layers.floor.getContext('2d'),wide=$('#roomFloorRatio').value==='wide',wallColor=$('#roomWallColor').value,trim=$('#roomTrimColor').value,floorColor=$('#roomFloorColor').value,gridColor=$('#roomGridColor').value,pattern=$('#roomTilePattern').value;
+    const back={x:512,y:wide?178:150},left={x:wide?62:92,y:wide?422:392},right={x:wide?962:932,y:wide?422:392},front={x:512,y:wide?704:724},wallHeight=wide?126:142,leftTop={x:left.x,y:left.y-wallHeight},backTop={x:back.x,y:back.y-wallHeight},rightTop={x:right.x,y:right.y-wallHeight};
+    drawPolygon(floor,[back,right,front,left],floorColor,trim,4);
+    if(pattern!=='none'){
+      const steps={small:20,medium:14,large:9,lab:16}[pattern]||14;floor.save();floor.beginPath();floor.moveTo(back.x,back.y);floor.lineTo(right.x,right.y);floor.lineTo(front.x,front.y);floor.lineTo(left.x,left.y);floor.closePath();floor.clip();
+      for(let i=1;i<steps;i++){const t=i/steps,strong=pattern==='lab'&&i%4===0;floor.strokeStyle=strong?shadeColor(gridColor,-18):gridColor;floor.globalAlpha=strong?.72:.42;floor.lineWidth=strong?2.4:1.25;let a=pointBetween(back,right,t),b=pointBetween(left,front,t);floor.beginPath();floor.moveTo(a.x,a.y);floor.lineTo(b.x,b.y);floor.stroke();a=pointBetween(back,left,t);b=pointBetween(right,front,t);floor.beginPath();floor.moveTo(a.x,a.y);floor.lineTo(b.x,b.y);floor.stroke();}floor.restore();floor.globalAlpha=1;
+    }
+    const leftWall={bottomStart:left,bottomEnd:back,topStart:leftTop,topEnd:backTop},rightWall={bottomStart:back,bottomEnd:right,topStart:backTop,topEnd:rightTop};
+    drawPolygon(floor,[left,back,backTop,leftTop],wallColor,trim,4);drawPolygon(floor,[back,right,rightTop,backTop],shadeColor(wallColor,-8),trim,4);
+    [[left,back],[back,right]].forEach(([a,b])=>{floor.strokeStyle=trim;floor.lineWidth=12;floor.beginPath();floor.moveTo(a.x,a.y-2);floor.lineTo(b.x,b.y-2);floor.stroke();});
+    const windowCount=+$('#roomWindowCount').value,perWall=windowCount/2,centers=perWall===1?[.42]:perWall===2?[.3,.62]:[];centers.forEach(center=>drawWindow(floor,leftWall,center,.23,trim));centers.forEach(center=>drawWindow(floor,rightWall,center,.23,trim));
+    const doorSide=$('#roomDoorSide').value;if(doorSide==='left')drawDoor(floor,leftWall,.82,trim);if(doorSide==='right')drawDoor(floor,rightWall,.82,trim);
+    state.activeLayer='floor';state.hasContent=true;state.soloLayer=null;syncActiveLayer();showAllLayers();changed();toast('고정된 ZEP 빈 방을 만들었습니다. 이제 그림판과 오브젝트로 꾸며 보세요.');
+  }
   function currentCanvas() { return state.workspace === 'object' ? state.objectCanvas : state.layers[state.activeLayer]; }
   function currentContext() { return currentCanvas().getContext('2d', { willReadFrequently: true }); }
   function resizeDisplay() {
@@ -416,6 +446,7 @@
     $('#colorInput').addEventListener('input',e=>setColor(e.target.value));$('#colorText').addEventListener('change',e=>{if(/^#[0-9a-f]{6}$/i.test(e.target.value))setColor(e.target.value);else e.target.value=state.color.toUpperCase();});
     $('#palette').addEventListener('click',e=>{if(e.target.dataset.color)setColor(e.target.dataset.color);});
     $('#resizeMapButton').addEventListener('click',()=>{const w=Math.max(64,Math.min(4096,+$('#mapWidth').value||640)),h=Math.max(64,Math.min(4096,+$('#mapHeight').value||480));if(confirm('기존 그림을 유지하면서 캔버스 크기를 바꿀까요?')){pushHistory();setupLayers(w,h,true);changed();}});
+    $('#roomPreset').addEventListener('change',e=>applyRoomPreset(e.target.value));$('#createRoomTemplateButton').addEventListener('click',createRoomTemplate);
     $('#newMapButton').addEventListener('click',trashMap);$('#trashMapButton').addEventListener('click',trashMap);
     $('#resizeObjectButton').addEventListener('click',()=>{const w=Math.max(8,Math.min(1024,+$('#objectWidth').value||96)),h=Math.max(8,Math.min(1024,+$('#objectHeight').value||96));setupObject(w,h,true);changed();});
     $('#clearObjectButton').addEventListener('click',()=>{if(confirm('오브젝트 캔버스를 비울까요?')){pushHistory();currentContext().clearRect(0,0,state.objectWidth,state.objectHeight);changed();}});
