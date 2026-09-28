@@ -354,12 +354,23 @@
   function showAILayer(key){if(!state.aiLayers)return;$('#aiResultImage').src=state.aiLayers[key]||state.aiLayers.composite;$$('[data-ai-layer]').forEach(button=>button.classList.toggle('active',button.dataset.aiLayer===key));}
   async function compactAIReference(dataUrl){const img=await imageFromURL(dataUrl),scale=Math.min(1,512/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height)),canvas=makeLayer(Math.round((img.naturalWidth||img.width)*scale),Math.round((img.naturalHeight||img.height)*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.9);}
   function detectIndoorForegroundBoundary(data,w,h){
+    const columnPixels=new Uint32Array(w),rowPixels=new Uint32Array(h);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(data[(y*w+x)*4+3]>16){columnPixels[x]++;rowPixels[y]++;}
+    let left=0,right=w-1,top=0,bottom=h-1;
+    while(left<w-1&&columnPixels[left]<h*.08)left++;
+    while(right>0&&columnPixels[right]<h*.08)right--;
+    while(top<h-1&&rowPixels[top]<w*.06)top++;
+    while(bottom>0&&rowPixels[bottom]<w*.06)bottom--;
+    if(right<=left||bottom<=top)return new Float32Array(w).fill(h);
+    const contentWidth=Math.max(1,right-left),contentHeight=Math.max(1,bottom-top),center=(left+right)/2,halfWidth=contentWidth/2;
     const raw=new Float32Array(w);
     for(let x=0;x<w;x++){
-      const distance=Math.abs(x/(w-1)-.5)*2,expected=h*(.46+.37*(1-distance)),radius=Math.max(8,Math.round(h*.018));
+      if(x<left||x>right){raw[x]=h;continue;}
+      const distance=Math.min(1,Math.abs(x-center)/halfWidth),expected=top+contentHeight*(.42+.43*(1-distance)),radius=Math.max(6,Math.round(contentHeight*.012));
       let bestY=Math.round(expected),bestScore=Infinity,bestLuma=255;
       for(let y=Math.max(0,Math.round(expected-radius));y<=Math.min(h-1,Math.round(expected+radius));y++){
-        const p=(y*w+x)*4,r=data[p],g=data[p+1],b=data[p+2],luma=.2126*r+.7152*g+.0722*b,score=luma+Math.abs(y-expected)*4;
+        const p=(y*w+x)*4;if(data[p+3]<16)continue;
+        const r=data[p],g=data[p+1],b=data[p+2],luma=.2126*r+.7152*g+.0722*b,score=luma+Math.abs(y-expected)*3.5;
         if(score<bestScore){bestScore=score;bestY=y;bestLuma=luma;}
       }
       raw[x]=bestLuma<185?bestY:expected;
@@ -373,26 +384,21 @@
     for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(y<boundary[x])data[(y*w+x)*4+3]=0;
     context.putImageData(image,0,0);
   }
-  function eraseLayerUnderMask(layer,mask,spread=24){
-    const context=layer.getContext('2d');
-    context.save();context.globalCompositeOperation='destination-out';context.filter=`blur(${spread}px)`;context.drawImage(mask,0,0,layer.width,layer.height);context.filter='none';context.drawImage(mask,0,0,layer.width,layer.height);context.restore();
-  }
   function isIndoorMapPrompt(prompt){return /내부|실내|연구실|실험실|과학실|교실|도서관|laboratory|classroom|interior|indoor|library|lab\b/i.test(prompt);}
   async function createIndoorDepthLayers(imageUrl){
     const image=await imageFromURL(imageUrl),width=image.naturalWidth||image.width,height=image.naturalHeight||image.height,canvases={floor:makeLayer(width,height),object:makeLayer(width,height),top:makeLayer(width,height),collision:makeLayer(width,height)};
     canvases.floor.getContext('2d').drawImage(image,0,0,width,height);
     canvases.top.getContext('2d').drawImage(image,0,0,width,height);
     removeConnectedBackground(canvases.floor,24);
-    clipIndoorTopToForeground(canvases.top);
     removeConnectedBackground(canvases.top,24);
-    eraseLayerUnderMask(canvases.floor,canvases.top,3);
+    clipIndoorTopToForeground(canvases.top);
     return finishLayerCanvases(canvases);
   }
   async function createAISeparatedLayers(images,prompt){
     const floorImage=await imageFromURL(images.floor),width=floorImage.naturalWidth||floorImage.width,height=floorImage.naturalHeight||floorImage.height,canvases={floor:makeLayer(width,height),object:makeLayer(width,height),top:makeLayer(width,height),collision:makeLayer(width,height)},indoor=isIndoorMapPrompt(prompt);
     canvases.floor.getContext('2d').drawImage(floorImage,0,0,width,height);
     if(images.top){const img=await imageFromURL(images.top);canvases.top.getContext('2d').drawImage(img,0,0,width,height);removeConnectedBackground(canvases.top);}
-    if(indoor){removeConnectedBackground(canvases.floor,24);clipIndoorTopToForeground(canvases.top);eraseLayerUnderMask(canvases.floor,canvases.top);}
+    if(indoor){removeConnectedBackground(canvases.floor,24);removeConnectedBackground(canvases.top,24);clipIndoorTopToForeground(canvases.top);}
     return finishLayerCanvases(canvases);
   }
   async function requestAISeparatedLayers(reference,prompt){
