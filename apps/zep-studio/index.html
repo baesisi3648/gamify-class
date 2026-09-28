@@ -57,6 +57,10 @@
             <option value="custom">직접 선택</option>
           </select>
         </label>
+        <div class="template-grid material-selects">
+          <label>벽 재질<select id="roomWallMaterial"><option value="lab-panel" selected>연구소 위생 패널</option><option value="paint">무광 도장벽</option><option value="concrete">노출 콘크리트</option><option value="brick">밝은 벽돌</option><option value="wood">목재 패널</option><option value="glass">청색 유리벽</option></select></label>
+          <label>바닥 재질<select id="roomFloorMaterial"><option value="epoxy" selected>연구소 에폭시</option><option value="light-tile">밝은 대형 타일</option><option value="blue-tile">청회색 타일</option><option value="concrete">연마 콘크리트</option><option value="wood">목재 바닥</option><option value="dark-tile">진회색 타일</option></select></label>
+        </div>
         <div class="template-colors">
           <label>벽 색<input id="roomWallColor" type="color" value="#e8f3f5" /></label>
           <label>벽 테두리<input id="roomTrimColor" type="color" value="#547184" /></label>
@@ -71,6 +75,16 @@
         </div>
         <button class="button full accent" id="createRoomTemplateButton" type="button">빈 방 만들기</button>
         <p class="hint">정확한 바닥과 위쪽 벽 두 개를 자동으로 만든 뒤, 아래 그림판 도구와 오브젝트 공방으로 자유롭게 꾸밀 수 있습니다.</p>
+        <div class="wall-planner">
+          <div class="section-title"><h2>6×6 내부 벽 설계</h2><span>항공뷰 → 아이소메트릭</span></div>
+          <canvas id="roomPlanCanvas" width="240" height="240" aria-label="6×6 내부 벽 평면도"></canvas>
+          <div class="button-row wall-plan-tools">
+            <button class="button active" id="wallDrawModeButton" type="button">벽 그리기</button>
+            <button class="button" id="wallEraseModeButton" type="button">지우개</button>
+            <button class="button ghost" id="clearRoomWallsButton" type="button">전체 삭제</button>
+          </div>
+          <p class="hint">격자점에서 다른 격자점까지 드래그하세요. 가로·세로 직선이 내부 벽으로 변환되며 `빈 방 만들기`를 다시 누르면 적용됩니다.</p>
+        </div>
       </section>
 
       <section class="panel-section object-only hidden">
