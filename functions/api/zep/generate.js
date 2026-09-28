@@ -294,10 +294,16 @@ function buildPrompt({ kind, prompt, scene, season, view, direction, architectur
     : /생명|과학|실험|연구|science|laboratory|lab\b/i.test(`${prompt} ${scene}`)
       ? "an empty unfurnished Korean school science classroom shell"
       : "an empty unfurnished Korean school classroom shell";
+  const purposeArchitecture = /도서관|library/i.test(`${prompt} ${scene}`)
+    ? "Use permanent library architecture only: warm wood wall trim, quiet acoustic wall panels and broad daylight windows, all built into the room shell."
+    : /생명|과학|실험|연구|science|laboratory|lab\b/i.test(`${prompt} ${scene}`)
+      ? "Make the empty shell unmistakably read as a modern biology research laboratory using PERMANENT BUILT-IN ARCHITECTURE only: hygienic white and cool pale-blue wall panels, a seamless light-gray laboratory epoxy floor with a restrained blue utility grid, one sealed blue-gray laboratory door, broad observation windows, small recessed ventilation grilles, flush wall utility connection panels and a few subtle floor drains. These features must be integrated flat into the walls or floor, never freestanding. Do not use text or hazard labels."
+      : "Use simple permanent Korean school classroom architecture built into the room shell.";
   if (indoorRequest) {
     return [
       "Create a completely EMPTY and UNFURNISHED open-front room shell for a ZEP-style 2D social game.",
       `Room identity: ${indoorPurpose}. This identity controls only wall colors and architectural finishes, never room contents.`,
+      `Purpose-specific built-in architecture: ${purposeArchitecture} Explicit user-requested colors or materials override these default finishes.`,
       architectureBrief ? `MANDATORY USER ARCHITECTURE: ${architectureBrief}. Every non-empty detail in this brief is required and overrides all defaults. Follow exact colors, materials, patterns, counts and wall placements without adding any objects.` : "",
       `Camera geometry: ${views[view] || views.topdown}. Orientation: ${mapDirections[direction] || mapDirections.auto}.`,
       "The ONLY visible components are one broad continuous tiled floor and exactly two LOW CUTAWAY BACK walls: one along the upper-left edge and one along the upper-right edge.",
@@ -306,7 +312,7 @@ function buildPrompt({ kind, prompt, scene, season, view, direction, architectur
       "The two back walls must meet perfectly at one clean central back corner. Both walls must remain structurally continuous from the outer end to that shared corner, with no broken section, black void, missing panel, detached fragment, notch or unexplained opening.",
       "Windows and framed doors may be embedded neatly within the two back walls, but may never interrupt their top trim, base trim, shared corner or structural continuity.",
       "The bottom-left and bottom-right edges facing the viewer are completely OPEN. The floor tiles continue cleanly to those open edges. There is no front wall, near wall, outer wall face, rim, border, railing, curb, parapet, lip, threshold or dark raised band.",
-      "No furniture and no freestanding objects of any kind: no laboratory benches, sinks, microscopes, cabinets, shelves, appliances, tables, chairs, plants, equipment, decorations, signs, displays, props or loose items.",
+      "No furniture and no freestanding objects of any kind: no laboratory benches, sinks, microscopes, cabinets, shelves, appliances, tables, chairs, plants, movable equipment, decorations, signs, displays, props or loose items. Only the permanent flush wall and floor fixtures explicitly allowed in the purpose-specific architecture may remain.",
       "No ceiling, ceiling panel, roof, roof edge, soffit, overhead frame, beam, interior partition, diagonal wall, doubled wall, floating structure, exterior scenery, grass, path, sky, collage, sprite sheet or duplicate room. The entire area above the two low back walls is empty background.",
       "Professional polished 2D pixel-art game environment foundation, cohesive lighting, consistent scale, clean isometric geometry and coherent tile alignment, with no perspective horizon.",
       moods[season] || moods["bright-day"], common,
