@@ -50,12 +50,13 @@ export async function onRequest(context) {
     return Response.json({ ok: false, code: "ACCESS_DENIED", message: "AI 생성 관리자 코드가 올바르지 않습니다." }, { status: 401, headers });
   }
 
-  const kind = body.kind === "object" ? "object" : "map";
+  const kind = body.kind === "object" ? "object" : body.kind === "character" ? "character" : "map";
   const prompt = String(body.prompt || "").trim().slice(0, 700);
   const scene = String(body.scene || "custom").trim().slice(0, 40);
   const season = String(body.season || "bright-day").trim().slice(0, 40);
   const view = String(body.view || "topdown").trim().slice(0, 30);
   const direction = String(body.direction || "auto").trim().slice(0, 30);
+  const action = String(body.action || "idle").trim().slice(0, 30);
   const mapMode = body.mapMode === "layered" ? "layered" : "quality";
   const operation = body.operation === "split" ? "split" : "generate";
   if (prompt.length < 3) {
@@ -77,6 +78,20 @@ export async function onRequest(context) {
       const spaceType = /도서관|library/i.test(contextText) ? "library" : /교실|classroom/i.test(contextText) && !/과학|생명|실험|lab/i.test(contextText) ? "classroom" : indoor ? "laboratory" : "campus";
       const plan = await generateLayerPlan(env.AI, { prompt, scene, season, view, direction, environment: indoor ? "indoor" : "outdoor", spaceType });
       return Response.json({ ok: true, kind, type: "layered-map", plan, model: PLAN_MODEL }, { headers });
+    }
+    if (kind === "character") {
+      const reference = String(body.reference || "");
+      const request = { kind, prompt, scene, season, view, direction, action };
+      let generated;
+      if (reference) {
+        if (!/^data:image\/(?:jpeg|png|webp);base64,/i.test(reference) || reference.length > 1600000) {
+          return Response.json({ ok: false, code: "REFERENCE_INVALID", message: "기준 캐릭터 이미지를 읽을 수 없습니다." }, { status: 400, headers });
+        }
+        generated = { image: await generateCharacterVariation(env.AI, reference, request), model: MODEL, degraded: false };
+      } else {
+        generated = await generateImage(env.AI, buildPrompt(request));
+      }
+      return Response.json({ ok: true, image: generated.image, kind, model: generated.model, degraded: generated.degraded, referenceUsed: Boolean(reference) }, { headers });
     }
     const indoor = kind === "map" && isIndoorRequest(`${prompt} ${scene}`);
     let architectureBrief = "";
@@ -140,6 +155,16 @@ async function generateReferenceImage(ai, prompt, reference) {
   const image = await normalizeImage(result);
   if (!image) throw new Error("EMPTY_LAYER_IMAGE");
   return image;
+}
+
+async function generateCharacterVariation(ai, reference, request) {
+  const prompt = buildPrompt(request, true);
+  return generateReferenceImage(ai, [
+    "Reference image 0 is the approved identity sheet for one original game avatar.",
+    "Preserve the exact same person, face, hairstyle, hair color, skin tone, body proportions, outfit colors, clothing details and accessories.",
+    "Create only the requested new facing direction and action. Do not redesign, add, remove or replace any identity detail.",
+    prompt
+  ].join(" "), reference);
 }
 
 function indoorPurposeArchitecture(prompt, scene) {
@@ -270,7 +295,7 @@ async function generateLayerPlan(ai, request) {
   return plan;
 }
 
-function buildPrompt({ kind, prompt, scene, season, view, direction, architectureBrief = "" }) {
+function buildPrompt({ kind, prompt, scene, season, view, direction, action = "idle", architectureBrief = "" }, referenceMode = false) {
   const scenes = {
     school: "a Korean school campus with classrooms, gym, athletic field, garden and connected walking paths",
     forest: "an ecology park with forest trails, stream, pond, meadow and observation areas",
@@ -309,7 +334,40 @@ function buildPrompt({ kind, prompt, scene, season, view, direction, architectur
     right: "show the right side profile",
     back: "show the rear face away from the viewer"
   };
+  const characterDirections = {
+    auto: "front-facing toward the viewer",
+    down: "front-facing toward the viewer and slightly downward",
+    up: "rear view facing directly away from the viewer",
+    left: "clean left-facing side profile",
+    right: "clean right-facing side profile",
+    "down-left": "three-quarter front view facing lower-left",
+    "down-right": "three-quarter front view facing lower-right",
+    "up-left": "three-quarter rear view facing upper-left",
+    "up-right": "three-quarter rear view facing upper-right"
+  };
+  const characterActions = {
+    idle: "a neutral relaxed standing idle pose with both feet visible",
+    walk: "one clear mid-step walking pose with readable arm and leg motion",
+    run: "one energetic running key pose with readable arm and leg motion",
+    wave: "a friendly standing pose waving one hand",
+    work: "a focused working pose using a small generic handheld tool",
+    sit: "a seated pose without any chair or furniture",
+    custom: "a simple expressive action that matches the user's description"
+  };
   const common = "Original artwork only. No text, no letters, no numbers, no logos, no watermark, no characters, no UI frame.";
+  if (kind === "character") {
+    return [
+      referenceMode ? "Create one new pose of the exact same approved avatar." : "Create one original full-body avatar for a cute 2D social metaverse game.",
+      `Character requested by the user: ${prompt}.`,
+      `Facing direction: ${characterDirections[direction] || characterDirections.auto}. Action: ${characterActions[action] || characterActions.idle}.`,
+      "Polished Korean casual social-game avatar aesthetic: adorable chibi proportions, head about 40 percent of total height, compact rounded body, short limbs, expressive but simple face, clean dark outline, soft cel shading, subtle highlights and crisp high-resolution pixel-art-inspired rendering.",
+      "The character must be anatomically coherent, fully visible from hair to shoes, centered, and use one consistent three-quarter game-sprite camera with no dramatic perspective.",
+      "Show exactly one character only. No alternate pose, no sprite sheet, no duplicate, no extra head, no extra limbs, no cropped body, no floor, no scenery, no prop unless explicitly required by the action.",
+      "Place the avatar on a perfectly uniform vivid magenta background (#ff00ff), with no cast shadow, border, gradient or texture so the background can be removed automatically.",
+      moods[season] || moods["bright-day"],
+      "Original character design only. Do not copy any existing ZEP avatar, game character, brand mascot or copyrighted character. No text, letters, numbers, logos, watermark or UI."
+    ].join(" ");
+  }
   if (kind === "object") {
     return [
       "Create one isolated game object for a ZEP-style map asset.",

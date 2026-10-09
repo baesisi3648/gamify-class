@@ -397,6 +397,26 @@
 
       <div class="character-layout">
         <section class="character-controls">
+          <details class="character-ai-box" open>
+            <summary><span>✦ AI 캐릭터 만들기</span><small>무료 할당량 사용</small></summary>
+            <label class="character-field">어떤 캐릭터인가요?
+              <textarea id="characterAiPrompt" rows="3" maxlength="500" placeholder="예: 갈색 단발머리와 둥근 안경, 흰색 실험복을 입고 작은 초록색 노트를 든 생명과학 교사"></textarea>
+            </label>
+            <div class="character-ai-presets" id="characterAiPresets">
+              <button type="button">흰 실험복을 입은 생명과학 교사</button>
+              <button type="button">교복을 입고 탐사 가방을 멘 학생</button>
+              <button type="button">초록 작업복을 입은 생태 연구원</button>
+            </div>
+            <label class="character-ai-reference"><input id="characterAiUseReference" type="checkbox" checked /> 첫 결과의 외형을 유지해 방향·행동 만들기</label>
+            <details class="character-ai-code"><summary>관리자 코드 <span>선택 사항</span></summary><input id="characterAiAccessCode" type="password" autocomplete="off" placeholder="설정한 경우에만 입력" /></details>
+            <button class="button full character-ai-generate" id="characterAiGenerateButton" type="button">✦ 현재 방향·행동으로 생성</button>
+            <div class="character-ai-status" id="characterAiStatus"><i></i><span>아래에서 방향과 행동을 먼저 선택하세요.</span></div>
+            <div class="character-ai-result checker" id="characterAiResult" hidden>
+              <img id="characterAiResultImage" alt="AI로 생성한 캐릭터" />
+              <div><button class="button primary" id="characterAiUseButton" type="button">현재 프레임으로 추가</button><button class="button ghost" id="characterAiDownloadButton" type="button">PNG 저장</button></div>
+            </div>
+          </details>
+
           <label class="character-field">캐릭터 이름
             <input id="characterName" maxlength="40" value="나의 캐릭터" />
           </label>
