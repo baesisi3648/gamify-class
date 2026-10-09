@@ -57,6 +57,7 @@ export async function onRequest(context) {
   const view = String(body.view || "topdown").trim().slice(0, 30);
   const direction = String(body.direction || "auto").trim().slice(0, 30);
   const action = String(body.action || "idle").trim().slice(0, 30);
+  const pose = String(body.pose || "").trim().slice(0, 180);
   const mapMode = body.mapMode === "layered" ? "layered" : "quality";
   const operation = body.operation === "split" ? "split" : "generate";
   if (prompt.length < 3) {
@@ -81,17 +82,18 @@ export async function onRequest(context) {
     }
     if (kind === "character") {
       const reference = String(body.reference || "");
-      const request = { kind, prompt, scene, season, view, direction, action };
+      const referenceRole = body.referenceRole === "style" ? "style" : "identity";
+      const request = { kind, prompt, scene, season, view, direction, action, pose };
       let generated;
       if (reference) {
         if (!/^data:image\/(?:jpeg|png|webp);base64,/i.test(reference) || reference.length > 1600000) {
           return Response.json({ ok: false, code: "REFERENCE_INVALID", message: "기준 캐릭터 이미지를 읽을 수 없습니다." }, { status: 400, headers });
         }
-        generated = { image: await generateCharacterVariation(env.AI, reference, request), model: MODEL, degraded: false };
+        generated = { image: await generateCharacterVariation(env.AI, reference, request, referenceRole), model: MODEL, degraded: false };
       } else {
         generated = await generateImage(env.AI, buildPrompt(request));
       }
-      return Response.json({ ok: true, image: generated.image, kind, model: generated.model, degraded: generated.degraded, referenceUsed: Boolean(reference) }, { headers });
+      return Response.json({ ok: true, image: generated.image, kind, model: generated.model, degraded: generated.degraded, referenceUsed: Boolean(reference), referenceRole: reference ? referenceRole : null }, { headers });
     }
     const indoor = kind === "map" && isIndoorRequest(`${prompt} ${scene}`);
     let architectureBrief = "";
@@ -157,14 +159,19 @@ async function generateReferenceImage(ai, prompt, reference) {
   return image;
 }
 
-async function generateCharacterVariation(ai, reference, request) {
-  const prompt = buildPrompt(request, true);
-  return generateReferenceImage(ai, [
-    "Reference image 0 is the approved identity sheet for one original game avatar.",
-    "Preserve the exact same person, face, hairstyle, hair color, skin tone, body proportions, outfit colors, clothing details and accessories.",
-    "Create only the requested new facing direction and action. Do not redesign, add, remove or replace any identity detail.",
-    prompt
-  ].join(" "), reference);
+async function generateCharacterVariation(ai, reference, request, referenceRole = "identity") {
+  const identityGuide = referenceRole === "style"
+    ? [
+        "Reference image 0 is a STYLE AND PROPORTION GUIDE ONLY. Do not copy its character identity, face, hair, clothing, colors or accessories.",
+        "Match only its compact pixel-sprite scale, huge-head tiny-body ratio, one-pixel outline weight, low-resolution pixel density and readable game pose.",
+        "Create a completely new character whose identity and outfit follow the user's description. Output exactly one pose, never the three-pose reference layout."
+      ]
+    : [
+        "Reference image 0 is the approved identity sheet for one original game avatar.",
+        "Preserve the exact same person, face, hairstyle, hair color, skin tone, body proportions, outfit colors, clothing details and accessories.",
+        "Create only the requested new facing direction and action. Do not redesign, add, remove or replace any identity detail."
+      ];
+  return generateReferenceImage(ai, [...identityGuide, buildPrompt(request, referenceRole === "identity")].join(" "), reference);
 }
 
 function indoorPurposeArchitecture(prompt, scene) {
@@ -295,7 +302,7 @@ async function generateLayerPlan(ai, request) {
   return plan;
 }
 
-function buildPrompt({ kind, prompt, scene, season, view, direction, action = "idle", architectureBrief = "" }, referenceMode = false) {
+function buildPrompt({ kind, prompt, scene, season, view, direction, action = "idle", pose = "", architectureBrief = "" }, referenceMode = false) {
   const scenes = {
     school: "a Korean school campus with classrooms, gym, athletic field, garden and connected walking paths",
     forest: "an ecology park with forest trails, stream, pond, meadow and observation areas",
@@ -352,6 +359,10 @@ function buildPrompt({ kind, prompt, scene, season, view, direction, action = "i
     wave: "a friendly standing pose waving one hand",
     work: "a focused working pose using a small generic handheld tool",
     sit: "a seated pose without any chair or furniture",
+    jump: "one readable airborne jump pose with bent knees and compact arms",
+    attack: "one dynamic but compact game attack key pose without weapons unless requested",
+    hurt: "one readable recoiling damage pose while remaining fully visible",
+    dance: "one cheerful rhythmic dance key pose with clear arm and leg gesture",
     custom: "a simple expressive action that matches the user's description"
   };
   const common = "Original artwork only. No text, no letters, no numbers, no logos, no watermark, no characters, no UI frame.";
@@ -360,8 +371,11 @@ function buildPrompt({ kind, prompt, scene, season, view, direction, action = "i
       referenceMode ? "Create one new pose of the exact same approved avatar." : "Create one original full-body avatar for a cute 2D social metaverse game.",
       `Character requested by the user: ${prompt}.`,
       `Facing direction: ${characterDirections[direction] || characterDirections.auto}. Action: ${characterActions[action] || characterActions.idle}.`,
-      "Polished Korean casual social-game avatar aesthetic: adorable chibi proportions, head about 40 percent of total height, compact rounded body, short limbs, expressive but simple face, clean dark outline, soft cel shading, subtle highlights and crisp high-resolution pixel-art-inspired rendering.",
-      "The character must be anatomically coherent, fully visible from hair to shoes, centered, and use one consistent three-quarter game-sprite camera with no dramatic perspective.",
+      pose ? `Additional mandatory pose detail: ${pose}.` : "",
+      "AUTHENTIC TINY GAME SPRITE, not an illustration: design at a logical resolution of about 48x64 pixels. Use hard square pixel clusters, crisp nearest-neighbor edges, a clean one-pixel near-black outline, no antialiasing, no painterly brushwork, no smooth vector curves, and only two or three flat cel-shading tones per material.",
+      "MANDATORY CHIBI PROPORTIONS: the oversized square-rounded head including hair occupies 50-55% of total character height and is slightly wider than the torso. The body is extremely compact: tiny torso about 22%, very short legs about 23%, tiny hands and shoes. Never use realistic adult proportions, long legs, broad shoulders, muscular anatomy, portrait proportions or fashion-illustration anatomy.",
+      "Facial features are simplified but readable: small eyes rendered in a few pixel clusters, tiny nose or no nose, one-pixel mouth, compact ears. The complete character must fit inside one 48x64-style sprite cell with generous empty space around it.",
+      "The character must be anatomically coherent, fully visible from hair to shoes, centered, and use one consistent slightly elevated three-quarter game-sprite camera with no dramatic perspective.",
       "Show exactly one character only. No alternate pose, no sprite sheet, no duplicate, no extra head, no extra limbs, no cropped body, no floor, no scenery, no prop unless explicitly required by the action.",
       "Place the avatar on a perfectly uniform vivid magenta background (#ff00ff), with no cast shadow, border, gradient or texture so the background can be removed automatically.",
       moods[season] || moods["bright-day"],
