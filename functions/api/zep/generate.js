@@ -359,6 +359,7 @@ function buildPrompt({ kind, prompt, scene, season, view, direction, action = "i
     wave: "a friendly standing pose waving one hand",
     work: "a focused working pose using a small generic handheld tool",
     sit: "a seated pose without any chair or furniture",
+    point: "a clear standing pose extending one arm forward to point at something",
     jump: "one readable airborne jump pose with bent knees and compact arms",
     attack: "one dynamic but compact game attack key pose without weapons unless requested",
     hurt: "one readable recoiling damage pose while remaining fully visible",
