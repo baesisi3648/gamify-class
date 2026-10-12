@@ -46,11 +46,12 @@ function bindAuthForms() {
   $('#draw-login-form').addEventListener('submit', (event) => loginStudent(event, true));
   $('#admin-login-form').addEventListener('submit', async (event) => {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     try {
       await api('/api/auth/admin', { method: 'POST', body: { password: form.get('password') } });
       state.role = 'admin';
-      event.currentTarget.reset();
+      formElement.reset();
       await showAdminView();
     } catch (error) { toast(error.message); }
   });
@@ -59,7 +60,8 @@ function bindAuthForms() {
 
 async function loginStudent(event, drawMode) {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
+  const formElement = event.currentTarget;
+  const form = new FormData(formElement);
   try {
     await api('/api/auth/student', {
       method: 'POST',
@@ -67,7 +69,7 @@ async function loginStudent(event, drawMode) {
     });
     state.role = 'student';
     state.drawCeremonyMode = drawMode;
-    event.currentTarget.reset();
+    formElement.reset();
     await showStudentView();
     if (drawMode && state.student?.assignment) {
       toast('이미 카드를 뽑은 학생입니다. 개인 공간에서 확인할 수 있어요.');
@@ -175,10 +177,11 @@ function bindStudentActions() {
   });
   $('#guestbook-form').addEventListener('submit', async (event) => {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     try {
       await api('/api/student/guestbook', { method: 'POST', body: { targetStudentId: Number(form.get('targetStudentId')), displayMode: form.get('displayMode'), message: form.get('message') } });
-      event.currentTarget.reset();
+      formElement.reset();
       toast('방명록을 남겼습니다.');
       await loadStudentDashboard();
     } catch (error) { toast(error.message); }
@@ -207,11 +210,12 @@ function bindAdminActions() {
   $('#refresh-admin').addEventListener('click', async () => { await loadClasses(); if (state.activity) await loadActivity(state.activity.activity.id); toast('새로고침했습니다.'); });
   $('#class-form').addEventListener('submit', async (event) => {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     try {
       const result = await api('/api/admin/classes', { method: 'POST', body: { name: form.get('name'), schoolYear: Number(form.get('schoolYear')), accessCode: form.get('accessCode') } });
       toast(`학급을 만들었습니다. 반 코드는 ${result.accessCode}입니다.`);
-      event.currentTarget.reset();
+      formElement.reset();
       $('#class-form [name=schoolYear]').value = new Date().getFullYear();
       await loadClasses();
     } catch (error) { toast(error.message); }
@@ -264,10 +268,11 @@ function bindAdminActions() {
   $('#mission-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!state.activity) return;
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     try {
       await api(`/api/admin/activities/${state.activity.activity.id}/missions`, { method: 'POST', body: { title: form.get('title'), description: form.get('description') } });
-      event.currentTarget.reset();
+      formElement.reset();
       toast('미션을 추가했습니다.');
       await loadActivity(state.activity.activity.id);
     } catch (error) { toast(error.message); }
