@@ -562,7 +562,13 @@ function httpError(status, message) {
 
 function clean(value) { return String(value ?? '').trim(); }
 function nullableText(value) { const text = clean(value); return text || null; }
-function normalizeName(value) { return clean(value).replace(/\s+/g, '').replace(/\(공동\)$/u, '').toLocaleLowerCase('ko-KR'); }
+export function normalizeName(value) {
+  return clean(value)
+    .replace(/\s+/g, '')
+    .replace(/\(공동\)$/u, '')
+    .replace(/선생님$/u, '')
+    .toLocaleLowerCase('ko-KR');
+}
 function constantEqual(a, b) {
   a = String(a); b = String(b);
   if (a.length !== b.length) return false;

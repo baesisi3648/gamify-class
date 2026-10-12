@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chooseReceiver, findCompletion } from '../src/matching.js';
+import { normalizeName } from '../src/index.js';
+
+test('선생님 호칭과 공동 표기를 빼고도 같은 이름으로 로그인한다', () => {
+  assert.equal(normalizeName('배성용'), '배성용');
+  assert.equal(normalizeName('배성용 선생님'), '배성용');
+  assert.equal(normalizeName('홍길동(공동)'), '홍길동');
+});
 
 test('28명 모두 자기 자신과 중복 없이 배정된다', () => {
   const ids = Array.from({ length: 28 }, (_, index) => index + 1);
