@@ -195,7 +195,17 @@ async function drawCard(request, env) {
   if (selectedCard) throw httpError(409, '방금 다른 친구가 고른 카드입니다. 다른 카드를 선택하세요.');
 
   const assignments = await env.DB.prepare('SELECT giver_id, receiver_id FROM assignments WHERE activity_id=?').bind(activity.id).all();
+  const exclusions = await env.DB.prepare(`
+    SELECT student_a_id, student_b_id
+    FROM assignment_exclusions
+    WHERE class_id=?
+  `).bind(session.class_id).all();
   const fixedPairs = new Map(assignments.results.map((row) => [row.giver_id, row.receiver_id]));
+  const forbiddenPairs = new Set();
+  for (const row of exclusions.results) {
+    forbiddenPairs.add(`${row.student_a_id}:${row.student_b_id}`);
+    forbiddenPairs.add(`${row.student_b_id}:${row.student_a_id}`);
+  }
   const assignedGivers = new Set(fixedPairs.keys());
   const usedReceivers = new Set(fixedPairs.values());
   const remainingGivers = students.map((s) => s.id).filter((id) => !assignedGivers.has(id));
@@ -206,6 +216,7 @@ async function drawCard(request, env) {
     remainingReceivers,
     fixedPairs,
     preventMutual: Boolean(activity.prevent_mutual),
+    forbiddenPairs,
   });
   if (!receiverId) throw httpError(409, '안전한 배정을 만들 수 없습니다. 교사가 뽑기를 초기화한 뒤 다시 시도해 주세요.');
 

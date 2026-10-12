@@ -14,8 +14,13 @@ export function shuffle(values, random = Math.random) {
   return copy;
 }
 
-function isAllowed(giver, receiver, pairs, preventMutual) {
+function pairKey(giver, receiver) {
+  return `${giver}:${receiver}`;
+}
+
+function isAllowed(giver, receiver, pairs, preventMutual, forbiddenPairs) {
   if (giver === receiver) return false;
+  if (forbiddenPairs.has(pairKey(giver, receiver))) return false;
   if (!preventMutual) return true;
   return pairs.get(receiver) !== giver;
 }
@@ -24,7 +29,14 @@ function isAllowed(giver, receiver, pairs, preventMutual) {
  * 남은 학생 전체가 규칙을 지키며 배정될 수 있는지 확인한다.
  * 후보가 가장 적은 학생부터 배정해 최대 28명 학급에서도 빠르게 끝난다.
  */
-export function findCompletion(givers, receivers, fixedPairs = new Map(), preventMutual = true, random = Math.random) {
+export function findCompletion(
+  givers,
+  receivers,
+  fixedPairs = new Map(),
+  preventMutual = true,
+  random = Math.random,
+  forbiddenPairs = new Set(),
+) {
   const pairs = new Map(fixedPairs);
   const available = new Set(receivers);
 
@@ -34,7 +46,7 @@ export function findCompletion(givers, receivers, fixedPairs = new Map(), preven
     let selected = null;
     let selectedCandidates = null;
     for (const giver of remaining) {
-      const candidates = [...available].filter((receiver) => isAllowed(giver, receiver, pairs, preventMutual));
+      const candidates = [...available].filter((receiver) => isAllowed(giver, receiver, pairs, preventMutual, forbiddenPairs));
       if (candidates.length === 0) return null;
       if (!selectedCandidates || candidates.length < selectedCandidates.length) {
         selected = giver;
@@ -58,9 +70,17 @@ export function findCompletion(givers, receivers, fixedPairs = new Map(), preven
 }
 
 /** 현재 학생이 고른 카드에 연결할 수 있는 안전한 상대를 선택한다. */
-export function chooseReceiver({ giverId, remainingGivers, remainingReceivers, fixedPairs, preventMutual = true, random = Math.random }) {
+export function chooseReceiver({
+  giverId,
+  remainingGivers,
+  remainingReceivers,
+  fixedPairs,
+  preventMutual = true,
+  random = Math.random,
+  forbiddenPairs = new Set(),
+}) {
   const candidates = shuffle(
-    remainingReceivers.filter((receiver) => isAllowed(giverId, receiver, fixedPairs, preventMutual)),
+    remainingReceivers.filter((receiver) => isAllowed(giverId, receiver, fixedPairs, preventMutual, forbiddenPairs)),
     random,
   );
 
@@ -73,6 +93,7 @@ export function chooseReceiver({ giverId, remainingGivers, remainingReceivers, f
       nextPairs,
       preventMutual,
       random,
+      forbiddenPairs,
     );
     if (completion) return receiver;
   }

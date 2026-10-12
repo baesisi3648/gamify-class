@@ -14,6 +14,40 @@ test('28명 모두 자기 자신과 중복 없이 배정된다', () => {
   }
 });
 
+test('지정한 두 학생은 어느 방향으로도 서로 배정되지 않는다', () => {
+  const ids = Array.from({ length: 29 }, (_, index) => index + 1);
+  const forbiddenPairs = new Set(['3:24', '24:3']);
+
+  for (let seed = 1; seed <= 40; seed += 1) {
+    let value = seed;
+    const random = () => {
+      value = (value * 1664525 + 1013904223) >>> 0;
+      return value / 0x100000000;
+    };
+    const order = [...ids].sort(() => random() - 0.5);
+    const fixedPairs = new Map();
+    const availableReceivers = new Set(ids);
+
+    for (const giverId of order) {
+      const receiver = chooseReceiver({
+        giverId,
+        remainingGivers: order.filter((id) => !fixedPairs.has(id)),
+        remainingReceivers: [...availableReceivers],
+        fixedPairs,
+        preventMutual: true,
+        random,
+        forbiddenPairs,
+      });
+      assert.ok(receiver, `seed ${seed}, giver ${giverId}`);
+      fixedPairs.set(giverId, receiver);
+      availableReceivers.delete(receiver);
+    }
+
+    assert.notEqual(fixedPairs.get(3), 24);
+    assert.notEqual(fixedPairs.get(24), 3);
+  }
+});
+
 test('이미 진행된 뽑기를 유지하면서 안전한 다음 상대를 고른다', () => {
   const fixedPairs = new Map([[1, 2], [3, 4]]);
   const receiver = chooseReceiver({
