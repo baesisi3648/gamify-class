@@ -18,6 +18,7 @@ async function init() {
   bindAuthForms();
   bindStudentActions();
   bindAdminActions();
+  bindLoginQr();
   $('#class-form [name=schoolYear]').value = new Date().getFullYear();
   try {
     const session = await api('/api/session');
@@ -28,6 +29,56 @@ async function init() {
   } catch (error) {
     toast(error.message);
   }
+}
+
+function bindLoginQr() {
+  const modal = $('#login-qr-modal');
+  const openButton = $('#open-login-qr');
+  const closeButton = $('#close-login-qr');
+  const copyButton = $('#copy-login-qr');
+  let previousFocus = null;
+
+  const open = () => {
+    previousFocus = document.activeElement;
+    modal.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+    closeButton.focus();
+  };
+  const close = () => {
+    modal.classList.add('hidden');
+    document.body.classList.remove('modal-open');
+    previousFocus?.focus?.();
+  };
+
+  openButton.addEventListener('click', open);
+  closeButton.addEventListener('click', close);
+  modal.addEventListener('click', (event) => { if (event.target === modal) close(); });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !modal.classList.contains('hidden')) close();
+  });
+  copyButton.addEventListener('click', async () => {
+    const originalText = copyButton.textContent;
+    copyButton.disabled = true;
+    copyButton.textContent = '이미지 복사 중…';
+    try {
+      const response = await fetch('/login-qr-large.png');
+      if (!response.ok) throw new Error('QR 이미지를 불러오지 못했습니다.');
+      const blob = await response.blob();
+      if (!navigator.clipboard || !window.ClipboardItem) throw new Error('image-copy-unsupported');
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      toast('QR 이미지를 클립보드에 복사했습니다.');
+    } catch {
+      try {
+        await navigator.clipboard.writeText('https://class-manitto.bsy0708.workers.dev/');
+        toast('이미지 복사가 지원되지 않아 접속 주소를 복사했습니다.');
+      } catch {
+        toast('복사가 차단되었습니다. QR 다운로드를 이용해 주세요.');
+      }
+    } finally {
+      copyButton.disabled = false;
+      copyButton.textContent = originalText;
+    }
+  });
 }
 
 function bindTabs() {
