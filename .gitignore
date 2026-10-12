@@ -1,4 +1,7 @@
 /.claude/
 **/.claude/memory/last-session.json
 .DS_Store
+**/node_modules/
+**/.wrangler/
+**/.dev.vars
 GAMIFY_CLASS_홈페이지_전체_리디자인_요구사항_v2.md
