@@ -332,7 +332,7 @@ async function importStudents(request, env) {
   const classId = Number(body.classId);
   const classRow = await env.DB.prepare('SELECT id FROM classes WHERE id=?').bind(classId).first();
   if (!classRow) throw httpError(404, '반을 찾을 수 없습니다.');
-  if (!Array.isArray(body.rows) || body.rows.length < 2 || body.rows.length > 50) throw httpError(400, '학생은 2~50명까지 등록할 수 있습니다.');
+  if (!Array.isArray(body.rows) || body.rows.length < 1 || body.rows.length > 50) throw httpError(400, '학생은 한 번에 1~50명까지 등록할 수 있습니다.');
 
   const seen = new Set();
   const prepared = [];
@@ -489,13 +489,13 @@ async function hashSecret(value) {
   const saltBytes = crypto.getRandomValues(new Uint8Array(16));
   const salt = bytesToBase64(saltBytes);
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(value), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: saltBytes, iterations: 120000, hash: 'SHA-256' }, key, 256);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: saltBytes, iterations: 100000, hash: 'SHA-256' }, key, 256);
   return { salt, hash: bytesToBase64(new Uint8Array(bits)) };
 }
 
 async function verifySecret(value, salt, expected) {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(value), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: base64ToBytes(salt), iterations: 120000, hash: 'SHA-256' }, key, 256);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: base64ToBytes(salt), iterations: 100000, hash: 'SHA-256' }, key, 256);
   return constantEqual(bytesToBase64(new Uint8Array(bits)), expected);
 }
 

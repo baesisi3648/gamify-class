@@ -221,9 +221,17 @@ function bindAdminActions() {
     const form = new FormData(event.currentTarget);
     const rows = parseRoster(form.get('roster'));
     try {
-      const result = await api('/api/admin/students/import', { method: 'POST', body: { classId: Number(form.get('classId')), rows } });
-      renderCredentials(result.credentials);
-      toast(`${result.count}명의 학생을 등록했습니다.`);
+      if (!rows.length) throw new Error('등록할 학생 명단을 입력하세요.');
+      const credentials = [];
+      for (let start = 0; start < rows.length; start += 4) {
+        const result = await api('/api/admin/students/import', {
+          method: 'POST',
+          body: { classId: Number(form.get('classId')), rows: rows.slice(start, start + 4) },
+        });
+        credentials.push(...result.credentials);
+      }
+      renderCredentials(credentials);
+      toast(`${credentials.length}명의 학생을 등록했습니다.`);
       await loadClasses();
     } catch (error) { toast(error.message); }
   });
