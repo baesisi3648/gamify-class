@@ -79,6 +79,8 @@ async function routeApi(request, env, url) {
   if (method === 'POST' && statusMatch) return updateActivityStatus(request, env, Number(statusMatch[1]));
   const resetMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)\/reset$/);
   if (method === 'POST' && resetMatch) return resetDraw(request, env, Number(resetMatch[1]));
+  const fullResetMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)\/full-reset$/);
+  if (method === 'POST' && fullResetMatch) return fullResetActivity(request, env, Number(fullResetMatch[1]));
   const missionMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)\/missions$/);
   if (method === 'POST' && missionMatch) return createMission(request, env, Number(missionMatch[1]));
   const jejuMissionMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)\/missions\/jeju$/);
@@ -548,6 +550,46 @@ async function resetDraw(request, env, activityId) {
   await env.DB.prepare('DELETE FROM assignments WHERE activity_id=?').bind(activityId).run();
   await env.DB.prepare("UPDATE activities SET status='draft' WHERE id=?").bind(activityId).run();
   return json({ ok: true });
+}
+
+async function fullResetActivity(request, env, activityId) {
+  await requireRole(request, env, 'admin');
+  const body = await readJson(request);
+  if (body.confirm !== 'FULL_RESET') throw httpError(400, '전체 초기화 확인 문구가 필요합니다.');
+  const activity = await env.DB.prepare('SELECT id,class_id FROM activities WHERE id=?').bind(activityId).first();
+  if (!activity) throw httpError(404, '활동을 찾을 수 없습니다.');
+
+  const [proofRows, counts] = await Promise.all([
+    env.DB.prepare(`SELECT p.photo_key FROM mission_proofs p JOIN missions m ON m.id=p.mission_id
+      WHERE m.activity_id=? AND p.photo_key IS NOT NULL`).bind(activityId).all(),
+    env.DB.prepare(`SELECT
+      (SELECT COUNT(*) FROM assignments WHERE activity_id=?) AS assignments,
+      (SELECT COUNT(*) FROM student_missions WHERE activity_id=?) AS student_missions,
+      (SELECT COUNT(*) FROM mission_proofs p JOIN missions m ON m.id=p.mission_id WHERE m.activity_id=?) AS proofs,
+      (SELECT COUNT(*) FROM guestbook_entries WHERE activity_id=?) AS guestbooks
+    `).bind(activityId, activityId, activityId, activityId).first(),
+  ]);
+
+  const statements = [
+    env.DB.prepare('DELETE FROM mission_proofs WHERE mission_id IN (SELECT id FROM missions WHERE activity_id=?)').bind(activityId),
+    env.DB.prepare('DELETE FROM guestbook_entries WHERE activity_id=?').bind(activityId),
+    env.DB.prepare('DELETE FROM student_missions WHERE activity_id=?').bind(activityId),
+    env.DB.prepare('DELETE FROM assignments WHERE activity_id=?').bind(activityId),
+    env.DB.prepare("UPDATE activities SET status='draft' WHERE id=?").bind(activityId),
+  ];
+  if (body.resetPins === true) {
+    statements.push(env.DB.prepare('UPDATE students SET pin_initialized=0 WHERE class_id=? AND active=1').bind(activity.class_id));
+    statements.push(env.DB.prepare("DELETE FROM sessions WHERE role='student' AND class_id=?").bind(activity.class_id));
+  }
+  await env.DB.batch(statements);
+
+  const photoKeys = proofRows.results.map((row) => row.photo_key).filter(Boolean);
+  if (env.PHOTOS && photoKeys.length) {
+    for (let index = 0; index < photoKeys.length; index += 1000) {
+      await env.PHOTOS.delete(photoKeys.slice(index, index + 1000));
+    }
+  }
+  return json({ ok: true, resetPins: body.resetPins === true, deleted: { ...counts, photos: photoKeys.length } });
 }
 
 async function createMission(request, env, activityId) {

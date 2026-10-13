@@ -448,6 +448,28 @@ function bindAdminActions() {
       await loadActivity(state.activity.activity.id);
     } catch (error) { toast(error.message); }
   });
+  $('#full-reset-activity').addEventListener('click', async (event) => {
+    if (!state.activity) return;
+    const resetPins = $('#full-reset-pins').checked;
+    const answer = prompt(`선택한 활동의 배정·미션 결과·인증사진·방명록이 모두 삭제됩니다.${resetPins ? '\n학생들의 PIN도 모두 초기화됩니다.' : ''}\n\n계속하려면 '전체초기화'를 입력하세요.`);
+    if (answer !== '전체초기화') {
+      if (answer !== null) toast('확인 문구가 일치하지 않아 취소했습니다.');
+      return;
+    }
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      const result = await api(`/api/admin/activities/${state.activity.activity.id}/full-reset`, { method: 'POST', body: { confirm: 'FULL_RESET', resetPins } });
+      const deleted = result.deleted;
+      toast(`전체 초기화 완료 · 배정 ${deleted.assignments}건, 인증 ${deleted.proofs}건, 메시지 ${deleted.guestbooks}건 삭제`);
+      $('#full-reset-pins').checked = false;
+      await loadActivity(state.activity.activity.id);
+      await loadClasses();
+    } catch (error) {
+      toast(error.message);
+      button.disabled = false;
+    }
+  });
   $('#proof-admin-list').addEventListener('click', async (event) => {
     const button = event.target.closest('[data-proof-status]');
     if (!button || !state.activity) return;
