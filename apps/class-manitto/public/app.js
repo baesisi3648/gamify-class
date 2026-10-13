@@ -356,6 +356,22 @@ function bindAdminActions() {
       await loadClasses();
     } catch (error) { toast(error.message); }
   });
+  $('#code-class-select').addEventListener('change', (event) => {
+    const selected = state.classes.find((item) => item.id === Number(event.target.value));
+    $('#class-code-form [name=accessCode]').value = selected?.access_code || '';
+  });
+  $('#class-code-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const classId = Number(form.get('classId'));
+    try {
+      const result = await api(`/api/admin/classes/${classId}/access-code`, { method: 'POST', body: { accessCode: form.get('accessCode') } });
+      toast(`학생 접속 코드를 ${result.accessCode}(으)로 변경했습니다.`);
+      await loadClasses();
+      if (state.activity?.activity.class_id === classId) await loadActivity(state.activity.activity.id);
+    } catch (error) { toast(error.message); }
+  });
   $('#roster-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);

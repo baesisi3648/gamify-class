@@ -65,6 +65,8 @@ async function routeApi(request, env, url) {
   if (method === 'POST' && pathname === '/api/admin/classes') return createClass(request, env);
   if (method === 'POST' && pathname === '/api/admin/students/import') return importStudents(request, env);
 
+  const classCodeMatch = pathname.match(/^\/api\/admin\/classes\/(\d+)\/access-code$/);
+  if (method === 'POST' && classCodeMatch) return updateClassAccessCode(request, env, Number(classCodeMatch[1]));
   const classStudentsMatch = pathname.match(/^\/api\/admin\/classes\/(\d+)\/students$/);
   if (method === 'GET' && classStudentsMatch) return listStudents(request, env, Number(classStudentsMatch[1]));
   const resetStudentPinMatch = pathname.match(/^\/api\/admin\/students\/(\d+)\/reset-pin$/);
@@ -411,6 +413,22 @@ async function createClass(request, env) {
     if (String(error).includes('UNIQUE')) throw httpError(409, '이미 사용 중인 반 코드입니다.');
     throw error;
   }
+}
+
+async function updateClassAccessCode(request, env, classId) {
+  await requireRole(request, env, 'admin');
+  const body = await readJson(request);
+  const accessCode = clean(body.accessCode).toUpperCase();
+  if (!/^[A-Z0-9]{4,10}$/.test(accessCode)) throw httpError(400, '접속 코드는 4~10자리 영문·숫자로 입력하세요.');
+  const classRow = await env.DB.prepare('SELECT id,access_code FROM classes WHERE id=?').bind(classId).first();
+  if (!classRow) throw httpError(404, '학급을 찾을 수 없습니다.');
+  try {
+    await env.DB.prepare('UPDATE classes SET access_code=? WHERE id=?').bind(accessCode, classId).run();
+  } catch (error) {
+    if (String(error).includes('UNIQUE')) throw httpError(409, '이미 다른 학급에서 사용 중인 코드입니다.');
+    throw error;
+  }
+  return json({ ok: true, accessCode, previousAccessCode: classRow.access_code });
 }
 
 async function importStudents(request, env) {
