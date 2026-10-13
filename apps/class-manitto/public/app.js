@@ -182,12 +182,21 @@ function renderDrawCards(data) {
 function renderMissions(missions) {
   $('#mission-list').innerHTML = missions.length ? missions.map((mission) => {
     const status = mission.proof_status || '미제출';
+    const existingPhoto = mission.photoUrl || '';
     return `<article class="mission-item">
       <div class="mission-head"><div><h3>${esc(mission.title)}</h3><p>${esc(mission.description || '미션을 수행하고 인증을 남겨 주세요.')}</p></div><span class="mini-status ${esc(status)}">${proofStatusName(status)}</span></div>
       ${mission.teacher_note ? `<p class="teacher-note">선생님 메모: ${esc(mission.teacher_note)}</p>` : ''}
       <form class="mission-form" data-mission-id="${mission.id}">
         <textarea name="proofText" rows="2" maxlength="1000" placeholder="어떻게 미션을 수행했나요?">${esc(mission.proof_text || '')}</textarea>
-        <label>사진 선택<input name="photo" type="file" accept="image/*"></label>
+        <div class="gallery-upload">
+          <div><b>사진으로 인증하기</b><small>휴대전화 사진첩·갤러리에서 사진 한 장을 선택하세요.</small></div>
+          <label class="gallery-picker"><span aria-hidden="true">▣</span><strong data-photo-label>${existingPhoto ? '다른 사진 선택' : '사진첩에서 사진 선택'}</strong><input name="photo" type="file" accept="image/*" data-photo-input></label>
+        </div>
+        <div class="mission-photo-preview" data-existing-url="${esc(existingPhoto)}" ${existingPhoto ? '' : 'hidden'}>
+          <img src="${existingPhoto ? esc(existingPhoto) : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='}" alt="${existingPhoto ? '현재 등록된 미션 인증 사진' : '선택한 미션 인증 사진 미리보기'}">
+          <div><b data-photo-name>${existingPhoto ? '현재 등록된 사진' : ''}</b><small data-photo-size>${existingPhoto ? '새 사진을 선택하지 않으면 이 사진이 유지됩니다.' : ''}</small></div>
+          <button type="button" data-clear-photo ${existingPhoto ? 'hidden' : ''}>선택 취소</button>
+        </div>
         <button class="secondary-btn" type="submit">${mission.proof_id ? '인증 다시 제출' : '미션 인증 제출'}</button>
       </form>
     </article>`;
@@ -248,6 +257,56 @@ function bindStudentActions() {
       toast('미션 인증을 제출했습니다.');
       await loadStudentDashboard();
     } catch (error) { toast(error.message); }
+  });
+  $('#mission-list').addEventListener('change', (event) => {
+    const input = event.target.closest('[data-photo-input]');
+    if (!input) return;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      input.value = '';
+      toast('사진 파일만 선택할 수 있습니다.');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      input.value = '';
+      toast('사진은 8MB 이하로 선택해 주세요.');
+      return;
+    }
+    if (input.dataset.previewUrl) URL.revokeObjectURL(input.dataset.previewUrl);
+    const previewUrl = URL.createObjectURL(file);
+    input.dataset.previewUrl = previewUrl;
+    const form = input.closest('.mission-form');
+    const preview = form.querySelector('.mission-photo-preview');
+    preview.hidden = false;
+    preview.querySelector('img').src = previewUrl;
+    preview.querySelector('img').alt = '선택한 미션 인증 사진 미리보기';
+    preview.querySelector('[data-photo-name]').textContent = file.name || '선택한 사진';
+    preview.querySelector('[data-photo-size]').textContent = `${(file.size / 1024 / 1024).toFixed(1)}MB · 제출 전에 사진을 확인해 주세요.`;
+    preview.querySelector('[data-clear-photo]').hidden = false;
+    form.querySelector('[data-photo-label]').textContent = '사진 변경하기';
+  });
+  $('#mission-list').addEventListener('click', (event) => {
+    const clearButton = event.target.closest('[data-clear-photo]');
+    if (!clearButton) return;
+    const form = clearButton.closest('.mission-form');
+    const input = form.querySelector('[data-photo-input]');
+    if (input.dataset.previewUrl) URL.revokeObjectURL(input.dataset.previewUrl);
+    delete input.dataset.previewUrl;
+    input.value = '';
+    const preview = form.querySelector('.mission-photo-preview');
+    const existingPhoto = preview.dataset.existingUrl;
+    if (existingPhoto) {
+      preview.querySelector('img').src = existingPhoto;
+      preview.querySelector('img').alt = '현재 등록된 미션 인증 사진';
+      preview.querySelector('[data-photo-name]').textContent = '현재 등록된 사진';
+      preview.querySelector('[data-photo-size]').textContent = '새 사진을 선택하지 않으면 이 사진이 유지됩니다.';
+      clearButton.hidden = true;
+      form.querySelector('[data-photo-label]').textContent = '다른 사진 선택';
+    } else {
+      preview.hidden = true;
+      form.querySelector('[data-photo-label]').textContent = '사진첩에서 사진 선택';
+    }
   });
 }
 
