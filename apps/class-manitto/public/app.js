@@ -189,7 +189,7 @@ function renderMissions(data) {
   if (!missions.length) {
     const canDraw = data.assignment && ['drawing', 'active'].includes(data.activity.status);
     $('#mission-list').innerHTML = canDraw
-      ? `<div class="mission-draw-box"><span class="mission-draw-icon">✦</span><h3>제주 미션 3개를 뽑아 볼까요?</h3><p>간식 선물·여행 도움·제주 추억 미션을 하나씩 받게 됩니다.<br>한 번 뽑으면 바꿀 수 없어요.</p><button id="draw-missions" class="primary-btn warm" type="button">제주 미션 3개 뽑기</button><small>위험한 장소에서는 촬영하지 말고, 친구의 얼굴은 동의를 받은 경우에만 찍어 주세요.</small></div>`
+      ? `<div class="mission-draw-box"><span class="mission-draw-icon">✦</span><h3>제주 미션 3개를 뽑아 볼까요?</h3><p>간식 선물 1개·여행 도움 1개·제주 여행 편지 1개가 반드시 나옵니다.<br>한 번 뽑으면 바꿀 수 없어요.</p><button id="draw-missions" class="primary-btn warm" type="button">필수 미션 3개 뽑기</button><small>위험한 장소에서는 촬영하지 말고, 친구의 얼굴은 동의를 받은 경우에만 찍어 주세요.</small></div>`
       : `<div class="empty">${data.assignment ? '지금은 미션을 뽑을 수 없습니다.' : '먼저 마니또 카드를 뽑아 주세요.'}</div>`;
     return;
   }
@@ -273,7 +273,7 @@ function bindStudentActions() {
     } catch (error) {
       toast(error.message);
       button.disabled = false;
-      button.textContent = '제주 미션 3개 뽑기';
+      button.textContent = '필수 미션 3개 뽑기';
     }
   });
   $('#student-card-grid').addEventListener('click', async (event) => {

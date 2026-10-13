@@ -265,12 +265,15 @@ async function drawStudentMissions(request, env) {
 
   const selected = [];
   for (const category of ['snack', 'help', 'memory']) {
+    const memoryCondition = category === 'memory' ? "AND title='제주 여행 편지'" : '';
     const mission = await env.DB.prepare(`
       SELECT id FROM missions
-      WHERE activity_id=? AND active=1 AND category=?
+      WHERE activity_id=? AND active=1 AND category=? ${memoryCondition}
       ORDER BY RANDOM() LIMIT 1
     `).bind(activity.id, category).first();
-    if (!mission) throw httpError(409, '교사가 제주 미션 묶음을 먼저 등록해야 합니다.');
+    if (!mission) throw httpError(409, category === 'memory'
+      ? '교사가 제주 여행 편지 미션을 먼저 등록해야 합니다.'
+      : '교사가 제주 미션 묶음을 먼저 등록해야 합니다.');
     selected.push({ category, missionId: mission.id });
   }
 
@@ -566,6 +569,9 @@ async function createActivity(request, env) {
   const preventMutual = body.preventMutual === false ? 0 : 1;
   const count = await env.DB.prepare('SELECT COUNT(*) AS count FROM students WHERE class_id=? AND active=1').bind(classId).first();
   if (!count || count.count < 2) throw httpError(400, '학생을 2명 이상 등록한 뒤 활동을 만드세요.');
+  const openActivity = await env.DB.prepare(`SELECT id,title,status FROM activities
+    WHERE class_id=? AND status <> 'closed' ORDER BY id DESC LIMIT 1`).bind(classId).first();
+  if (openActivity) throw httpError(409, `이미 진행 중인 '${openActivity.title}' 활동이 있습니다. 기존 활동을 종료한 뒤 새 활동을 만드세요.`);
   const result = await env.DB.prepare(`INSERT INTO activities(class_id,title,prevent_mutual,starts_at,ends_at) VALUES(?,?,?,?,?)`)
     .bind(classId, title, preventMutual, nullableText(body.startsAt), nullableText(body.endsAt)).run();
   return json({ ok: true, id: result.meta.last_row_id });
@@ -611,7 +617,15 @@ async function updateActivityStatus(request, env, activityId) {
       (SELECT COUNT(*) FROM assignments WHERE activity_id=?) AS assignments`).bind(activity.class_id, activityId).first();
     if (counts.students !== counts.assignments) throw httpError(409, `아직 ${counts.students - counts.assignments}명이 카드를 뽑지 않았습니다.`);
   }
-  await env.DB.prepare('UPDATE activities SET status=? WHERE id=?').bind(status, activityId).run();
+  if (['drawing', 'active', 'revealed'].includes(status)) {
+    await env.DB.batch([
+      env.DB.prepare("UPDATE activities SET status='closed' WHERE class_id=? AND id<>? AND status<>'closed'")
+        .bind(activity.class_id, activityId),
+      env.DB.prepare('UPDATE activities SET status=? WHERE id=?').bind(status, activityId),
+    ]);
+  } else {
+    await env.DB.prepare('UPDATE activities SET status=? WHERE id=?').bind(status, activityId).run();
+  }
   return json({ ok: true, status });
 }
 
