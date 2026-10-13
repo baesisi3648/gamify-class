@@ -21,9 +21,10 @@ test('28명 모두 자기 자신과 중복 없이 배정된다', () => {
   }
 });
 
-test('지정한 두 학생은 어느 방향으로도 서로 배정되지 않는다', () => {
+test('여러 제외 학생 쌍은 어느 방향으로도 서로 배정되지 않는다', () => {
   const ids = Array.from({ length: 29 }, (_, index) => index + 1);
-  const forbiddenPairs = new Set(['3:24', '24:3']);
+  const excludedPairs = [[3, 24], [2, 4], [4, 5]];
+  const forbiddenPairs = new Set(excludedPairs.flatMap(([first, second]) => [`${first}:${second}`, `${second}:${first}`]));
 
   for (let seed = 1; seed <= 40; seed += 1) {
     let value = seed;
@@ -50,8 +51,10 @@ test('지정한 두 학생은 어느 방향으로도 서로 배정되지 않는�
       availableReceivers.delete(receiver);
     }
 
-    assert.notEqual(fixedPairs.get(3), 24);
-    assert.notEqual(fixedPairs.get(24), 3);
+    for (const [first, second] of excludedPairs) {
+      assert.notEqual(fixedPairs.get(first), second);
+      assert.notEqual(fixedPairs.get(second), first);
+    }
   }
 });
 

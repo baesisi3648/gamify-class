@@ -159,6 +159,11 @@
               </article>
             </div>
             <article class="content-card"><div class="section-title"><span class="number">D</span><div><h2>등록된 학급</h2><p>학급과 현재 활동 상태를 확인하세요.</p></div></div><div id="class-list" class="class-list"></div></article>
+            <article class="content-card"><div class="section-title"><span class="number">E</span><div><h2>마니또 배정 제외 설정</h2><p>두 학생을 등록하면 어느 방향으로도 서로 마니또가 되지 않습니다.</p></div></div>
+              <form id="exclusion-form" class="exclusion-form"><label>대상 학급<select id="exclusion-class-select" name="classId" class="class-select" required></select></label><label>첫 번째 학생<select id="exclusion-student-a" name="studentAId" required></select></label><label>두 번째 학생<select id="exclusion-student-b" name="studentBId" required></select></label><button class="secondary-btn" type="submit">제외 관계 추가</button></form>
+              <p class="board-guide">이미 서로 배정된 뒤에는 추가할 수 없습니다. 그 경우 카드 뽑기를 초기화한 후 설정하세요.</p>
+              <div id="exclusion-list" class="exclusion-list"><div class="empty">학급을 선택해 주세요.</div></div>
+            </article>
             <article id="credential-card" class="content-card hidden"><div class="section-title"><span class="number">PIN</span><div><h2>학생 PIN 등록 상태</h2><p>PIN을 비워 등록한 학생은 첫 로그인에서 본인이 숫자 4자리를 정합니다.</p></div></div><div class="table-wrap"><table><thead><tr><th>번호</th><th>이름</th><th>PIN 상태</th></tr></thead><tbody id="credential-list"></tbody></table></div></article>
           </section>
 

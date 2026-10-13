@@ -434,6 +434,26 @@ function bindAdminActions() {
       if (state.activity?.activity.class_id === classId) await loadActivity(state.activity.activity.id);
     } catch (error) { toast(error.message); }
   });
+  $('#exclusion-class-select').addEventListener('change', (event) => loadAssignmentExclusions(Number(event.target.value)));
+  $('#exclusion-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const classId = Number(form.get('classId'));
+    try {
+      await api(`/api/admin/classes/${classId}/exclusions`, { method: 'POST', body: { studentAId: Number(form.get('studentAId')), studentBId: Number(form.get('studentBId')) } });
+      toast('두 학생의 마니또 배정 제외 관계를 추가했습니다.');
+      await loadAssignmentExclusions(classId);
+    } catch (error) { toast(error.message); }
+  });
+  $('#exclusion-list').addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-delete-exclusion]');
+    if (!button || !confirm('이 제외 관계를 삭제할까요?')) return;
+    try {
+      await api(`/api/admin/exclusions/${button.dataset.deleteExclusion}`, { method: 'DELETE' });
+      toast('제외 관계를 삭제했습니다.');
+      await loadAssignmentExclusions(Number($('#exclusion-class-select').value));
+    } catch (error) { toast(error.message); }
+  });
   $('#roster-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -622,6 +642,31 @@ async function loadClasses() {
     if ([...select.options].some((option) => option.value === previous)) select.value = previous;
   });
   $('#class-list').innerHTML = data.classes.length ? data.classes.map((item) => `<article class="class-item"><span class="class-code">${esc(item.access_code)}</span><h3>${esc(item.name)}</h3><p>${item.school_year}학년도 · 학생 ${item.student_count}명</p><span class="mini-status">${item.activity_status ? statusNames[item.activity_status] : '활동 없음'}</span></article>`).join('') : '<div class="empty">등록된 학급이 없습니다.</div>';
+  const exclusionClass = $('#exclusion-class-select');
+  if (!exclusionClass.value && data.classes.length) exclusionClass.value = String(data.classes[0].id);
+  if (exclusionClass.value) await loadAssignmentExclusions(Number(exclusionClass.value));
+}
+
+async function loadAssignmentExclusions(classId) {
+  if (!classId) {
+    $('#exclusion-list').innerHTML = '<div class="empty">학급을 선택해 주세요.</div>';
+    return;
+  }
+  try {
+    const data = await api(`/api/admin/classes/${classId}/exclusions`);
+    const options = '<option value="">학생을 선택하세요</option>' + data.students.map((student) => `<option value="${student.id}">${student.student_no}번 ${esc(student.name)}</option>`).join('');
+    const first = $('#exclusion-student-a');
+    const second = $('#exclusion-student-b');
+    const previousFirst = first.value;
+    const previousSecond = second.value;
+    first.innerHTML = options;
+    second.innerHTML = options;
+    if ([...first.options].some((option) => option.value === previousFirst)) first.value = previousFirst;
+    if ([...second.options].some((option) => option.value === previousSecond)) second.value = previousSecond;
+    $('#exclusion-list').innerHTML = data.exclusions.length ? data.exclusions.map((item) => `<article class="exclusion-item"><div><b>${item.student_a_no}번 ${esc(item.student_a_name)}</b><span>↔</span><b>${item.student_b_no}번 ${esc(item.student_b_name)}</b></div><small>양방향 배정 제외</small><button class="danger-btn" data-delete-exclusion="${item.id}" type="button">삭제</button></article>`).join('') : '<div class="empty">등록된 제외 관계가 없습니다.</div>';
+  } catch (error) {
+    $('#exclusion-list').innerHTML = `<div class="empty">${esc(error.message)}</div>`;
+  }
 }
 
 async function loadActivity(activityId) {

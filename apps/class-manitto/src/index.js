@@ -72,6 +72,11 @@ async function routeApi(request, env, url) {
   if (method === 'POST' && classCodeMatch) return updateClassAccessCode(request, env, Number(classCodeMatch[1]));
   const classStudentsMatch = pathname.match(/^\/api\/admin\/classes\/(\d+)\/students$/);
   if (method === 'GET' && classStudentsMatch) return listStudents(request, env, Number(classStudentsMatch[1]));
+  const classExclusionsMatch = pathname.match(/^\/api\/admin\/classes\/(\d+)\/exclusions$/);
+  if (method === 'GET' && classExclusionsMatch) return listAssignmentExclusions(request, env, Number(classExclusionsMatch[1]));
+  if (method === 'POST' && classExclusionsMatch) return addAssignmentExclusion(request, env, Number(classExclusionsMatch[1]));
+  const exclusionMatch = pathname.match(/^\/api\/admin\/exclusions\/(\d+)$/);
+  if (method === 'DELETE' && exclusionMatch) return deleteAssignmentExclusion(request, env, Number(exclusionMatch[1]));
   const resetStudentPinMatch = pathname.match(/^\/api\/admin\/students\/(\d+)\/reset-pin$/);
   if (method === 'POST' && resetStudentPinMatch) return resetStudentPin(request, env, Number(resetStudentPinMatch[1]));
   const resetClassPinsMatch = pathname.match(/^\/api\/admin\/classes\/(\d+)\/reset-pins$/);
@@ -522,6 +527,54 @@ async function listStudents(request, env, classId) {
   await requireRole(request, env, 'admin');
   const rows = await env.DB.prepare(`SELECT id,student_no,name,active,pin_initialized,created_at FROM students WHERE class_id=? ORDER BY student_no`).bind(classId).all();
   return json({ students: rows.results });
+}
+
+async function listAssignmentExclusions(request, env, classId) {
+  await requireRole(request, env, 'admin');
+  const classRow = await env.DB.prepare('SELECT id,name FROM classes WHERE id=?').bind(classId).first();
+  if (!classRow) throw httpError(404, '학급을 찾을 수 없습니다.');
+  const [students, exclusions] = await Promise.all([
+    env.DB.prepare('SELECT id,student_no,name FROM students WHERE class_id=? AND active=1 ORDER BY student_no').bind(classId).all(),
+    env.DB.prepare(`SELECT e.id,e.student_a_id,e.student_b_id,
+        a.student_no AS student_a_no,a.name AS student_a_name,
+        b.student_no AS student_b_no,b.name AS student_b_name
+      FROM assignment_exclusions e
+      JOIN students a ON a.id=e.student_a_id
+      JOIN students b ON b.id=e.student_b_id
+      WHERE e.class_id=? ORDER BY a.student_no,b.student_no`).bind(classId).all(),
+  ]);
+  return json({ class: classRow, students: students.results, exclusions: exclusions.results });
+}
+
+async function addAssignmentExclusion(request, env, classId) {
+  await requireRole(request, env, 'admin');
+  const body = await readJson(request);
+  const firstId = Number(body.studentAId);
+  const secondId = Number(body.studentBId);
+  if (!Number.isInteger(firstId) || !Number.isInteger(secondId) || firstId === secondId) {
+    throw httpError(400, '서로 다른 학생 두 명을 선택하세요.');
+  }
+  const students = await env.DB.prepare(`SELECT id FROM students
+    WHERE class_id=? AND active=1 AND id IN (?,?)`).bind(classId, firstId, secondId).all();
+  if (students.results.length !== 2) throw httpError(400, '같은 학급의 학생 두 명을 선택하세요.');
+  const studentAId = Math.min(firstId, secondId);
+  const studentBId = Math.max(firstId, secondId);
+  const conflict = await env.DB.prepare(`SELECT a.id FROM assignments a
+    JOIN activities x ON x.id=a.activity_id
+    WHERE x.class_id=? AND x.status<>'closed'
+      AND ((a.giver_id=? AND a.receiver_id=?) OR (a.giver_id=? AND a.receiver_id=?))
+    LIMIT 1`).bind(classId, studentAId, studentBId, studentBId, studentAId).first();
+  if (conflict) throw httpError(409, '두 학생이 현재 활동에서 이미 서로 배정되었습니다. 카드 뽑기를 초기화한 뒤 추가하세요.');
+  await env.DB.prepare(`INSERT OR IGNORE INTO assignment_exclusions(class_id,student_a_id,student_b_id)
+    VALUES(?,?,?)`).bind(classId, studentAId, studentBId).run();
+  return json({ ok: true });
+}
+
+async function deleteAssignmentExclusion(request, env, exclusionId) {
+  await requireRole(request, env, 'admin');
+  const result = await env.DB.prepare('DELETE FROM assignment_exclusions WHERE id=?').bind(exclusionId).run();
+  if (!result.meta.changes) throw httpError(404, '제외 관계를 찾을 수 없습니다.');
+  return json({ ok: true });
 }
 
 async function resetStudentPin(request, env, studentId) {
