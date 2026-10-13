@@ -67,6 +67,8 @@ async function routeApi(request, env, url) {
 
   const classStudentsMatch = pathname.match(/^\/api\/admin\/classes\/(\d+)\/students$/);
   if (method === 'GET' && classStudentsMatch) return listStudents(request, env, Number(classStudentsMatch[1]));
+  const resetStudentPinMatch = pathname.match(/^\/api\/admin\/students\/(\d+)\/reset-pin$/);
+  if (method === 'POST' && resetStudentPinMatch) return resetStudentPin(request, env, Number(resetStudentPinMatch[1]));
 
   if (method === 'POST' && pathname === '/api/admin/activities') return createActivity(request, env);
   const activityMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)$/);
@@ -101,10 +103,20 @@ async function studentLogin(request, env) {
     FROM students s JOIN classes c ON c.id = s.class_id
     WHERE c.access_code = ? AND s.student_no = ? AND s.normalized_name = ? AND s.active = 1
   `).bind(classCode, studentNo, name).first();
-  if (!student || !(await verifySecret(pin, student.pin_salt, student.pin_hash))) throw httpError(401, '학생 정보를 확인할 수 없습니다.');
+  if (!student) throw httpError(401, '학생 정보를 확인할 수 없습니다.');
+  let pinCreated = false;
+  if (!student.pin_initialized) {
+    if (!/^\d{4}$/.test(pin)) throw httpError(400, '처음 사용할 개인 PIN은 숫자 4자리로 정하세요.');
+    const secured = await hashSecret(pin);
+    await env.DB.prepare('UPDATE students SET pin_hash=?,pin_salt=?,pin_initialized=1 WHERE id=? AND pin_initialized=0')
+      .bind(secured.hash, secured.salt, student.id).run();
+    pinCreated = true;
+  } else if (!(await verifySecret(pin, student.pin_salt, student.pin_hash))) {
+    throw httpError(401, '학생 정보를 확인할 수 없습니다.');
+  }
 
   const session = await createSession(env, { role: 'student', studentId: student.id, classId: student.class_id, hours: STUDENT_SESSION_DAYS * 24 });
-  return withCookie(json({ ok: true, role: 'student', name: student.name, className: student.class_name }), session.cookie, request, STUDENT_SESSION_DAYS * 86400);
+  return withCookie(json({ ok: true, role: 'student', name: student.name, className: student.class_name, pinCreated }), session.cookie, request, STUDENT_SESSION_DAYS * 86400);
 }
 
 async function adminLogin(request, env) {
@@ -414,29 +426,43 @@ async function importStudents(request, env) {
   for (const row of body.rows) {
     const studentNo = Number(row.studentNo);
     const name = clean(row.name);
-    const pin = clean(row.pin) || String(crypto.getRandomValues(new Uint32Array(1))[0] % 10000).padStart(4, '0');
-    if (!Number.isInteger(studentNo) || studentNo < 1 || studentNo > 99 || !name || pin.length < 4 || pin.length > 20 || seen.has(studentNo)) {
+    const pin = clean(row.pin);
+    if (!Number.isInteger(studentNo) || studentNo < 1 || studentNo > 99 || !name || (pin && !/^\d{4}$/.test(pin)) || seen.has(studentNo)) {
       throw httpError(400, '학생 번호·이름·PIN 또는 중복 번호를 확인하세요.');
     }
     seen.add(studentNo);
-    const secured = await hashSecret(pin);
-    prepared.push({ studentNo, name, normalizedName: normalizeName(name), pin, ...secured });
+    const secured = await hashSecret(pin || randomToken(24));
+    prepared.push({ studentNo, name, normalizedName: normalizeName(name), pin: pin || null, pinInitialized: pin ? 1 : 0, ...secured });
   }
   const statements = prepared.map((row) => env.DB.prepare(`
-    INSERT INTO students(class_id,student_no,name,normalized_name,pin_hash,pin_salt,active)
-    VALUES(?,?,?,?,?,?,1)
+    INSERT INTO students(class_id,student_no,name,normalized_name,pin_hash,pin_salt,pin_initialized,active)
+    VALUES(?,?,?,?,?,?,?,1)
     ON CONFLICT(class_id,student_no) DO UPDATE SET
       name=excluded.name, normalized_name=excluded.normalized_name,
-      pin_hash=excluded.pin_hash, pin_salt=excluded.pin_salt, active=1
-  `).bind(classId, row.studentNo, row.name, row.normalizedName, row.hash, row.salt));
+      pin_hash=CASE WHEN excluded.pin_initialized=1 THEN excluded.pin_hash ELSE students.pin_hash END,
+      pin_salt=CASE WHEN excluded.pin_initialized=1 THEN excluded.pin_salt ELSE students.pin_salt END,
+      pin_initialized=CASE WHEN excluded.pin_initialized=1 THEN 1 ELSE students.pin_initialized END,
+      active=1
+  `).bind(classId, row.studentNo, row.name, row.normalizedName, row.hash, row.salt, row.pinInitialized));
   await env.DB.batch(statements);
   return json({ ok: true, count: prepared.length, credentials: prepared.map(({ studentNo, name, pin }) => ({ studentNo, name, pin })) });
 }
 
 async function listStudents(request, env, classId) {
   await requireRole(request, env, 'admin');
-  const rows = await env.DB.prepare(`SELECT id,student_no,name,active,created_at FROM students WHERE class_id=? ORDER BY student_no`).bind(classId).all();
+  const rows = await env.DB.prepare(`SELECT id,student_no,name,active,pin_initialized,created_at FROM students WHERE class_id=? ORDER BY student_no`).bind(classId).all();
   return json({ students: rows.results });
+}
+
+async function resetStudentPin(request, env, studentId) {
+  await requireRole(request, env, 'admin');
+  const student = await env.DB.prepare('SELECT id,name FROM students WHERE id=?').bind(studentId).first();
+  if (!student) throw httpError(404, '학생을 찾을 수 없습니다.');
+  const secured = await hashSecret(randomToken(24));
+  await env.DB.prepare('UPDATE students SET pin_hash=?,pin_salt=?,pin_initialized=0 WHERE id=?')
+    .bind(secured.hash, secured.salt, studentId).run();
+  await env.DB.prepare("DELETE FROM sessions WHERE role='student' AND student_id=?").bind(studentId).run();
+  return json({ ok: true, name: student.name });
 }
 
 async function createActivity(request, env) {
@@ -458,7 +484,7 @@ async function activityDetail(request, env, activityId) {
     .bind(activityId).first();
   if (!activity) throw httpError(404, '활동을 찾을 수 없습니다.');
   const [students, assignments, missions, proofs, guestbook] = await Promise.all([
-    env.DB.prepare('SELECT id,student_no,name,active FROM students WHERE class_id=? ORDER BY student_no').bind(activity.class_id).all(),
+    env.DB.prepare('SELECT id,student_no,name,active,pin_initialized FROM students WHERE class_id=? ORDER BY student_no').bind(activity.class_id).all(),
     env.DB.prepare(`SELECT a.*,g.student_no AS giver_no,g.name AS giver_name,r.student_no AS receiver_no,r.name AS receiver_name,
       (SELECT COUNT(*) FROM student_missions sm WHERE sm.activity_id=a.activity_id AND sm.student_id=a.giver_id) AS mission_count,
       (SELECT COUNT(*) FROM mission_proofs p JOIN missions m ON m.id=p.mission_id WHERE m.activity_id=a.activity_id AND p.student_id=a.giver_id AND p.status='approved') AS approved_count

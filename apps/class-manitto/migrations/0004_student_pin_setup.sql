@@ -1,0 +1,1 @@
+ALTER TABLE students ADD COLUMN pin_initialized INTEGER NOT NULL DEFAULT 1;

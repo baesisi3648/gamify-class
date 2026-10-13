@@ -42,14 +42,14 @@
         </div>
 
         <section id="student-login" class="tab-panel active">
-          <div class="panel-heading"><span class="mini-icon">✦</span><div><h2>나의 비밀 공간</h2><p>학급 정보와 개인 PIN을 입력하세요.</p></div></div>
+          <div class="panel-heading"><span class="mini-icon">✦</span><div><h2>나의 비밀 공간</h2><p>처음 접속한다면 사용할 숫자 4자리 PIN을 직접 정하세요.</p></div></div>
           <form id="student-login-form" class="form-stack">
             <label>반 코드<input name="classCode" maxlength="10" autocomplete="organization" placeholder="예: 1A2026" required></label>
             <div class="form-row">
               <label>번호<input name="studentNo" type="number" min="1" max="99" inputmode="numeric" placeholder="12" required></label>
               <label>이름<input name="name" autocomplete="name" placeholder="배성용" required></label>
             </div>
-            <label>개인 PIN<input name="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••" required></label>
+            <label>개인 PIN<input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="current-password" placeholder="숫자 4자리" required><small class="field-help">첫 로그인 때 입력한 PIN이 다음 로그인부터 비밀번호가 됩니다.</small></label>
             <button class="primary-btn" type="submit">비밀 공간 들어가기 <span>→</span></button>
           </form>
         </section>
@@ -62,7 +62,7 @@
               <label>번호<input name="studentNo" type="number" min="1" max="99" inputmode="numeric" required></label>
               <label>이름<input name="name" required></label>
             </div>
-            <label>개인 PIN<input name="pin" type="password" inputmode="numeric" required></label>
+            <label>개인 PIN<input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="숫자 4자리" required></label>
             <button class="primary-btn warm" type="submit">카드 선택하러 가기 <span>→</span></button>
           </form>
         </section>
@@ -139,12 +139,12 @@
               <article class="content-card"><div class="section-title"><span class="number">A</span><div><h2>새 학급 만들기</h2><p>학생이 입력할 반 코드를 함께 정합니다.</p></div></div>
                 <form id="class-form" class="form-stack"><label>학급 이름<input name="name" placeholder="1학년 9반" required></label><div class="form-row"><label>학년도<input name="schoolYear" type="number" min="2020" max="2100" required></label><label>반 코드<input name="accessCode" maxlength="10" placeholder="비우면 자동 생성"></label></div><button class="primary-btn" type="submit">학급 만들기</button></form>
               </article>
-              <article class="content-card"><div class="section-title"><span class="number">B</span><div><h2>학생 명단 등록</h2><p>한 줄에 번호, 이름, PIN 순서로 입력하세요.</p></div></div>
-                <form id="roster-form" class="form-stack"><label>대상 학급<select name="classId" class="class-select" required></select></label><label>학생 명단<textarea name="roster" rows="10" placeholder="1, 김가람, 1234&#10;2, 이나무, 5678&#10;3, 박하늘&#10;&#10;PIN을 비우면 자동 생성됩니다." required></textarea></label><button class="primary-btn warm" type="submit">명단 등록하기</button></form>
+              <article class="content-card"><div class="section-title"><span class="number">B</span><div><h2>학생 명단 등록</h2><p>번호와 이름만 등록하면 학생이 첫 로그인에서 PIN을 직접 정합니다.</p></div></div>
+                <form id="roster-form" class="form-stack"><label>대상 학급<select name="classId" class="class-select" required></select></label><label>학생 명단<textarea name="roster" rows="10" placeholder="1, 김가람&#10;2, 이나무&#10;3, 박하늘&#10;&#10;교사가 PIN을 지정하려면 세 번째 칸에 숫자 4자리를 입력하세요." required></textarea></label><button class="primary-btn warm" type="submit">명단 등록하기</button></form>
               </article>
             </div>
             <article class="content-card"><div class="section-title"><span class="number">C</span><div><h2>등록된 학급</h2><p>학급과 현재 활동 상태를 확인하세요.</p></div></div><div id="class-list" class="class-list"></div></article>
-            <article id="credential-card" class="content-card hidden"><div class="section-title"><span class="number">PIN</span><div><h2>학생 로그인 정보</h2><p>이 정보는 지금만 표시됩니다. 안전한 곳에 저장한 뒤 학생에게 개별 전달하세요.</p></div></div><div class="table-wrap"><table><thead><tr><th>번호</th><th>이름</th><th>PIN</th></tr></thead><tbody id="credential-list"></tbody></table></div></article>
+            <article id="credential-card" class="content-card hidden"><div class="section-title"><span class="number">PIN</span><div><h2>학생 PIN 등록 상태</h2><p>PIN을 비워 등록한 학생은 첫 로그인에서 본인이 숫자 4자리를 정합니다.</p></div></div><div class="table-wrap"><table><thead><tr><th>번호</th><th>이름</th><th>PIN 상태</th></tr></thead><tbody id="credential-list"></tbody></table></div></article>
           </section>
 
           <section id="activity-panel" class="admin-panel">

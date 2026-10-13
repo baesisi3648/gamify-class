@@ -115,7 +115,7 @@ async function loginStudent(event, drawMode) {
   const formElement = event.currentTarget;
   const form = new FormData(formElement);
   try {
-    await api('/api/auth/student', {
+    const result = await api('/api/auth/student', {
       method: 'POST',
       body: { classCode: form.get('classCode'), studentNo: Number(form.get('studentNo')), name: form.get('name'), pin: form.get('pin') },
     });
@@ -123,6 +123,7 @@ async function loginStudent(event, drawMode) {
     state.drawCeremonyMode = drawMode;
     formElement.reset();
     await showStudentView();
+    if (result.pinCreated) toast('개인 PIN이 등록되었습니다. 다음 로그인에도 같은 PIN을 사용하세요.');
     if (drawMode && state.student?.assignment) {
       toast('이미 카드를 뽑은 학생입니다. 개인 공간에서 확인할 수 있어요.');
       await logoutToWelcome('draw-login');
@@ -455,6 +456,21 @@ function bindAdminActions() {
     state.selectedStudentId = Number(button.dataset.studentSpace);
     renderStudentSpaces(state.activity);
   });
+  $('#student-space-detail').addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-reset-student-pin]');
+    if (!button || !state.activity) return;
+    const student = state.activity.students.find((item) => item.id === Number(button.dataset.resetStudentPin));
+    if (!student || !confirm(`${student.student_no}번 ${student.name} 학생의 PIN을 초기화할까요?\n기존 활동 기록은 유지되고, 학생은 다음 로그인에서 새 PIN을 정하게 됩니다.`)) return;
+    button.disabled = true;
+    try {
+      await api(`/api/admin/students/${student.id}/reset-pin`, { method: 'POST', body: {} });
+      toast(`${student.name} 학생의 PIN을 초기화했습니다.`);
+      await loadActivity(state.activity.activity.id);
+    } catch (error) {
+      toast(error.message);
+      button.disabled = false;
+    }
+  });
 }
 
 async function loadClasses() {
@@ -517,7 +533,7 @@ function renderStudentSpaces(data) {
   const receivedProofs = receivesFrom ? data.proofs.filter((proof) => proof.student_id === receivesFrom.giver_id) : [];
   const relationship = `<div class="student-space-summary"><div><span>내가 챙길 친구</span><strong>${givesTo ? `${givesTo.receiver_no}번 ${esc(givesTo.receiver_name)}` : '아직 미배정'}</strong></div><div><span>나를 챙기는 마니또</span><strong>${receivesFrom ? `${receivesFrom.giver_no}번 ${esc(receivesFrom.giver_name)}` : '아직 미배정'}</strong></div></div>`;
   $('#student-space-detail').classList.remove('empty');
-  $('#student-space-detail').innerHTML = `<div class="student-space-title"><div><span class="class-code">${student.student_no}번</span><h2>${esc(student.name)} 학생의 공간</h2></div><span class="mini-status">교사 전용</span></div>
+  $('#student-space-detail').innerHTML = `<div class="student-space-title"><div><span class="class-code">${student.student_no}번</span><h2>${esc(student.name)} 학생의 공간</h2></div><div class="student-space-tools"><span class="mini-status ${student.pin_initialized ? 'approved' : ''}">${student.pin_initialized ? 'PIN 등록됨' : 'PIN 설정 대기'}</span><button class="danger-btn" data-reset-student-pin="${student.id}" type="button">PIN 초기화</button></div></div>
     ${relationship}
     ${studentSpaceSection('받은 방명록', `${receivedGuestbooks.length}건`, receivedGuestbooks.map((entry) => guestbookSpaceCard(entry, '받음')).join(''))}
     ${studentSpaceSection('마니또에게 받은 미션 인증', `${receivedProofs.length}건`, receivedProofs.map((proof) => proofSpaceCard(proof, receivesFrom ? `${receivesFrom.giver_no}번 ${receivesFrom.giver_name}` : '')).join(''))}
@@ -539,7 +555,7 @@ function proofSpaceCard(proof, relation) {
 
 function renderCredentials(rows) {
   $('#credential-card').classList.remove('hidden');
-  $('#credential-list').innerHTML = rows.map((row) => `<tr><td>${row.studentNo}</td><td>${esc(row.name)}</td><td><b>${esc(row.pin)}</b></td></tr>`).join('');
+  $('#credential-list').innerHTML = rows.map((row) => `<tr><td>${row.studentNo}</td><td>${esc(row.name)}</td><td><b>${row.pin ? esc(row.pin) : '학생이 첫 로그인에서 설정'}</b></td></tr>`).join('');
   $('#credential-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
