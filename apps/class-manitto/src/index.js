@@ -56,6 +56,7 @@ async function routeApi(request, env, url) {
   if (method === 'POST' && pathname === '/api/student/draw') return drawCard(request, env);
   if (method === 'POST' && pathname === '/api/student/missions/draw') return drawStudentMissions(request, env);
   if (method === 'POST' && pathname === '/api/student/guestbook') return addGuestbook(request, env);
+  if (method === 'POST' && pathname === '/api/student/board') return addBoardPost(request, env);
   if (method === 'POST' && pathname === '/api/student/proofs') return submitProof(request, env);
 
   const photoMatch = pathname.match(/^\/api\/photos\/(\d+)$/);
@@ -89,6 +90,8 @@ async function routeApi(request, env, url) {
   if (method === 'POST' && reviewMatch) return reviewProof(request, env, Number(reviewMatch[1]));
   const hideMatch = pathname.match(/^\/api\/admin\/guestbook\/(\d+)\/visibility$/);
   if (method === 'POST' && hideMatch) return setGuestbookVisibility(request, env, Number(hideMatch[1]));
+  const boardHideMatch = pathname.match(/^\/api\/admin\/board\/(\d+)\/visibility$/);
+  if (method === 'POST' && boardHideMatch) return setBoardPostVisibility(request, env, Number(boardHideMatch[1]));
 
   throw httpError(404, '요청한 기능을 찾을 수 없습니다.');
 }
@@ -204,6 +207,12 @@ async function studentDashboard(request, env) {
   const classmates = await env.DB.prepare('SELECT id, student_no, name FROM students WHERE class_id=? AND active=1 AND id<>? ORDER BY student_no')
     .bind(student.class_id, student.id).all();
   const usedCards = await env.DB.prepare('SELECT card_index FROM assignments WHERE activity_id=? ORDER BY card_index').bind(activity.id).all();
+  const board = await env.DB.prepare(`
+    SELECT b.id,b.message,b.display_mode,b.created_at,
+      CASE WHEN b.display_mode='public' THEN s.name ELSE '익명의 친구' END AS author_name
+    FROM board_posts b JOIN students s ON s.id=b.author_student_id
+    WHERE b.activity_id=? AND b.hidden=0 ORDER BY b.id DESC LIMIT 100
+  `).bind(activity.id).all();
   return json({
     student,
     activity,
@@ -213,6 +222,7 @@ async function studentDashboard(request, env) {
     incomingProofs: incomingProofs.results.map((p) => ({ ...p, photoUrl: p.photo_key ? `/api/photos/${p.id}` : null })),
     classmates: classmates.results,
     usedCards: usedCards.results.map((item) => item.card_index),
+    board: board.results,
   });
 }
 
@@ -322,6 +332,21 @@ async function addGuestbook(request, env) {
   if (!target || targetId === session.student_id) throw httpError(400, '같은 반의 다른 친구를 선택하세요.');
   await env.DB.prepare(`INSERT INTO guestbook_entries(activity_id,author_student_id,target_student_id,display_mode,message) VALUES(?,?,?,?,?)`)
     .bind(activity.id, session.student_id, targetId, mode, message).run();
+  return json({ ok: true });
+}
+
+async function addBoardPost(request, env) {
+  const session = await requireRole(request, env, 'student');
+  const body = await readJson(request);
+  const displayMode = body.displayMode === 'public' ? 'public' : 'anonymous';
+  const message = clean(body.message);
+  if (!message || message.length > 500) throw httpError(400, '게시글은 1~500자로 작성하세요.');
+  const activity = await env.DB.prepare(`SELECT id FROM activities
+    WHERE class_id=? AND status IN ('drawing','active','revealed') ORDER BY id DESC LIMIT 1`)
+    .bind(session.class_id).first();
+  if (!activity) throw httpError(409, '자유게시판을 이용할 수 있는 활동이 없습니다.');
+  await env.DB.prepare(`INSERT INTO board_posts(activity_id,author_student_id,display_mode,message) VALUES(?,?,?,?)`)
+    .bind(activity.id, session.student_id, displayMode, message).run();
   return json({ ok: true });
 }
 
@@ -503,7 +528,7 @@ async function activityDetail(request, env, activityId) {
   const activity = await env.DB.prepare(`SELECT a.*,c.name AS class_name,c.access_code FROM activities a JOIN classes c ON c.id=a.class_id WHERE a.id=?`)
     .bind(activityId).first();
   if (!activity) throw httpError(404, '활동을 찾을 수 없습니다.');
-  const [students, assignments, missions, proofs, guestbook] = await Promise.all([
+  const [students, assignments, missions, proofs, guestbook, board] = await Promise.all([
     env.DB.prepare('SELECT id,student_no,name,active,pin_initialized FROM students WHERE class_id=? ORDER BY student_no').bind(activity.class_id).all(),
     env.DB.prepare(`SELECT a.*,g.student_no AS giver_no,g.name AS giver_name,r.student_no AS receiver_no,r.name AS receiver_name,
       (SELECT COUNT(*) FROM student_missions sm WHERE sm.activity_id=a.activity_id AND sm.student_id=a.giver_id) AS mission_count,
@@ -516,9 +541,12 @@ async function activityDetail(request, env, activityId) {
     env.DB.prepare(`SELECT g.*,a.name AS author_name,t.name AS target_name
       FROM guestbook_entries g JOIN students a ON a.id=g.author_student_id JOIN students t ON t.id=g.target_student_id
       WHERE g.activity_id=? ORDER BY g.id DESC`).bind(activityId).all(),
+    env.DB.prepare(`SELECT b.*,s.student_no,s.name AS author_name
+      FROM board_posts b JOIN students s ON s.id=b.author_student_id
+      WHERE b.activity_id=? ORDER BY b.id DESC`).bind(activityId).all(),
   ]);
   return json({ activity, students: students.results, assignments: assignments.results, missions: missions.results,
-    proofs: proofs.results.map((p) => ({ ...p, photoUrl: p.photo_key ? `/api/photos/${p.id}` : null })), guestbook: guestbook.results });
+    proofs: proofs.results.map((p) => ({ ...p, photoUrl: p.photo_key ? `/api/photos/${p.id}` : null })), guestbook: guestbook.results, board: board.results });
 }
 
 async function updateActivityStatus(request, env, activityId) {
@@ -566,13 +594,15 @@ async function fullResetActivity(request, env, activityId) {
       (SELECT COUNT(*) FROM assignments WHERE activity_id=?) AS assignments,
       (SELECT COUNT(*) FROM student_missions WHERE activity_id=?) AS student_missions,
       (SELECT COUNT(*) FROM mission_proofs p JOIN missions m ON m.id=p.mission_id WHERE m.activity_id=?) AS proofs,
-      (SELECT COUNT(*) FROM guestbook_entries WHERE activity_id=?) AS guestbooks
-    `).bind(activityId, activityId, activityId, activityId).first(),
+      (SELECT COUNT(*) FROM guestbook_entries WHERE activity_id=?) AS guestbooks,
+      (SELECT COUNT(*) FROM board_posts WHERE activity_id=?) AS board_posts
+    `).bind(activityId, activityId, activityId, activityId, activityId).first(),
   ]);
 
   const statements = [
     env.DB.prepare('DELETE FROM mission_proofs WHERE mission_id IN (SELECT id FROM missions WHERE activity_id=?)').bind(activityId),
     env.DB.prepare('DELETE FROM guestbook_entries WHERE activity_id=?').bind(activityId),
+    env.DB.prepare('DELETE FROM board_posts WHERE activity_id=?').bind(activityId),
     env.DB.prepare('DELETE FROM student_missions WHERE activity_id=?').bind(activityId),
     env.DB.prepare('DELETE FROM assignments WHERE activity_id=?').bind(activityId),
     env.DB.prepare("UPDATE activities SET status='draft' WHERE id=?").bind(activityId),
@@ -631,6 +661,13 @@ async function setGuestbookVisibility(request, env, entryId) {
   await requireRole(request, env, 'admin');
   const body = await readJson(request);
   await env.DB.prepare('UPDATE guestbook_entries SET hidden=? WHERE id=?').bind(body.hidden ? 1 : 0, entryId).run();
+  return json({ ok: true });
+}
+
+async function setBoardPostVisibility(request, env, postId) {
+  await requireRole(request, env, 'admin');
+  const body = await readJson(request);
+  await env.DB.prepare('UPDATE board_posts SET hidden=? WHERE id=?').bind(body.hidden ? 1 : 0, postId).run();
   return json({ ok: true });
 }
 

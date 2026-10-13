@@ -154,6 +154,7 @@ async function loadStudentDashboard() {
   renderMissions(data);
   renderGuestbook(data.guestbook);
   renderIncomingProofs(data.incomingProofs);
+  renderBoard(data.board || []);
   $('#guestbook-target').innerHTML = '<option value="">친구를 선택하세요</option>' + data.classmates
     .map((student) => `<option value="${student.id}">${student.student_no}번 ${esc(student.name)}</option>`).join('');
 }
@@ -222,6 +223,10 @@ function renderIncomingProofs(entries) {
   $('#incoming-proof-list').innerHTML = entries.length ? entries.map((entry) => `<article class="note-item"><div class="note-head"><h3>${esc(entry.mission_title)}</h3><span class="mini-status approved">승인됨</span></div><p>${esc(entry.proof_text || '사진으로 마음을 전했어요.')}</p>${entry.photoUrl ? `<img class="review-image" src="${entry.photoUrl}" alt="나를 위한 미션 인증 사진" loading="lazy">` : ''}<small>${esc(entry.author_name)} · ${formatDate(entry.submitted_at)}</small></article>`).join('') : '<div class="empty">아직 공개된 활동 인증이 없습니다.</div>';
 }
 
+function renderBoard(entries) {
+  $('#board-list').innerHTML = entries.length ? entries.map((entry) => `<article class="board-post"><div class="note-head"><h3>${esc(entry.author_name)}</h3><span class="mini-status">${entry.display_mode === 'anonymous' ? '익명' : '공개'}</span></div><p>${esc(entry.message)}</p><small>${formatDate(entry.created_at)}</small></article>`).join('') : '<div class="empty">첫 번째 게시글을 남겨 보세요.</div>';
+}
+
 function bindStudentActions() {
   $('#mission-list').addEventListener('click', async (event) => {
     const button = event.target.closest('#draw-missions');
@@ -269,6 +274,17 @@ function bindStudentActions() {
       await api('/api/student/guestbook', { method: 'POST', body: { targetStudentId: Number(form.get('targetStudentId')), displayMode: form.get('displayMode'), message: form.get('message') } });
       formElement.reset();
       toast('방명록을 남겼습니다.');
+      await loadStudentDashboard();
+    } catch (error) { toast(error.message); }
+  });
+  $('#board-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    try {
+      await api('/api/student/board', { method: 'POST', body: { displayMode: form.get('displayMode'), message: form.get('message') } });
+      formElement.querySelector('textarea').value = '';
+      toast('자유게시판에 글을 등록했습니다.');
       await loadStudentDashboard();
     } catch (error) { toast(error.message); }
   });
@@ -488,6 +504,15 @@ function bindAdminActions() {
       await loadActivity(state.activity.activity.id);
     } catch (error) { toast(error.message); }
   });
+  $('#board-admin-list').addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-board-post-id]');
+    if (!button || !state.activity) return;
+    try {
+      await api(`/api/admin/board/${button.dataset.boardPostId}/visibility`, { method: 'POST', body: { hidden: button.dataset.hidden !== '1' } });
+      toast('자유게시판 글의 표시 상태를 변경했습니다.');
+      await loadActivity(state.activity.activity.id);
+    } catch (error) { toast(error.message); }
+  });
   $('#student-space-list').addEventListener('click', (event) => {
     const button = event.target.closest('[data-student-space]');
     if (!button || !state.activity) return;
@@ -545,6 +570,7 @@ function renderAdminRecords(data) {
   $('#assignment-list').innerHTML = data.assignments.length ? `<table><thead><tr><th>카드</th><th>뽑은 학생</th><th>마니또 대상</th><th>미션 현황</th><th>선택 시각</th></tr></thead><tbody>${data.assignments.map((item) => `<tr><td>${item.card_index}</td><td>${item.giver_no}번 ${esc(item.giver_name)}</td><td>${item.receiver_no}번 ${esc(item.receiver_name)}</td><td>${item.mission_count ? `${item.approved_count} / ${item.mission_count} 승인` : '미션 미추첨'}</td><td>${formatDate(item.chosen_at)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">아직 카드를 뽑은 학생이 없습니다.</div>';
   $('#proof-admin-list').innerHTML = data.proofs.length ? data.proofs.map((proof) => `<article class="review-item"><div class="review-head"><div><h3>${proof.student_no}번 ${esc(proof.student_name)} · ${esc(proof.mission_title)}</h3><p>${esc(proof.proof_text || '사진 인증')}</p></div><span class="mini-status ${esc(proof.status)}">${proofStatusName(proof.status)}</span></div>${proof.photoUrl ? `<img class="review-image" src="${proof.photoUrl}" alt="미션 인증 사진" loading="lazy">` : ''}<div class="review-actions"><button class="secondary-btn" data-proof-id="${proof.id}" data-proof-status="approved" type="button">승인</button><button class="danger-btn" data-proof-id="${proof.id}" data-proof-status="rejected" type="button">반려</button></div></article>`).join('') : '<div class="empty">제출된 인증이 없습니다.</div>';
   $('#guestbook-admin-list').innerHTML = data.guestbook.length ? data.guestbook.map((entry) => `<article class="review-item"><div class="review-head"><div><h3>${esc(entry.author_name)} → ${esc(entry.target_name)}</h3><p>${esc(entry.message)}</p></div><span class="mini-status">${entry.display_mode === 'anonymous' ? '학생에게 익명' : '공개'}</span></div><div class="review-actions"><button class="${entry.hidden ? 'secondary-btn' : 'danger-btn'}" data-entry-id="${entry.id}" data-hidden="${entry.hidden}" type="button">${entry.hidden ? '다시 표시' : '숨기기'}</button></div></article>`).join('') : '<div class="empty">작성된 방명록이 없습니다.</div>';
+  $('#board-admin-list').innerHTML = data.board.length ? data.board.map((entry) => `<article class="review-item"><div class="review-head"><div><h3>${entry.student_no}번 ${esc(entry.author_name)}</h3><p>${esc(entry.message)}</p><small>${formatDate(entry.created_at)}</small></div><span class="mini-status">${entry.display_mode === 'anonymous' ? '학생에게 익명' : '이름 공개'}</span></div><div class="review-actions"><button class="${entry.hidden ? 'secondary-btn' : 'danger-btn'}" data-board-post-id="${entry.id}" data-hidden="${entry.hidden}" type="button">${entry.hidden ? '다시 표시' : '숨기기'}</button></div></article>`).join('') : '<div class="empty">작성된 자유게시판 글이 없습니다.</div>';
 }
 
 function renderStudentSpaces(data) {
@@ -568,6 +594,7 @@ function renderStudentSpaces(data) {
   const receivedGuestbooks = data.guestbook.filter((entry) => entry.target_student_id === student.id);
   const sentGuestbooks = data.guestbook.filter((entry) => entry.author_student_id === student.id);
   const sentProofs = data.proofs.filter((proof) => proof.student_id === student.id);
+  const boardPosts = data.board.filter((entry) => entry.author_student_id === student.id);
   const receivedProofs = receivesFrom ? data.proofs.filter((proof) => proof.student_id === receivesFrom.giver_id) : [];
   const relationship = `<div class="student-space-summary"><div><span>내가 챙길 친구</span><strong>${givesTo ? `${givesTo.receiver_no}번 ${esc(givesTo.receiver_name)}` : '아직 미배정'}</strong></div><div><span>나를 챙기는 마니또</span><strong>${receivesFrom ? `${receivesFrom.giver_no}번 ${esc(receivesFrom.giver_name)}` : '아직 미배정'}</strong></div></div>`;
   $('#student-space-detail').classList.remove('empty');
@@ -576,7 +603,8 @@ function renderStudentSpaces(data) {
     ${studentSpaceSection('받은 방명록', `${receivedGuestbooks.length}건`, receivedGuestbooks.map((entry) => guestbookSpaceCard(entry, '받음')).join(''))}
     ${studentSpaceSection('마니또에게 받은 미션 인증', `${receivedProofs.length}건`, receivedProofs.map((proof) => proofSpaceCard(proof, receivesFrom ? `${receivesFrom.giver_no}번 ${receivesFrom.giver_name}` : '')).join(''))}
     ${studentSpaceSection('내가 보낸 미션 인증', `${sentProofs.length}건`, sentProofs.map((proof) => proofSpaceCard(proof, givesTo ? `${givesTo.receiver_no}번 ${givesTo.receiver_name}에게` : '')).join(''))}
-    ${studentSpaceSection('작성한 방명록', `${sentGuestbooks.length}건`, sentGuestbooks.map((entry) => guestbookSpaceCard(entry, `${esc(entry.target_name)}에게`)).join(''))}`;
+    ${studentSpaceSection('작성한 방명록', `${sentGuestbooks.length}건`, sentGuestbooks.map((entry) => guestbookSpaceCard(entry, `${esc(entry.target_name)}에게`)).join(''))}
+    ${studentSpaceSection('작성한 자유게시판 글', `${boardPosts.length}건`, boardPosts.map(boardSpaceCard).join(''))}`;
 }
 
 function studentSpaceSection(title, count, content) {
@@ -591,6 +619,10 @@ function proofSpaceCard(proof, relation) {
   return `<article class="space-entry"><div class="space-entry-head"><div><b>${esc(proof.mission_title)}</b>${relation ? `<small>${relation}</small>` : ''}</div><span class="mini-status ${esc(proof.status)}">${proofStatusName(proof.status)}</span></div><p>${esc(proof.proof_text || '사진으로 인증했습니다.')}</p>${proof.photoUrl ? `<a class="space-photo-link" href="${esc(proof.photoUrl)}" target="_blank" rel="noopener"><img src="${esc(proof.photoUrl)}" alt="미션 인증 사진" loading="lazy"><span>사진 크게 보기</span></a>` : ''}<small>${formatDate(proof.submitted_at)}</small></article>`;
 }
 
+function boardSpaceCard(entry) {
+  return `<article class="space-entry"><div class="space-entry-head"><b>${entry.display_mode === 'anonymous' ? '익명으로 작성' : '이름 공개'}</b><span class="mini-status">${entry.hidden ? '숨김' : '표시 중'}</span></div><p>${esc(entry.message)}</p><small>${formatDate(entry.created_at)}</small></article>`;
+}
+
 function renderCredentials(rows) {
   $('#credential-card').classList.remove('hidden');
   $('#credential-list').innerHTML = rows.map((row) => `<tr><td>${row.studentNo}</td><td>${esc(row.name)}</td><td><b>${row.pin ? esc(row.pin) : '학생이 첫 로그인에서 설정'}</b></td></tr>`).join('');
@@ -601,6 +633,7 @@ function clearRecords() {
   $('#assignment-list').innerHTML = '<div class="empty">활동을 선택해 주세요.</div>';
   $('#proof-admin-list').innerHTML = '';
   $('#guestbook-admin-list').innerHTML = '';
+  $('#board-admin-list').innerHTML = '';
   $('#student-space-list').innerHTML = '<div class="empty">활동을 선택해 주세요.</div>';
   $('#student-space-detail').classList.add('empty');
   $('#student-space-detail').innerHTML = '왼쪽에서 학생을 선택하세요.';

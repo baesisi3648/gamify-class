@@ -119,6 +119,12 @@
           <section class="content-card"><div class="section-title"><span class="number">04</span><div><h2>나에게 온 방명록</h2><p>친구들이 남긴 마음입니다.</p></div></div><div id="guestbook-list" class="note-list"></div></section>
           <section class="content-card"><div class="section-title"><span class="number">05</span><div><h2>나를 위한 활동</h2><p>정체는 마지막 공개일까지 비밀이에요.</p></div></div><div id="incoming-proof-list" class="note-list"></div></section>
         </div>
+        <section class="content-card board-panel">
+          <div class="section-title"><span class="number">06</span><div><h2>우리 반 자유게시판</h2><p>여행 중 재미있는 이야기와 응원을 자유롭게 나눠 보세요. 글마다 익명 여부를 선택할 수 있습니다.</p></div></div>
+          <form id="board-form" class="board-form"><select name="displayMode" aria-label="게시글 이름 표시"><option value="anonymous">익명으로 작성</option><option value="public">이름 공개</option></select><textarea name="message" rows="2" maxlength="500" placeholder="친구들이 함께 볼 내용을 작성하세요." required></textarea><button class="secondary-btn" type="submit">게시글 등록</button></form>
+          <p class="board-guide">서로 존중하는 표현을 사용해 주세요. 익명 글도 교사는 작성자를 확인할 수 있습니다.</p>
+          <div id="board-list" class="board-list"></div>
+        </section>
       </div>
     </section>
 
@@ -171,6 +177,7 @@
             <article class="content-card"><div class="section-title"><span class="number">A</span><div><h2>마니또 배정 현황</h2><p>이 정보는 교사에게만 표시됩니다.</p></div></div><div id="assignment-list" class="table-wrap empty">활동을 선택해 주세요.</div></article>
             <article class="content-card"><div class="section-title"><span class="number">B</span><div><h2>미션 인증 검토</h2><p>승인된 인증만 상대 학생의 공간에 익명으로 나타납니다.</p></div></div><div id="proof-admin-list" class="review-list"></div></article>
             <article class="content-card"><div class="section-title"><span class="number">C</span><div><h2>방명록 관리</h2><p>익명 글도 교사는 작성자를 확인하고 숨김 처리할 수 있습니다.</p></div></div><div id="guestbook-admin-list" class="review-list"></div></article>
+            <article class="content-card"><div class="section-title"><span class="number">D</span><div><h2>자유게시판 관리</h2><p>익명 게시글의 실제 작성자를 확인하고 부적절한 글을 숨길 수 있습니다.</p></div></div><div id="board-admin-list" class="review-list"></div></article>
           </section>
 
           <section id="student-spaces-panel" class="admin-panel">
@@ -186,6 +193,8 @@
       </div>
     </section>
   </main>
+
+  <footer class="site-footer"><span>GAMIFY CLASS · CLASS MANITTO</span><strong>제작 · 용인삼계고 교사 배성용</strong></footer>
 
   <div id="reveal-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="reveal-title">
     <div class="reveal-box"><span class="spark">✦</span><p>당신이 몰래 챙겨 줄 친구는</p><h2 id="reveal-title"></h2><span id="reveal-number"></span><button id="close-reveal" class="primary-btn" type="button">기억했어요. 다시 닫기</button><small>이 화면을 닫으면 다른 친구에게는 보이지 않아요.</small></div>
