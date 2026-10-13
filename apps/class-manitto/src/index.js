@@ -349,7 +349,7 @@ async function addGuestbook(request, env) {
   const visibility = body.visibility === 'private' ? 'private' : 'public';
   const message = clean(body.message);
   if (!message || message.length > 500) throw httpError(400, '방명록은 1~500자로 작성하세요.');
-  const activity = await env.DB.prepare(`SELECT * FROM activities WHERE class_id=? AND status IN ('active','revealed') ORDER BY id DESC LIMIT 1`)
+  const activity = await env.DB.prepare(`SELECT * FROM activities WHERE class_id=? AND status IN ('drawing','active','revealed') ORDER BY id DESC LIMIT 1`)
     .bind(session.class_id).first();
   if (!activity) throw httpError(409, '방명록을 작성할 수 있는 활동이 없습니다.');
   const target = await env.DB.prepare('SELECT id FROM students WHERE id=? AND class_id=? AND active=1').bind(targetId, session.class_id).first();
