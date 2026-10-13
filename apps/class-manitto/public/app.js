@@ -3,7 +3,6 @@ const state = {
   student: null,
   classes: [],
   activity: null,
-  drawCeremonyMode: false,
   selectedStudentId: null,
   selectedFriendId: null,
 };
@@ -95,8 +94,7 @@ function bindTabs() {
 }
 
 function bindAuthForms() {
-  $('#student-login-form').addEventListener('submit', (event) => loginStudent(event, false));
-  $('#draw-login-form').addEventListener('submit', (event) => loginStudent(event, true));
+  $('#student-login-form').addEventListener('submit', loginStudent);
   $('#admin-login-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const formElement = event.currentTarget;
@@ -111,7 +109,7 @@ function bindAuthForms() {
   $('#logout-btn').addEventListener('click', () => logoutToWelcome());
 }
 
-async function loginStudent(event, drawMode) {
+async function loginStudent(event) {
   event.preventDefault();
   const formElement = event.currentTarget;
   const form = new FormData(formElement);
@@ -121,16 +119,9 @@ async function loginStudent(event, drawMode) {
       body: { classCode: form.get('classCode'), studentNo: Number(form.get('studentNo')), name: form.get('name'), pin: form.get('pin') },
     });
     state.role = 'student';
-    state.drawCeremonyMode = drawMode;
     formElement.reset();
     await showStudentView();
     if (result.pinCreated) toast('개인 PIN이 등록되었습니다. 다음 로그인에도 같은 PIN을 사용하세요.');
-    if (drawMode && state.student?.assignment) {
-      toast('이미 카드를 뽑은 학생입니다. 개인 공간에서 확인할 수 있어요.');
-      await logoutToWelcome('draw-login');
-      return;
-    }
-    if (drawMode) $('#draw-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) { toast(error.message); }
 }
 
@@ -332,12 +323,7 @@ function bindStudentActions() {
   });
   $('#close-reveal').addEventListener('click', async () => {
     $('#reveal-modal').classList.add('hidden');
-    if (state.drawCeremonyMode) {
-      await logoutToWelcome('draw-login');
-      toast('카드가 안전하게 닫혔습니다. 다음 학생이 로그인해 주세요.');
-    } else {
-      await loadStudentDashboard();
-    }
+    await loadStudentDashboard();
   });
   $('#guestbook-form').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -834,7 +820,6 @@ async function logoutToWelcome(tabId = 'student-login') {
   state.role = null;
   state.activity = null;
   state.student = null;
-  state.drawCeremonyMode = false;
   showOnly('#welcome-view');
   $('#logout-btn').classList.add('hidden');
   const tab = $(`.tab[data-tab="${tabId}"]`);
