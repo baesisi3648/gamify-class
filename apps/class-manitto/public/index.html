@@ -109,6 +109,7 @@
             <form id="guestbook-form" class="form-stack compact">
               <label>받는 친구<select name="targetStudentId" id="guestbook-target" required></select></label>
               <label>이름 표시<select name="displayMode"><option value="anonymous">익명으로 남기기</option><option value="public">이름 공개하기</option></select></label>
+              <label>공개 범위<select name="visibility"><option value="public">친구들도 볼 수 있게 공개</option><option value="private">받는 친구만 보기</option></select></label>
               <label>메시지<textarea name="message" rows="3" maxlength="500" placeholder="친구에게 따뜻한 말을 남겨 주세요." required></textarea></label>
               <button class="secondary-btn" type="submit">방명록 남기기</button>
             </form>
@@ -119,8 +120,13 @@
           <section class="content-card"><div class="section-title"><span class="number">04</span><div><h2>나에게 온 방명록</h2><p>친구들이 남긴 마음입니다.</p></div></div><div id="guestbook-list" class="note-list"></div></section>
           <section class="content-card"><div class="section-title"><span class="number">05</span><div><h2>나를 위한 활동</h2><p>정체는 마지막 공개일까지 비밀이에요.</p></div></div><div id="incoming-proof-list" class="note-list"></div></section>
         </div>
+        <section class="content-card friend-spaces-panel">
+          <div class="section-title"><span class="number">06</span><div><h2>우리 반 미니홈피</h2><p>친구의 공간을 방문해 공개 방명록을 구경하고 따뜻한 글을 남겨 보세요.</p></div></div>
+          <div id="friend-space-list" class="friend-space-list"></div>
+          <div id="friend-space-detail" class="friend-space-detail empty">위에서 방문할 친구를 선택하세요.</div>
+        </section>
         <section class="content-card board-panel">
-          <div class="section-title"><span class="number">06</span><div><h2>우리 반 자유게시판</h2><p>여행 중 재미있는 이야기와 응원을 자유롭게 나눠 보세요. 글마다 익명 여부를 선택할 수 있습니다.</p></div></div>
+          <div class="section-title"><span class="number">07</span><div><h2>우리 반 자유게시판</h2><p>여행 중 재미있는 이야기와 응원을 자유롭게 나눠 보세요. 글마다 익명 여부를 선택할 수 있습니다.</p></div></div>
           <form id="board-form" class="board-form"><select name="displayMode" aria-label="게시글 이름 표시"><option value="anonymous">익명으로 작성</option><option value="public">이름 공개</option></select><textarea name="message" rows="2" maxlength="500" placeholder="친구들이 함께 볼 내용을 작성하세요." required></textarea><button class="secondary-btn" type="submit">게시글 등록</button></form>
           <p class="board-guide">서로 존중하는 표현을 사용해 주세요. 익명 글도 교사는 작성자를 확인할 수 있습니다.</p>
           <div id="board-list" class="board-list"></div>
@@ -183,6 +189,7 @@
           <section id="student-spaces-panel" class="admin-panel">
             <article class="content-card">
               <div class="section-title"><span class="number">S</span><div><h2>학생별 비밀 공간 확인</h2><p>학생을 선택하면 받은 메시지와 주고받은 미션 인증을 모두 확인할 수 있습니다.</p></div></div>
+              <div class="pin-bulk-tools"><label class="check-label"><input id="select-all-student-pins" type="checkbox"> 전체 선택</label><span id="selected-pin-count">0명 선택</span><button id="reset-selected-pins" class="secondary-btn" type="button">선택 학생 PIN 초기화</button><button id="reset-all-pins" class="danger-btn" type="button">전체 학생 PIN 초기화</button></div>
               <div class="student-space-layout">
                 <div id="student-space-list" class="student-space-list"><div class="empty">활동을 선택해 주세요.</div></div>
                 <div id="student-space-detail" class="student-space-detail empty">왼쪽에서 학생을 선택하세요.</div>

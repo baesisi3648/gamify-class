@@ -53,6 +53,8 @@ async function routeApi(request, env, url) {
   if (method === 'GET' && pathname === '/api/draw/board') return drawBoard(url, env);
 
   if (method === 'GET' && pathname === '/api/student/dashboard') return studentDashboard(request, env);
+  const studentSpaceMatch = pathname.match(/^\/api\/student\/spaces\/(\d+)$/);
+  if (method === 'GET' && studentSpaceMatch) return studentPublicSpace(request, env, Number(studentSpaceMatch[1]));
   if (method === 'POST' && pathname === '/api/student/draw') return drawCard(request, env);
   if (method === 'POST' && pathname === '/api/student/missions/draw') return drawStudentMissions(request, env);
   if (method === 'POST' && pathname === '/api/student/guestbook') return addGuestbook(request, env);
@@ -72,6 +74,8 @@ async function routeApi(request, env, url) {
   if (method === 'GET' && classStudentsMatch) return listStudents(request, env, Number(classStudentsMatch[1]));
   const resetStudentPinMatch = pathname.match(/^\/api\/admin\/students\/(\d+)\/reset-pin$/);
   if (method === 'POST' && resetStudentPinMatch) return resetStudentPin(request, env, Number(resetStudentPinMatch[1]));
+  const resetClassPinsMatch = pathname.match(/^\/api\/admin\/classes\/(\d+)\/reset-pins$/);
+  if (method === 'POST' && resetClassPinsMatch) return resetClassPins(request, env, Number(resetClassPinsMatch[1]));
 
   if (method === 'POST' && pathname === '/api/admin/activities') return createActivity(request, env);
   const activityMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)$/);
@@ -190,7 +194,7 @@ async function studentDashboard(request, env) {
     ORDER BY CASE sm.category WHEN 'snack' THEN 1 WHEN 'help' THEN 2 WHEN 'memory' THEN 3 ELSE 4 END
   `).bind(activity.id, student.id).all();
   const guestbook = await env.DB.prepare(`
-    SELECT g.id, g.message, g.display_mode, g.created_at,
+    SELECT g.id, g.message, g.display_mode, g.visibility, g.created_at,
       CASE WHEN g.display_mode='public' OR ?='revealed' THEN s.name ELSE '익명의 친구' END AS author_name
     FROM guestbook_entries g JOIN students s ON s.id=g.author_student_id
     WHERE g.activity_id=? AND g.target_student_id=? AND g.hidden=0 ORDER BY g.id DESC
@@ -224,6 +228,22 @@ async function studentDashboard(request, env) {
     usedCards: usedCards.results.map((item) => item.card_index),
     board: board.results,
   });
+}
+
+async function studentPublicSpace(request, env, targetStudentId) {
+  const session = await requireRole(request, env, 'student');
+  const target = await env.DB.prepare(`SELECT id,student_no,name FROM students
+    WHERE id=? AND class_id=? AND active=1`).bind(targetStudentId, session.class_id).first();
+  if (!target || target.id === session.student_id) throw httpError(404, '친구의 미니홈피를 찾을 수 없습니다.');
+  const activity = await env.DB.prepare(`SELECT id,status FROM activities
+    WHERE class_id=? AND status <> 'closed' ORDER BY id DESC LIMIT 1`).bind(session.class_id).first();
+  if (!activity) throw httpError(404, '진행 중인 활동이 없습니다.');
+  const entries = await env.DB.prepare(`SELECT g.id,g.message,g.display_mode,g.created_at,
+      CASE WHEN g.display_mode='public' THEN a.name ELSE '익명의 친구' END AS author_name
+    FROM guestbook_entries g JOIN students a ON a.id=g.author_student_id
+    WHERE g.activity_id=? AND g.target_student_id=? AND g.visibility='public' AND g.hidden=0
+    ORDER BY g.id DESC`).bind(activity.id, target.id).all();
+  return json({ student: target, guestbook: entries.results });
 }
 
 async function drawStudentMissions(request, env) {
@@ -323,6 +343,7 @@ async function addGuestbook(request, env) {
   const body = await readJson(request);
   const targetId = Number(body.targetStudentId);
   const mode = body.displayMode === 'public' ? 'public' : 'anonymous';
+  const visibility = body.visibility === 'private' ? 'private' : 'public';
   const message = clean(body.message);
   if (!message || message.length > 500) throw httpError(400, '방명록은 1~500자로 작성하세요.');
   const activity = await env.DB.prepare(`SELECT * FROM activities WHERE class_id=? AND status IN ('active','revealed') ORDER BY id DESC LIMIT 1`)
@@ -330,8 +351,8 @@ async function addGuestbook(request, env) {
   if (!activity) throw httpError(409, '방명록을 작성할 수 있는 활동이 없습니다.');
   const target = await env.DB.prepare('SELECT id FROM students WHERE id=? AND class_id=? AND active=1').bind(targetId, session.class_id).first();
   if (!target || targetId === session.student_id) throw httpError(400, '같은 반의 다른 친구를 선택하세요.');
-  await env.DB.prepare(`INSERT INTO guestbook_entries(activity_id,author_student_id,target_student_id,display_mode,message) VALUES(?,?,?,?,?)`)
-    .bind(activity.id, session.student_id, targetId, mode, message).run();
+  await env.DB.prepare(`INSERT INTO guestbook_entries(activity_id,author_student_id,target_student_id,display_mode,visibility,message) VALUES(?,?,?,?,?,?)`)
+    .bind(activity.id, session.student_id, targetId, mode, visibility, message).run();
   return json({ ok: true });
 }
 
@@ -508,6 +529,33 @@ async function resetStudentPin(request, env, studentId) {
     .bind(secured.hash, secured.salt, studentId).run();
   await env.DB.prepare("DELETE FROM sessions WHERE role='student' AND student_id=?").bind(studentId).run();
   return json({ ok: true, name: student.name });
+}
+
+async function resetClassPins(request, env, classId) {
+  await requireRole(request, env, 'admin');
+  const body = await readJson(request);
+  const classRow = await env.DB.prepare('SELECT id,name FROM classes WHERE id=?').bind(classId).first();
+  if (!classRow) throw httpError(404, '학급을 찾을 수 없습니다.');
+  const active = await env.DB.prepare('SELECT id FROM students WHERE class_id=? AND active=1 ORDER BY student_no')
+    .bind(classId).all();
+  const activeIds = new Set(active.results.map((student) => Number(student.id)));
+  const requestedIds = Array.isArray(body.studentIds)
+    ? [...new Set(body.studentIds.map(Number).filter((id) => Number.isInteger(id) && activeIds.has(id)))]
+    : [];
+  const ids = body.all === true ? [...activeIds] : requestedIds;
+  if (!ids.length) throw httpError(400, 'PIN을 초기화할 학생을 선택하세요.');
+
+  const updates = [];
+  for (const studentId of ids) {
+    const secured = await hashSecret(randomToken(24));
+    updates.push(env.DB.prepare('UPDATE students SET pin_hash=?,pin_salt=?,pin_initialized=0 WHERE id=? AND class_id=?')
+      .bind(secured.hash, secured.salt, studentId, classId));
+  }
+  const placeholders = ids.map(() => '?').join(',');
+  updates.push(env.DB.prepare(`DELETE FROM sessions WHERE role='student' AND class_id=? AND student_id IN (${placeholders})`)
+    .bind(classId, ...ids));
+  await env.DB.batch(updates);
+  return json({ ok: true, count: ids.length, className: classRow.name });
 }
 
 async function createActivity(request, env) {

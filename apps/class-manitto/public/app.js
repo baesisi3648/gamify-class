@@ -5,6 +5,7 @@ const state = {
   activity: null,
   drawCeremonyMode: false,
   selectedStudentId: null,
+  selectedFriendId: null,
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -153,6 +154,7 @@ async function loadStudentDashboard() {
   renderDrawCards(data);
   renderMissions(data);
   renderGuestbook(data.guestbook);
+  renderFriendSpaces(data.classmates);
   renderIncomingProofs(data.incomingProofs);
   renderBoard(data.board || []);
   $('#guestbook-target').innerHTML = '<option value="">친구를 선택하세요</option>' + data.classmates
@@ -216,7 +218,38 @@ function renderMissions(data) {
 }
 
 function renderGuestbook(entries) {
-  $('#guestbook-list').innerHTML = entries.length ? entries.map((entry) => `<article class="note-item"><div class="note-head"><h3>${esc(entry.author_name)}</h3><span class="mini-status">${entry.display_mode === 'anonymous' ? '익명' : '공개'}</span></div><p>${esc(entry.message)}</p><small>${formatDate(entry.created_at)}</small></article>`).join('') : '<div class="empty">아직 도착한 방명록이 없습니다.</div>';
+  $('#guestbook-list').innerHTML = entries.length ? entries.map((entry) => `<article class="note-item"><div class="note-head"><h3>${esc(entry.author_name)}</h3><span class="mini-status">${entry.visibility === 'private' ? '나만 보기' : entry.display_mode === 'anonymous' ? '공개 · 익명' : '공개'}</span></div><p>${esc(entry.message)}</p><small>${formatDate(entry.created_at)}</small></article>`).join('') : '<div class="empty">아직 도착한 방명록이 없습니다.</div>';
+}
+
+function renderFriendSpaces(classmates) {
+  if (!classmates.length) {
+    $('#friend-space-list').innerHTML = '<div class="empty">방문할 친구가 없습니다.</div>';
+    $('#friend-space-detail').innerHTML = '아직 방문할 수 있는 친구 공간이 없습니다.';
+    return;
+  }
+  $('#friend-space-list').innerHTML = classmates.map((student) => `<button class="friend-space-button ${student.id === state.selectedFriendId ? 'active' : ''}" data-friend-space="${student.id}" type="button"><span>${student.student_no}</span><b>${esc(student.name)}</b><small>미니홈피 방문</small></button>`).join('');
+  if (!state.selectedFriendId || !classmates.some((student) => student.id === state.selectedFriendId)) {
+    state.selectedFriendId = null;
+    $('#friend-space-detail').classList.add('empty');
+    $('#friend-space-detail').innerHTML = '위에서 방문할 친구를 선택하세요.';
+  }
+}
+
+async function openFriendSpace(studentId) {
+  state.selectedFriendId = studentId;
+  $$('#friend-space-list [data-friend-space]').forEach((button) => button.classList.toggle('active', Number(button.dataset.friendSpace) === studentId));
+  const detail = $('#friend-space-detail');
+  detail.classList.add('empty');
+  detail.innerHTML = '친구의 미니홈피를 불러오는 중…';
+  try {
+    const data = await api(`/api/student/spaces/${studentId}`);
+    detail.classList.remove('empty');
+    const notes = data.guestbook.length ? data.guestbook.map((entry) => `<article class="mini-home-note"><div class="note-head"><h3>${esc(entry.author_name)}</h3><span class="mini-status">${entry.display_mode === 'anonymous' ? '익명' : '이름 공개'}</span></div><p>${esc(entry.message)}</p><small>${formatDate(entry.created_at)}</small></article>`).join('') : '<div class="empty">아직 공개된 방명록이 없어요. 첫 번째 글을 남겨 보세요!</div>';
+    detail.innerHTML = `<header class="mini-home-header"><div><span>${data.student.student_no}번의 공간</span><h3>${esc(data.student.name)}님의 미니홈피</h3><p>공개된 방명록만 친구들에게 보여요.</p></div><button class="secondary-btn" data-write-to-friend="${data.student.id}" type="button">방명록 남기기</button></header><div class="mini-home-notes">${notes}</div>`;
+  } catch (error) {
+    detail.classList.add('empty');
+    detail.textContent = error.message;
+  }
 }
 
 function renderIncomingProofs(entries) {
@@ -271,11 +304,24 @@ function bindStudentActions() {
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     try {
-      await api('/api/student/guestbook', { method: 'POST', body: { targetStudentId: Number(form.get('targetStudentId')), displayMode: form.get('displayMode'), message: form.get('message') } });
+      const targetStudentId = Number(form.get('targetStudentId'));
+      await api('/api/student/guestbook', { method: 'POST', body: { targetStudentId, displayMode: form.get('displayMode'), visibility: form.get('visibility'), message: form.get('message') } });
       formElement.reset();
       toast('방명록을 남겼습니다.');
       await loadStudentDashboard();
+      if (state.selectedFriendId === targetStudentId) await openFriendSpace(targetStudentId);
     } catch (error) { toast(error.message); }
+  });
+  $('#friend-space-list').addEventListener('click', (event) => {
+    const button = event.target.closest('[data-friend-space]');
+    if (button) openFriendSpace(Number(button.dataset.friendSpace));
+  });
+  $('#friend-space-detail').addEventListener('click', (event) => {
+    const button = event.target.closest('[data-write-to-friend]');
+    if (!button) return;
+    $('#guestbook-target').value = button.dataset.writeToFriend;
+    $('#guestbook-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    $('#guestbook-form textarea').focus();
   });
   $('#board-form').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -534,6 +580,36 @@ function bindAdminActions() {
       button.disabled = false;
     }
   });
+  $('#select-all-student-pins').addEventListener('change', (event) => {
+    $$('[data-student-pin-select]').forEach((input) => { input.checked = event.target.checked; });
+    updatePinSelectionCount();
+  });
+  $('#student-space-list').addEventListener('change', (event) => {
+    if (event.target.matches('[data-student-pin-select]')) updatePinSelectionCount();
+  });
+  $('#reset-selected-pins').addEventListener('click', () => resetPins(false));
+  $('#reset-all-pins').addEventListener('click', () => resetPins(true));
+}
+
+function updatePinSelectionCount() {
+  const inputs = $$('[data-student-pin-select]');
+  const selected = inputs.filter((input) => input.checked).length;
+  $('#selected-pin-count').textContent = `${selected}명 선택`;
+  $('#select-all-student-pins').checked = inputs.length > 0 && selected === inputs.length;
+  $('#select-all-student-pins').indeterminate = selected > 0 && selected < inputs.length;
+}
+
+async function resetPins(all) {
+  if (!state.activity) return;
+  const studentIds = $$('[data-student-pin-select]:checked').map((input) => Number(input.value));
+  if (!all && !studentIds.length) return toast('PIN을 초기화할 학생을 선택하세요.');
+  const count = all ? state.activity.students.filter((student) => student.active).length : studentIds.length;
+  if (!confirm(`${all ? '전체 학생' : `선택한 ${count}명`}의 PIN을 초기화할까요?\n학생은 다음 로그인에서 새 PIN을 정하게 됩니다.`)) return;
+  try {
+    const result = await api(`/api/admin/classes/${state.activity.activity.class_id}/reset-pins`, { method: 'POST', body: all ? { all: true } : { studentIds } });
+    toast(`${result.count}명의 PIN을 초기화했습니다.`);
+    await loadActivity(state.activity.activity.id);
+  } catch (error) { toast(error.message); }
 }
 
 async function loadClasses() {
@@ -569,7 +645,7 @@ async function loadActivity(activityId) {
 function renderAdminRecords(data) {
   $('#assignment-list').innerHTML = data.assignments.length ? `<table><thead><tr><th>카드</th><th>뽑은 학생</th><th>마니또 대상</th><th>미션 현황</th><th>선택 시각</th></tr></thead><tbody>${data.assignments.map((item) => `<tr><td>${item.card_index}</td><td>${item.giver_no}번 ${esc(item.giver_name)}</td><td>${item.receiver_no}번 ${esc(item.receiver_name)}</td><td>${item.mission_count ? `${item.approved_count} / ${item.mission_count} 승인` : '미션 미추첨'}</td><td>${formatDate(item.chosen_at)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">아직 카드를 뽑은 학생이 없습니다.</div>';
   $('#proof-admin-list').innerHTML = data.proofs.length ? data.proofs.map((proof) => `<article class="review-item"><div class="review-head"><div><h3>${proof.student_no}번 ${esc(proof.student_name)} · ${esc(proof.mission_title)}</h3><p>${esc(proof.proof_text || '사진 인증')}</p></div><span class="mini-status ${esc(proof.status)}">${proofStatusName(proof.status)}</span></div>${proof.photoUrl ? `<img class="review-image" src="${proof.photoUrl}" alt="미션 인증 사진" loading="lazy">` : ''}<div class="review-actions"><button class="secondary-btn" data-proof-id="${proof.id}" data-proof-status="approved" type="button">승인</button><button class="danger-btn" data-proof-id="${proof.id}" data-proof-status="rejected" type="button">반려</button></div></article>`).join('') : '<div class="empty">제출된 인증이 없습니다.</div>';
-  $('#guestbook-admin-list').innerHTML = data.guestbook.length ? data.guestbook.map((entry) => `<article class="review-item"><div class="review-head"><div><h3>${esc(entry.author_name)} → ${esc(entry.target_name)}</h3><p>${esc(entry.message)}</p></div><span class="mini-status">${entry.display_mode === 'anonymous' ? '학생에게 익명' : '공개'}</span></div><div class="review-actions"><button class="${entry.hidden ? 'secondary-btn' : 'danger-btn'}" data-entry-id="${entry.id}" data-hidden="${entry.hidden}" type="button">${entry.hidden ? '다시 표시' : '숨기기'}</button></div></article>`).join('') : '<div class="empty">작성된 방명록이 없습니다.</div>';
+  $('#guestbook-admin-list').innerHTML = data.guestbook.length ? data.guestbook.map((entry) => `<article class="review-item"><div class="review-head"><div><h3>${esc(entry.author_name)} → ${esc(entry.target_name)}</h3><p>${esc(entry.message)}</p></div><span class="mini-status">${entry.visibility === 'private' ? '받는 학생만' : entry.display_mode === 'anonymous' ? '전체 공개 · 익명' : '전체 공개'}</span></div><div class="review-actions"><button class="${entry.hidden ? 'secondary-btn' : 'danger-btn'}" data-entry-id="${entry.id}" data-hidden="${entry.hidden}" type="button">${entry.hidden ? '다시 표시' : '숨기기'}</button></div></article>`).join('') : '<div class="empty">작성된 방명록이 없습니다.</div>';
   $('#board-admin-list').innerHTML = data.board.length ? data.board.map((entry) => `<article class="review-item"><div class="review-head"><div><h3>${entry.student_no}번 ${esc(entry.author_name)}</h3><p>${esc(entry.message)}</p><small>${formatDate(entry.created_at)}</small></div><span class="mini-status">${entry.display_mode === 'anonymous' ? '학생에게 익명' : '이름 공개'}</span></div><div class="review-actions"><button class="${entry.hidden ? 'secondary-btn' : 'danger-btn'}" data-board-post-id="${entry.id}" data-hidden="${entry.hidden}" type="button">${entry.hidden ? '다시 표시' : '숨기기'}</button></div></article>`).join('') : '<div class="empty">작성된 자유게시판 글이 없습니다.</div>';
 }
 
@@ -585,8 +661,9 @@ function renderStudentSpaces(data) {
     const receivedGuestbooks = data.guestbook.filter((entry) => entry.target_student_id === student.id).length;
     const giver = data.assignments.find((assignment) => assignment.receiver_id === student.id);
     const receivedProofs = giver ? data.proofs.filter((proof) => proof.student_id === giver.giver_id).length : 0;
-    return `<button class="student-space-button ${student.id === state.selectedStudentId ? 'active' : ''}" data-student-space="${student.id}" type="button"><span>${student.student_no}번</span><b>${esc(student.name)}</b><small>메시지 ${receivedGuestbooks} · 인증 ${receivedProofs}</small></button>`;
+    return `<div class="student-space-row"><label class="student-pin-check" title="PIN 초기화 대상으로 선택"><input type="checkbox" value="${student.id}" data-student-pin-select aria-label="${student.student_no}번 ${esc(student.name)} PIN 초기화 대상으로 선택"></label><button class="student-space-button ${student.id === state.selectedStudentId ? 'active' : ''}" data-student-space="${student.id}" type="button"><span>${student.student_no}번</span><b>${esc(student.name)}</b><small>메시지 ${receivedGuestbooks} · 인증 ${receivedProofs}</small></button></div>`;
   }).join('');
+  updatePinSelectionCount();
 
   const student = students.find((item) => item.id === state.selectedStudentId);
   const givesTo = data.assignments.find((assignment) => assignment.giver_id === student.id);
