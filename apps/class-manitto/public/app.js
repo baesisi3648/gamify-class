@@ -145,6 +145,7 @@ async function loadStudentDashboard() {
   state.student = data;
   $('#student-name').textContent = data.student.name;
   $('#student-class').textContent = `${data.student.class_name} · ${data.student.student_no}번`;
+  renderOwnProfile(data.student);
   $('#no-activity').classList.toggle('hidden', Boolean(data.activity));
   $('#student-content').classList.toggle('hidden', !data.activity);
   $('#activity-badge').textContent = data.activity ? statusNames[data.activity.status] : '대기 중';
@@ -159,6 +160,18 @@ async function loadStudentDashboard() {
   renderBoard(data.board || []);
   $('#guestbook-target').innerHTML = '<option value="">친구를 선택하세요</option>' + data.classmates
     .map((student) => `<option value="${student.id}">${student.student_no}번 ${esc(student.name)}</option>`).join('');
+}
+
+function renderOwnProfile(student) {
+  const image = $('#profile-avatar-image');
+  const fallback = $('#profile-avatar-fallback');
+  const hasPhoto = Boolean(student.profilePhotoUrl);
+  image.hidden = !hasPhoto;
+  fallback.hidden = hasPhoto;
+  if (hasPhoto) image.src = student.profilePhotoUrl;
+  else image.removeAttribute('src');
+  fallback.textContent = student.name.slice(0, 1) || 'ME';
+  $('#delete-profile-photo').classList.toggle('hidden', !hasPhoto);
 }
 
 function renderTarget(data) {
@@ -227,7 +240,7 @@ function renderFriendSpaces(classmates) {
     $('#friend-space-detail').innerHTML = '아직 방문할 수 있는 친구 공간이 없습니다.';
     return;
   }
-  $('#friend-space-list').innerHTML = classmates.map((student) => `<button class="friend-space-button ${student.id === state.selectedFriendId ? 'active' : ''}" data-friend-space="${student.id}" type="button"><span>${student.student_no}</span><b>${esc(student.name)}</b><small>미니홈피 방문</small></button>`).join('');
+  $('#friend-space-list').innerHTML = classmates.map((student) => `<button class="friend-space-button ${student.id === state.selectedFriendId ? 'active' : ''}" data-friend-space="${student.id}" type="button">${student.profilePhotoUrl ? `<img src="${esc(student.profilePhotoUrl)}" alt="${esc(student.name)} 프로필 사진" loading="lazy">` : `<span>${student.student_no}</span>`}<b>${esc(student.name)}</b><small>미니홈피 방문</small></button>`).join('');
   if (!state.selectedFriendId || !classmates.some((student) => student.id === state.selectedFriendId)) {
     state.selectedFriendId = null;
     $('#friend-space-detail').classList.add('empty');
@@ -245,7 +258,8 @@ async function openFriendSpace(studentId) {
     const data = await api(`/api/student/spaces/${studentId}`);
     detail.classList.remove('empty');
     const notes = data.guestbook.length ? data.guestbook.map((entry) => `<article class="mini-home-note"><div class="note-head"><h3>${esc(entry.author_name)}</h3><span class="mini-status">${entry.display_mode === 'anonymous' ? '익명' : '이름 공개'}</span></div><p>${esc(entry.message)}</p><small>${formatDate(entry.created_at)}</small></article>`).join('') : '<div class="empty">아직 공개된 방명록이 없어요. 첫 번째 글을 남겨 보세요!</div>';
-    detail.innerHTML = `<header class="mini-home-header"><div><span>${data.student.student_no}번의 공간</span><h3>${esc(data.student.name)}님의 미니홈피</h3><p>공개된 방명록만 친구들에게 보여요.</p></div><button class="secondary-btn" data-write-to-friend="${data.student.id}" type="button">방명록 남기기</button></header><div class="mini-home-notes">${notes}</div>`;
+    const avatar = data.student.profilePhotoUrl ? `<img src="${esc(data.student.profilePhotoUrl)}" alt="${esc(data.student.name)} 프로필 사진">` : `<span>${esc(data.student.name.slice(0, 1))}</span>`;
+    detail.innerHTML = `<header class="mini-home-header"><div class="mini-home-person"><div class="mini-home-avatar">${avatar}</div><div><span>${data.student.student_no}번의 공간</span><h3>${esc(data.student.name)}님의 미니홈피</h3><p>공개된 방명록만 친구들에게 보여요.</p></div></div><button class="secondary-btn" data-write-to-friend="${data.student.id}" type="button">방명록 남기기</button></header><div class="mini-home-notes">${notes}</div>`;
   } catch (error) {
     detail.classList.add('empty');
     detail.textContent = error.message;
@@ -261,6 +275,32 @@ function renderBoard(entries) {
 }
 
 function bindStudentActions() {
+  $('#profile-photo-input').addEventListener('change', async (event) => {
+    const input = event.currentTarget;
+    const photo = input.files?.[0];
+    if (!photo) return;
+    if (!photo.type.startsWith('image/') || photo.size > 5 * 1024 * 1024) {
+      input.value = '';
+      return toast('5MB 이하의 이미지 파일을 선택하세요.');
+    }
+    const form = new FormData();
+    form.set('photo', photo);
+    input.disabled = true;
+    try {
+      await api('/api/student/profile-photo', { method: 'POST', formData: form });
+      toast('프로필 사진을 꾸몄습니다.');
+      await loadStudentDashboard();
+    } catch (error) { toast(error.message); }
+    finally { input.disabled = false; input.value = ''; }
+  });
+  $('#delete-profile-photo').addEventListener('click', async () => {
+    if (!confirm('프로필 사진을 삭제할까요?')) return;
+    try {
+      await api('/api/student/profile-photo', { method: 'DELETE' });
+      toast('프로필 사진을 삭제했습니다.');
+      await loadStudentDashboard();
+    } catch (error) { toast(error.message); }
+  });
   $('#mission-list').addEventListener('click', async (event) => {
     const button = event.target.closest('#draw-missions');
     if (!button) return;

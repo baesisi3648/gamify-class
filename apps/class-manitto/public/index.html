@@ -86,7 +86,10 @@
 
     <section id="student-view" class="app-view hidden">
       <div class="page-intro">
-        <div><span class="eyebrow">MY SECRET ROOM</span><h1><span id="student-name"></span>님의 비밀 공간</h1><p id="student-class"></p></div>
+        <div class="student-profile-heading">
+          <div class="profile-avatar-wrap"><div id="profile-avatar" class="profile-avatar"><span id="profile-avatar-fallback">ME</span><img id="profile-avatar-image" alt="내 프로필 사진" hidden></div><label class="profile-photo-picker">사진 꾸미기<input id="profile-photo-input" type="file" accept="image/*"></label><button id="delete-profile-photo" class="profile-photo-delete hidden" type="button">사진 삭제</button></div>
+          <div><span class="eyebrow">MY SECRET ROOM</span><h1><span id="student-name"></span>님의 비밀 공간</h1><p id="student-class"></p><small class="profile-photo-guide">5MB 이하 사진 · 같은 반 친구와 선생님에게만 보여요.</small></div>
+        </div>
         <div id="activity-badge" class="status-pill"></div>
       </div>
 

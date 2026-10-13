@@ -60,9 +60,13 @@ async function routeApi(request, env, url) {
   if (method === 'POST' && pathname === '/api/student/guestbook') return addGuestbook(request, env);
   if (method === 'POST' && pathname === '/api/student/board') return addBoardPost(request, env);
   if (method === 'POST' && pathname === '/api/student/proofs') return submitProof(request, env);
+  if (method === 'POST' && pathname === '/api/student/profile-photo') return updateProfilePhoto(request, env);
+  if (method === 'DELETE' && pathname === '/api/student/profile-photo') return deleteProfilePhoto(request, env);
 
   const photoMatch = pathname.match(/^\/api\/photos\/(\d+)$/);
   if (method === 'GET' && photoMatch) return getProofPhoto(request, env, Number(photoMatch[1]));
+  const profilePhotoMatch = pathname.match(/^\/api\/profile-photos\/(\d+)$/);
+  if (method === 'GET' && profilePhotoMatch) return getProfilePhoto(request, env, Number(profilePhotoMatch[1]));
 
   if (method === 'GET' && pathname === '/api/admin/classes') return listClasses(request, env);
   if (method === 'POST' && pathname === '/api/admin/classes') return createClass(request, env);
@@ -179,11 +183,11 @@ async function drawBoard(url, env) {
 
 async function studentDashboard(request, env) {
   const session = await requireRole(request, env, 'student');
-  const student = await env.DB.prepare(`SELECT s.id, s.name, s.student_no, s.class_id, c.name AS class_name, c.access_code
+  const student = await env.DB.prepare(`SELECT s.id, s.name, s.student_no, s.class_id, s.profile_photo_key, c.name AS class_name, c.access_code
     FROM students s JOIN classes c ON c.id=s.class_id WHERE s.id=?`).bind(session.student_id).first();
   const activity = await env.DB.prepare(`SELECT * FROM activities WHERE class_id=? AND status <> 'closed' ORDER BY id DESC LIMIT 1`)
     .bind(student.class_id).first();
-  if (!activity) return json({ student, activity: null });
+  if (!activity) return json({ student: withProfilePhoto(student), activity: null });
 
   const assignment = await env.DB.prepare(`
     SELECT a.card_index, a.chosen_at, r.id AS receiver_id, r.student_no AS receiver_no, r.name AS receiver_name
@@ -213,7 +217,7 @@ async function studentDashboard(request, env) {
     JOIN missions m ON m.id=p.mission_id AND m.activity_id=a.activity_id
     WHERE a.activity_id=? AND a.receiver_id=? ORDER BY p.submitted_at DESC
   `).bind(activity.status, activity.id, student.id).all();
-  const classmates = await env.DB.prepare('SELECT id, student_no, name FROM students WHERE class_id=? AND active=1 AND id<>? ORDER BY student_no')
+  const classmates = await env.DB.prepare('SELECT id, student_no, name, profile_photo_key FROM students WHERE class_id=? AND active=1 AND id<>? ORDER BY student_no')
     .bind(student.class_id, student.id).all();
   const usedCards = await env.DB.prepare('SELECT card_index FROM assignments WHERE activity_id=? ORDER BY card_index').bind(activity.id).all();
   const board = await env.DB.prepare(`
@@ -223,13 +227,13 @@ async function studentDashboard(request, env) {
     WHERE b.activity_id=? AND b.hidden=0 ORDER BY b.id DESC LIMIT 100
   `).bind(activity.id).all();
   return json({
-    student,
+    student: withProfilePhoto(student),
     activity,
     assignment,
     missions: missions.results.map((m) => ({ ...m, photoUrl: m.photo_key ? `/api/photos/${m.proof_id}` : null })),
     guestbook: guestbook.results,
     incomingProofs: incomingProofs.results.map((p) => ({ ...p, photoUrl: p.photo_key ? `/api/photos/${p.id}` : null })),
-    classmates: classmates.results,
+    classmates: classmates.results.map(withProfilePhoto),
     usedCards: usedCards.results.map((item) => item.card_index),
     board: board.results,
   });
@@ -237,7 +241,7 @@ async function studentDashboard(request, env) {
 
 async function studentPublicSpace(request, env, targetStudentId) {
   const session = await requireRole(request, env, 'student');
-  const target = await env.DB.prepare(`SELECT id,student_no,name FROM students
+  const target = await env.DB.prepare(`SELECT id,student_no,name,profile_photo_key FROM students
     WHERE id=? AND class_id=? AND active=1`).bind(targetStudentId, session.class_id).first();
   if (!target || target.id === session.student_id) throw httpError(404, '친구의 미니홈피를 찾을 수 없습니다.');
   const activity = await env.DB.prepare(`SELECT id,status FROM activities
@@ -248,7 +252,7 @@ async function studentPublicSpace(request, env, targetStudentId) {
     FROM guestbook_entries g JOIN students a ON a.id=g.author_student_id
     WHERE g.activity_id=? AND g.target_student_id=? AND g.visibility='public' AND g.hidden=0
     ORDER BY g.id DESC`).bind(activity.id, target.id).all();
-  return json({ student: target, guestbook: entries.results });
+  return json({ student: withProfilePhoto(target), guestbook: entries.results });
 }
 
 async function drawStudentMissions(request, env) {
@@ -439,6 +443,60 @@ async function getProofPhoto(request, env, proofId) {
   const headers = new Headers();
   object.writeHttpMetadata(headers);
   headers.set('Cache-Control', 'private, max-age=300');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  return new Response(object.body, { headers });
+}
+
+async function updateProfilePhoto(request, env) {
+  const session = await requireRole(request, env, 'student');
+  if (!env.PHOTOS) throw httpError(503, '사진 저장소가 연결되지 않았습니다.');
+  const form = await request.formData();
+  const photo = form.get('photo');
+  if (!(photo instanceof File) || !photo.size) throw httpError(400, '프로필 사진을 선택하세요.');
+  if (!photo.type.startsWith('image/') || photo.size > 5 * 1024 * 1024) {
+    throw httpError(400, '5MB 이하의 이미지 파일만 등록할 수 있습니다.');
+  }
+  const current = await env.DB.prepare('SELECT profile_photo_key FROM students WHERE id=? AND class_id=?')
+    .bind(session.student_id, session.class_id).first();
+  if (!current) throw httpError(404, '학생 정보를 찾을 수 없습니다.');
+  const extension = safeExtension(photo.name, photo.type);
+  const photoKey = `profiles/${session.class_id}/${session.student_id}/${crypto.randomUUID()}.${extension}`;
+  await env.PHOTOS.put(photoKey, photo.stream(), { httpMetadata: { contentType: photo.type } });
+  try {
+    await env.DB.prepare('UPDATE students SET profile_photo_key=? WHERE id=? AND class_id=?')
+      .bind(photoKey, session.student_id, session.class_id).run();
+  } catch (error) {
+    await env.PHOTOS.delete(photoKey);
+    throw error;
+  }
+  if (current.profile_photo_key && current.profile_photo_key !== photoKey) await env.PHOTOS.delete(current.profile_photo_key);
+  return json({ ok: true, profilePhotoUrl: profilePhotoUrl(session.student_id, photoKey) });
+}
+
+async function deleteProfilePhoto(request, env) {
+  const session = await requireRole(request, env, 'student');
+  const current = await env.DB.prepare('SELECT profile_photo_key FROM students WHERE id=? AND class_id=?')
+    .bind(session.student_id, session.class_id).first();
+  if (!current) throw httpError(404, '학생 정보를 찾을 수 없습니다.');
+  await env.DB.prepare('UPDATE students SET profile_photo_key=NULL WHERE id=? AND class_id=?')
+    .bind(session.student_id, session.class_id).run();
+  if (env.PHOTOS && current.profile_photo_key) await env.PHOTOS.delete(current.profile_photo_key);
+  return json({ ok: true });
+}
+
+async function getProfilePhoto(request, env, studentId) {
+  const session = await getSession(request, env, true);
+  const student = await env.DB.prepare('SELECT class_id,profile_photo_key FROM students WHERE id=? AND active=1')
+    .bind(studentId).first();
+  if (!student?.profile_photo_key) throw httpError(404, '프로필 사진을 찾을 수 없습니다.');
+  if (session.role !== 'admin' && session.class_id !== student.class_id) throw httpError(403, '사진을 볼 권한이 없습니다.');
+  if (!env.PHOTOS) throw httpError(503, '사진 저장소가 연결되지 않았습니다.');
+  const object = await env.PHOTOS.get(student.profile_photo_key);
+  if (!object) throw httpError(404, '프로필 사진 파일을 찾을 수 없습니다.');
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('Cache-Control', 'private, max-age=300');
+  headers.set('Content-Disposition', 'inline');
   headers.set('X-Content-Type-Options', 'nosniff');
   return new Response(object.body, { headers });
 }
@@ -882,6 +940,14 @@ function httpError(status, message) {
 
 function clean(value) { return String(value ?? '').trim(); }
 function nullableText(value) { const text = clean(value); return text || null; }
+function profilePhotoUrl(studentId, key) {
+  return key ? `/api/profile-photos/${studentId}?v=${encodeURIComponent(key.split('/').pop())}` : null;
+}
+function withProfilePhoto(student) {
+  if (!student) return student;
+  const { profile_photo_key: key, ...safeStudent } = student;
+  return { ...safeStudent, profilePhotoUrl: profilePhotoUrl(student.id, key) };
+}
 export function normalizeName(value) {
   return clean(value)
     .replace(/\s+/g, '')
