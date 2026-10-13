@@ -385,7 +385,8 @@ async function submitProof(request, env) {
     FROM student_missions sm
     JOIN missions m ON m.id=sm.mission_id
     JOIN activities a ON a.id=m.activity_id
-    WHERE m.id=? AND sm.student_id=? AND a.class_id=? AND a.status='active' AND m.active=1
+    WHERE m.id=? AND sm.student_id=? AND a.class_id=?
+      AND a.status IN ('drawing','active','revealed') AND m.active=1
   `).bind(missionId, session.student_id, session.class_id).first();
   if (!mission) throw httpError(400, '제출할 수 있는 미션이 아닙니다.');
   if (!proofText && !(photo instanceof File && photo.size)) throw httpError(400, '인증 글이나 사진 중 하나를 등록하세요.');
