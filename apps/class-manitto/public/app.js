@@ -149,7 +149,7 @@ async function loadStudentDashboard() {
 
   renderTarget(data);
   renderDrawCards(data);
-  renderMissions(data.missions);
+  renderMissions(data);
   renderGuestbook(data.guestbook);
   renderIncomingProofs(data.incomingProofs);
   $('#guestbook-target').innerHTML = '<option value="">친구를 선택하세요</option>' + data.classmates
@@ -179,12 +179,21 @@ function renderDrawCards(data) {
   }).join('');
 }
 
-function renderMissions(missions) {
-  $('#mission-list').innerHTML = missions.length ? missions.map((mission) => {
+function renderMissions(data) {
+  const missions = data.missions;
+  if (!missions.length) {
+    const canDraw = data.assignment && ['drawing', 'active'].includes(data.activity.status);
+    $('#mission-list').innerHTML = canDraw
+      ? `<div class="mission-draw-box"><span class="mission-draw-icon">✦</span><h3>제주 미션 3개를 뽑아 볼까요?</h3><p>간식 선물·여행 도움·제주 추억 미션을 하나씩 받게 됩니다.<br>한 번 뽑으면 바꿀 수 없어요.</p><button id="draw-missions" class="primary-btn warm" type="button">제주 미션 3개 뽑기</button><small>위험한 장소에서는 촬영하지 말고, 친구의 얼굴은 동의를 받은 경우에만 찍어 주세요.</small></div>`
+      : `<div class="empty">${data.assignment ? '지금은 미션을 뽑을 수 없습니다.' : '먼저 마니또 카드를 뽑아 주세요.'}</div>`;
+    return;
+  }
+  const approved = missions.filter((mission) => mission.proof_status === 'approved').length;
+  $('#mission-list').innerHTML = `<div class="mission-progress"><span>미션 완료</span><strong>${approved} / ${missions.length}</strong></div>` + missions.map((mission) => {
     const status = mission.proof_status || '미제출';
     const existingPhoto = mission.photoUrl || '';
     return `<article class="mission-item">
-      <div class="mission-head"><div><h3>${esc(mission.title)}</h3><p>${esc(mission.description || '미션을 수행하고 인증을 남겨 주세요.')}</p></div><span class="mini-status ${esc(status)}">${proofStatusName(status)}</span></div>
+      <div class="mission-head"><div><span class="mission-category ${esc(mission.category)}">${missionCategoryName(mission.category)}</span><h3>${esc(mission.title)}</h3><p>${esc(mission.description || '미션을 수행하고 인증을 남겨 주세요.')}</p></div><span class="mini-status ${esc(status)}">${proofStatusName(status)}</span></div>
       ${mission.teacher_note ? `<p class="teacher-note">선생님 메모: ${esc(mission.teacher_note)}</p>` : ''}
       <form class="mission-form" data-mission-id="${mission.id}">
         <textarea name="proofText" rows="2" maxlength="1000" placeholder="어떻게 미션을 수행했나요?">${esc(mission.proof_text || '')}</textarea>
@@ -200,7 +209,7 @@ function renderMissions(missions) {
         <button class="secondary-btn" type="submit">${mission.proof_id ? '인증 다시 제출' : '미션 인증 제출'}</button>
       </form>
     </article>`;
-  }).join('') : '<div class="empty">아직 등록된 미션이 없습니다.</div>';
+  }).join('');
 }
 
 function renderGuestbook(entries) {
@@ -212,6 +221,21 @@ function renderIncomingProofs(entries) {
 }
 
 function bindStudentActions() {
+  $('#mission-list').addEventListener('click', async (event) => {
+    const button = event.target.closest('#draw-missions');
+    if (!button) return;
+    button.disabled = true;
+    button.textContent = '미션을 고르는 중…';
+    try {
+      await api('/api/student/missions/draw', { method: 'POST', body: {} });
+      toast('제주 미션 3개가 정해졌습니다!');
+      await loadStudentDashboard();
+    } catch (error) {
+      toast(error.message);
+      button.disabled = false;
+      button.textContent = '제주 미션 3개 뽑기';
+    }
+  });
   $('#student-card-grid').addEventListener('click', async (event) => {
     const card = event.target.closest('[data-card]');
     if (!card || card.disabled) return;
@@ -381,11 +405,22 @@ function bindAdminActions() {
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     try {
-      await api(`/api/admin/activities/${state.activity.activity.id}/missions`, { method: 'POST', body: { title: form.get('title'), description: form.get('description') } });
+      await api(`/api/admin/activities/${state.activity.activity.id}/missions`, { method: 'POST', body: { category: form.get('category'), title: form.get('title'), description: form.get('description') } });
       formElement.reset();
       toast('미션을 추가했습니다.');
       await loadActivity(state.activity.activity.id);
     } catch (error) { toast(error.message); }
+  });
+  $('#install-jeju-missions').addEventListener('click', async (event) => {
+    if (!state.activity || !confirm('제주 수학여행용 랜덤 미션 18개를 이 활동에 등록할까요?')) return;
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      const result = await api(`/api/admin/activities/${state.activity.activity.id}/missions/jeju`, { method: 'POST', body: {} });
+      toast(`제주 미션 ${result.count}개를 등록했습니다.`);
+      await loadActivity(state.activity.activity.id);
+    } catch (error) { toast(error.message); }
+    finally { button.disabled = false; }
   });
   $('#reset-draw').addEventListener('click', async () => {
     if (!state.activity || !confirm('모든 학생의 카드 선택을 초기화할까요? 이 작업은 되돌릴 수 없습니다.')) return;
@@ -440,12 +475,12 @@ async function loadActivity(activityId) {
   const picked = data.assignments.length;
   $('#draw-progress-label').textContent = `${picked} / ${activeStudents}명`;
   $('#draw-progress-bar').style.width = `${activeStudents ? (picked / activeStudents) * 100 : 0}%`;
-  $('#mission-admin-list').innerHTML = data.missions.length ? data.missions.map((mission) => `<span>${esc(mission.title)}</span>`).join('') : '<span>등록된 미션 없음</span>';
+  $('#mission-admin-list').innerHTML = data.missions.length ? data.missions.map((mission) => `<span>${missionCategoryName(mission.category)} · ${esc(mission.title)}</span>`).join('') : '<span>등록된 미션 없음</span>';
   renderAdminRecords(data);
 }
 
 function renderAdminRecords(data) {
-  $('#assignment-list').innerHTML = data.assignments.length ? `<table><thead><tr><th>카드</th><th>뽑은 학생</th><th>마니또 대상</th><th>선택 시각</th></tr></thead><tbody>${data.assignments.map((item) => `<tr><td>${item.card_index}</td><td>${item.giver_no}번 ${esc(item.giver_name)}</td><td>${item.receiver_no}번 ${esc(item.receiver_name)}</td><td>${formatDate(item.chosen_at)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">아직 카드를 뽑은 학생이 없습니다.</div>';
+  $('#assignment-list').innerHTML = data.assignments.length ? `<table><thead><tr><th>카드</th><th>뽑은 학생</th><th>마니또 대상</th><th>미션 현황</th><th>선택 시각</th></tr></thead><tbody>${data.assignments.map((item) => `<tr><td>${item.card_index}</td><td>${item.giver_no}번 ${esc(item.giver_name)}</td><td>${item.receiver_no}번 ${esc(item.receiver_name)}</td><td>${item.mission_count ? `${item.approved_count} / ${item.mission_count} 승인` : '미션 미추첨'}</td><td>${formatDate(item.chosen_at)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">아직 카드를 뽑은 학생이 없습니다.</div>';
   $('#proof-admin-list').innerHTML = data.proofs.length ? data.proofs.map((proof) => `<article class="review-item"><div class="review-head"><div><h3>${proof.student_no}번 ${esc(proof.student_name)} · ${esc(proof.mission_title)}</h3><p>${esc(proof.proof_text || '사진 인증')}</p></div><span class="mini-status ${esc(proof.status)}">${proofStatusName(proof.status)}</span></div>${proof.photoUrl ? `<img class="review-image" src="${proof.photoUrl}" alt="미션 인증 사진" loading="lazy">` : ''}<div class="review-actions"><button class="secondary-btn" data-proof-id="${proof.id}" data-proof-status="approved" type="button">승인</button><button class="danger-btn" data-proof-id="${proof.id}" data-proof-status="rejected" type="button">반려</button></div></article>`).join('') : '<div class="empty">제출된 인증이 없습니다.</div>';
   $('#guestbook-admin-list').innerHTML = data.guestbook.length ? data.guestbook.map((entry) => `<article class="review-item"><div class="review-head"><div><h3>${esc(entry.author_name)} → ${esc(entry.target_name)}</h3><p>${esc(entry.message)}</p></div><span class="mini-status">${entry.display_mode === 'anonymous' ? '학생에게 익명' : '공개'}</span></div><div class="review-actions"><button class="${entry.hidden ? 'secondary-btn' : 'danger-btn'}" data-entry-id="${entry.id}" data-hidden="${entry.hidden}" type="button">${entry.hidden ? '다시 표시' : '숨기기'}</button></div></article>`).join('') : '<div class="empty">작성된 방명록이 없습니다.</div>';
 }
@@ -503,6 +538,10 @@ async function logoutToWelcome(tabId = 'student-login') {
 
 function proofStatusName(status) {
   return ({ submitted: '검토 대기', approved: '승인됨', rejected: '다시 제출', 미제출: '미제출' })[status] || status;
+}
+
+function missionCategoryName(category) {
+  return ({ snack: '간식 선물', help: '여행 도움', memory: '제주 추억', general: '일반 미션' })[category] || '일반 미션';
 }
 
 function formatDate(value) {

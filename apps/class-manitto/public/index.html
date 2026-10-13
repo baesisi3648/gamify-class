@@ -101,7 +101,7 @@
 
         <div class="dashboard-grid">
           <section class="content-card missions-panel">
-            <div class="section-title"><span class="number">02</span><div><h2>나의 미션</h2><p>작은 행동으로 비밀 친구의 하루를 밝혀 주세요.</p></div></div>
+            <div class="section-title"><span class="number">02</span><div><h2>나의 제주 미션</h2><p>간식·여행 도움·제주 추억 미션을 하나씩 뽑아 수행해 보세요.</p></div></div>
             <div id="mission-list" class="mission-list"></div>
           </section>
           <section class="content-card guestbook-panel">
@@ -156,8 +156,8 @@
             <article id="activity-control" class="content-card hidden">
               <div class="control-head"><div><span id="admin-activity-status" class="status-pill"></span><h2 id="admin-activity-title"></h2><p id="admin-activity-code"></p></div><div class="control-actions"><button data-status="drawing" class="secondary-btn" type="button">카드 뽑기 열기</button><button data-status="active" class="secondary-btn" type="button">활동 시작</button><button data-status="revealed" class="secondary-btn" type="button">정체 공개</button><button data-status="closed" class="ghost-btn" type="button">활동 종료</button></div></div>
               <div class="progress-block"><div><span>카드 뽑기 진행률</span><strong id="draw-progress-label"></strong></div><div class="progress-track"><span id="draw-progress-bar"></span></div></div>
-              <div class="section-title"><span class="number">M</span><div><h2>새 미션 추가</h2><p>활동 중 학생에게 보여 줄 미션을 등록하세요.</p></div></div>
-              <form id="mission-form" class="inline-form"><input name="title" placeholder="예: 오늘 먼저 인사하기" required><input name="description" placeholder="미션 설명"><button class="primary-btn" type="submit">미션 추가</button></form>
+              <div class="section-title mission-admin-heading"><span class="number">M</span><div><h2>랜덤 미션 준비</h2><p>제주 수학여행용 미션 18개를 한 번에 등록하거나 직접 추가하세요.</p></div><button id="install-jeju-missions" class="secondary-btn" type="button">제주 미션 18개 자동 등록</button></div>
+              <form id="mission-form" class="inline-form mission-form-admin"><select name="category" aria-label="미션 종류"><option value="snack">간식 선물</option><option value="help">여행 도움</option><option value="memory">제주 추억</option></select><input name="title" placeholder="미션 제목" required><input name="description" placeholder="미션 설명"><button class="primary-btn" type="submit">미션 추가</button></form>
               <div id="mission-admin-list" class="chip-list"></div>
               <details class="danger-zone"><summary>뽑기 초기화</summary><p>활동 시작 전 카드 선택 결과를 모두 지웁니다.</p><button id="reset-draw" class="danger-btn" type="button">모든 카드 선택 초기화</button></details>
             </article>

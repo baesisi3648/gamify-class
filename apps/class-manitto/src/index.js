@@ -3,6 +3,26 @@ import { chooseReceiver } from './matching.js';
 const COOKIE_NAME = 'manitto_session';
 const STUDENT_SESSION_DAYS = 14;
 const ADMIN_SESSION_HOURS = 12;
+const JEJU_MISSIONS = [
+  ['snack', '제주 간식과 응원 쪽지', '제주에서 고른 포장 간식에 짧은 응원 쪽지를 붙여 마니또에게 몰래 전달하고 사진으로 인증하세요.'],
+  ['snack', '숙소 비밀 간식 찾기', '숙소 안의 안전한 장소에 포장된 젤리·사탕·과자를 숨기고, 마니또가 찾을 수 있는 힌트 사진을 올리세요. 발견 후에는 반드시 회수 여부를 확인하세요.'],
+  ['snack', '감귤 간식 선물', '감귤과 관련된 포장 간식 하나를 골라 마니또에게 전달하고 사진으로 인증하세요.'],
+  ['snack', '여행 간식 꾸러미', '작은 간식 두 가지를 여행 꾸러미처럼 준비해 마니또에게 전하고 인증하세요.'],
+  ['snack', '숙소 야식 선물', '숙소에서 먹을 수 있는 컵라면이나 포장 간식을 준비해 전달하고 인증하세요.'],
+  ['snack', '행운의 음료 선물', '마니또가 좋아할 것 같은 음료에 짧은 행운 메시지를 붙여 전달하고 인증하세요.'],
+  ['help', '여행 준비 도우미', '마니또가 이동이나 준비 과정에서 곤란해할 때 자연스럽게 한 가지를 도와주고, 상황을 알아볼 수 있는 사진과 글로 인증하세요.'],
+  ['help', '식사 시간 챙김 미션', '식사 시간에 마니또의 물·수저·휴지 등을 자연스럽게 챙겨 주고 인증하세요.'],
+  ['help', '분실물 지킴이', '버스나 숙소에서 이동하기 전 마니또가 두고 가는 물건이 없는지 살펴주고 글이나 사진으로 인증하세요.'],
+  ['help', '단체사진 도우미', '단체사진을 찍을 때 마니또가 빠지지 않고 잘 나올 수 있도록 챙겨 주고 인증하세요.'],
+  ['help', '피곤할 때 응원하기', '여행 중 마니또가 피곤해 보일 때 따뜻한 응원 메시지나 작은 도움을 건네고 인증하세요.'],
+  ['help', '숙소 정리 도우미', '숙소에서 마니또가 해야 할 정리나 준비를 한 가지 자연스럽게 도와주고 인증하세요.'],
+  ['memory', '제주 풍경 하트', '아름다운 제주 풍경을 배경으로 손이나 소품으로 하트를 만들어 찍고 마니또를 위한 한마디와 함께 올리세요.'],
+  ['memory', '마니또에게 보여 줄 제주', '마니또에게 꼭 보여주고 싶은 제주 풍경을 촬영해 그 이유와 함께 올리세요.'],
+  ['memory', '돌하르방 추억 사진', '돌하르방과 재미있는 포즈 또는 구도로 사진을 찍어 마니또에게 선물하세요.'],
+  ['memory', '제주 별명 만들기', '마니또에게 어울리는 제주 여행 별명을 지어 풍경 사진과 함께 올리세요.'],
+  ['memory', '칭찬 한 장면', '여행 중 마니또가 잘하거나 배려한 순간을 찾아, 개인정보가 드러나지 않는 사진과 칭찬 글로 인증하세요.'],
+  ['memory', '제주 여행 편지', '제주를 떠나기 전 마니또에게 전할 짧은 여행 편지를 쓰고 제주 풍경과 함께 인증하세요.'],
+];
 
 export default {
   async fetch(request, env) {
@@ -34,6 +54,7 @@ async function routeApi(request, env, url) {
 
   if (method === 'GET' && pathname === '/api/student/dashboard') return studentDashboard(request, env);
   if (method === 'POST' && pathname === '/api/student/draw') return drawCard(request, env);
+  if (method === 'POST' && pathname === '/api/student/missions/draw') return drawStudentMissions(request, env);
   if (method === 'POST' && pathname === '/api/student/guestbook') return addGuestbook(request, env);
   if (method === 'POST' && pathname === '/api/student/proofs') return submitProof(request, env);
 
@@ -56,6 +77,8 @@ async function routeApi(request, env, url) {
   if (method === 'POST' && resetMatch) return resetDraw(request, env, Number(resetMatch[1]));
   const missionMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)\/missions$/);
   if (method === 'POST' && missionMatch) return createMission(request, env, Number(missionMatch[1]));
+  const jejuMissionMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)\/missions\/jeju$/);
+  if (method === 'POST' && jejuMissionMatch) return installJejuMissions(request, env, Number(jejuMissionMatch[1]));
   const reviewMatch = pathname.match(/^\/api\/admin\/proofs\/(\d+)\/review$/);
   if (method === 'POST' && reviewMatch) return reviewProof(request, env, Number(reviewMatch[1]));
   const hideMatch = pathname.match(/^\/api\/admin\/guestbook\/(\d+)\/visibility$/);
@@ -141,9 +164,12 @@ async function studentDashboard(request, env) {
   `).bind(activity.id, student.id).first();
   const missions = await env.DB.prepare(`
     SELECT m.*, p.id AS proof_id, p.proof_text, p.photo_key, p.status AS proof_status, p.teacher_note, p.submitted_at
-    FROM missions m LEFT JOIN mission_proofs p ON p.mission_id=m.id AND p.student_id=?
-    WHERE m.activity_id=? AND m.active=1 ORDER BY m.id
-  `).bind(student.id, activity.id).all();
+    FROM student_missions sm
+    JOIN missions m ON m.id=sm.mission_id
+    LEFT JOIN mission_proofs p ON p.mission_id=m.id AND p.student_id=sm.student_id
+    WHERE sm.activity_id=? AND sm.student_id=? AND m.active=1
+    ORDER BY CASE sm.category WHEN 'snack' THEN 1 WHEN 'help' THEN 2 WHEN 'memory' THEN 3 ELSE 4 END
+  `).bind(activity.id, student.id).all();
   const guestbook = await env.DB.prepare(`
     SELECT g.id, g.message, g.display_mode, g.created_at,
       CASE WHEN g.display_mode='public' OR ?='revealed' THEN s.name ELSE '익명의 친구' END AS author_name
@@ -172,6 +198,41 @@ async function studentDashboard(request, env) {
     classmates: classmates.results,
     usedCards: usedCards.results.map((item) => item.card_index),
   });
+}
+
+async function drawStudentMissions(request, env) {
+  const session = await requireRole(request, env, 'student');
+  const activity = await env.DB.prepare(`
+    SELECT a.* FROM activities a
+    WHERE a.class_id=? AND a.status IN ('drawing','active')
+    ORDER BY a.id DESC LIMIT 1
+  `).bind(session.class_id).first();
+  if (!activity) throw httpError(409, '지금은 미션을 뽑을 수 없습니다.');
+
+  const assignment = await env.DB.prepare('SELECT id FROM assignments WHERE activity_id=? AND giver_id=?')
+    .bind(activity.id, session.student_id).first();
+  if (!assignment) throw httpError(409, '먼저 마니또 카드를 뽑아 주세요.');
+
+  const existing = await env.DB.prepare('SELECT COUNT(*) AS count FROM student_missions WHERE activity_id=? AND student_id=?')
+    .bind(activity.id, session.student_id).first();
+  if (Number(existing?.count) > 0) throw httpError(409, '이미 제주 미션을 뽑았습니다.');
+
+  const selected = [];
+  for (const category of ['snack', 'help', 'memory']) {
+    const mission = await env.DB.prepare(`
+      SELECT id FROM missions
+      WHERE activity_id=? AND active=1 AND category=?
+      ORDER BY RANDOM() LIMIT 1
+    `).bind(activity.id, category).first();
+    if (!mission) throw httpError(409, '교사가 제주 미션 묶음을 먼저 등록해야 합니다.');
+    selected.push({ category, missionId: mission.id });
+  }
+
+  await env.DB.batch(selected.map(({ category, missionId }) => env.DB.prepare(`
+    INSERT OR IGNORE INTO student_missions(activity_id,student_id,mission_id,category)
+    VALUES(?,?,?,?)
+  `).bind(activity.id, session.student_id, missionId, category)));
+  return json({ ok: true, count: selected.length });
 }
 
 async function drawCard(request, env) {
@@ -255,9 +316,12 @@ async function submitProof(request, env) {
   const proofText = clean(form.get('proofText'));
   const photo = form.get('photo');
   const mission = await env.DB.prepare(`
-    SELECT m.id, m.activity_id FROM missions m JOIN activities a ON a.id=m.activity_id
-    WHERE m.id=? AND a.class_id=? AND a.status='active' AND m.active=1
-  `).bind(missionId, session.class_id).first();
+    SELECT m.id, m.activity_id
+    FROM student_missions sm
+    JOIN missions m ON m.id=sm.mission_id
+    JOIN activities a ON a.id=m.activity_id
+    WHERE m.id=? AND sm.student_id=? AND a.class_id=? AND a.status='active' AND m.active=1
+  `).bind(missionId, session.student_id, session.class_id).first();
   if (!mission) throw httpError(400, '제출할 수 있는 미션이 아닙니다.');
   if (!proofText && !(photo instanceof File && photo.size)) throw httpError(400, '인증 글이나 사진 중 하나를 등록하세요.');
   if (proofText.length > 1000) throw httpError(400, '인증 글은 1,000자 이내로 작성하세요.');
@@ -395,7 +459,9 @@ async function activityDetail(request, env, activityId) {
   if (!activity) throw httpError(404, '활동을 찾을 수 없습니다.');
   const [students, assignments, missions, proofs, guestbook] = await Promise.all([
     env.DB.prepare('SELECT id,student_no,name,active FROM students WHERE class_id=? ORDER BY student_no').bind(activity.class_id).all(),
-    env.DB.prepare(`SELECT a.*,g.student_no AS giver_no,g.name AS giver_name,r.student_no AS receiver_no,r.name AS receiver_name
+    env.DB.prepare(`SELECT a.*,g.student_no AS giver_no,g.name AS giver_name,r.student_no AS receiver_no,r.name AS receiver_name,
+      (SELECT COUNT(*) FROM student_missions sm WHERE sm.activity_id=a.activity_id AND sm.student_id=a.giver_id) AS mission_count,
+      (SELECT COUNT(*) FROM mission_proofs p JOIN missions m ON m.id=p.mission_id WHERE m.activity_id=a.activity_id AND p.student_id=a.giver_id AND p.status='approved') AS approved_count
       FROM assignments a JOIN students g ON g.id=a.giver_id JOIN students r ON r.id=a.receiver_id WHERE a.activity_id=? ORDER BY a.chosen_at`).bind(activityId).all(),
     env.DB.prepare('SELECT * FROM missions WHERE activity_id=? ORDER BY id').bind(activityId).all(),
     env.DB.prepare(`SELECT p.*,m.title AS mission_title,s.student_no,s.name AS student_name
@@ -434,6 +500,7 @@ async function resetDraw(request, env, activityId) {
   const activity = await env.DB.prepare('SELECT status FROM activities WHERE id=?').bind(activityId).first();
   if (!activity) throw httpError(404, '활동을 찾을 수 없습니다.');
   if (!['draft', 'drawing'].includes(activity.status)) throw httpError(409, '활동 시작 후에는 배정을 초기화할 수 없습니다.');
+  await env.DB.prepare('DELETE FROM student_missions WHERE activity_id=?').bind(activityId).run();
   await env.DB.prepare('DELETE FROM assignments WHERE activity_id=?').bind(activityId).run();
   await env.DB.prepare("UPDATE activities SET status='draft' WHERE id=?").bind(activityId).run();
   return json({ ok: true });
@@ -444,10 +511,24 @@ async function createMission(request, env, activityId) {
   const body = await readJson(request);
   const title = clean(body.title);
   const description = clean(body.description);
+  const category = ['snack', 'help', 'memory', 'general'].includes(body.category) ? body.category : 'general';
   if (!title || title.length > 80 || description.length > 1000) throw httpError(400, '미션 제목과 설명 길이를 확인하세요.');
-  const result = await env.DB.prepare('INSERT INTO missions(activity_id,title,description,due_at) VALUES(?,?,?,?)')
-    .bind(activityId, title, description, nullableText(body.dueAt)).run();
+  const result = await env.DB.prepare('INSERT INTO missions(activity_id,title,description,due_at,category) VALUES(?,?,?,?,?)')
+    .bind(activityId, title, description, nullableText(body.dueAt), category).run();
   return json({ ok: true, id: result.meta.last_row_id });
+}
+
+async function installJejuMissions(request, env, activityId) {
+  await requireRole(request, env, 'admin');
+  const activity = await env.DB.prepare('SELECT id FROM activities WHERE id=?').bind(activityId).first();
+  if (!activity) throw httpError(404, '활동을 찾을 수 없습니다.');
+  const existing = await env.DB.prepare("SELECT COUNT(*) AS count FROM missions WHERE activity_id=? AND category IN ('snack','help','memory')")
+    .bind(activityId).first();
+  if (Number(existing?.count) > 0) throw httpError(409, '이미 제주 랜덤 미션이 등록되어 있습니다.');
+  await env.DB.batch(JEJU_MISSIONS.map(([category, title, description]) => env.DB.prepare(`
+    INSERT INTO missions(activity_id,title,description,category) VALUES(?,?,?,?)
+  `).bind(activityId, title, description, category)));
+  return json({ ok: true, count: JEJU_MISSIONS.length });
 }
 
 async function reviewProof(request, env, proofId) {
