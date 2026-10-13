@@ -4,6 +4,7 @@ const state = {
   classes: [],
   activity: null,
   drawCeremonyMode: false,
+  selectedStudentId: null,
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -448,6 +449,12 @@ function bindAdminActions() {
       await loadActivity(state.activity.activity.id);
     } catch (error) { toast(error.message); }
   });
+  $('#student-space-list').addEventListener('click', (event) => {
+    const button = event.target.closest('[data-student-space]');
+    if (!button || !state.activity) return;
+    state.selectedStudentId = Number(button.dataset.studentSpace);
+    renderStudentSpaces(state.activity);
+  });
 }
 
 async function loadClasses() {
@@ -477,12 +484,57 @@ async function loadActivity(activityId) {
   $('#draw-progress-bar').style.width = `${activeStudents ? (picked / activeStudents) * 100 : 0}%`;
   $('#mission-admin-list').innerHTML = data.missions.length ? data.missions.map((mission) => `<span>${missionCategoryName(mission.category)} · ${esc(mission.title)}</span>`).join('') : '<span>등록된 미션 없음</span>';
   renderAdminRecords(data);
+  renderStudentSpaces(data);
 }
 
 function renderAdminRecords(data) {
   $('#assignment-list').innerHTML = data.assignments.length ? `<table><thead><tr><th>카드</th><th>뽑은 학생</th><th>마니또 대상</th><th>미션 현황</th><th>선택 시각</th></tr></thead><tbody>${data.assignments.map((item) => `<tr><td>${item.card_index}</td><td>${item.giver_no}번 ${esc(item.giver_name)}</td><td>${item.receiver_no}번 ${esc(item.receiver_name)}</td><td>${item.mission_count ? `${item.approved_count} / ${item.mission_count} 승인` : '미션 미추첨'}</td><td>${formatDate(item.chosen_at)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">아직 카드를 뽑은 학생이 없습니다.</div>';
   $('#proof-admin-list').innerHTML = data.proofs.length ? data.proofs.map((proof) => `<article class="review-item"><div class="review-head"><div><h3>${proof.student_no}번 ${esc(proof.student_name)} · ${esc(proof.mission_title)}</h3><p>${esc(proof.proof_text || '사진 인증')}</p></div><span class="mini-status ${esc(proof.status)}">${proofStatusName(proof.status)}</span></div>${proof.photoUrl ? `<img class="review-image" src="${proof.photoUrl}" alt="미션 인증 사진" loading="lazy">` : ''}<div class="review-actions"><button class="secondary-btn" data-proof-id="${proof.id}" data-proof-status="approved" type="button">승인</button><button class="danger-btn" data-proof-id="${proof.id}" data-proof-status="rejected" type="button">반려</button></div></article>`).join('') : '<div class="empty">제출된 인증이 없습니다.</div>';
   $('#guestbook-admin-list').innerHTML = data.guestbook.length ? data.guestbook.map((entry) => `<article class="review-item"><div class="review-head"><div><h3>${esc(entry.author_name)} → ${esc(entry.target_name)}</h3><p>${esc(entry.message)}</p></div><span class="mini-status">${entry.display_mode === 'anonymous' ? '학생에게 익명' : '공개'}</span></div><div class="review-actions"><button class="${entry.hidden ? 'secondary-btn' : 'danger-btn'}" data-entry-id="${entry.id}" data-hidden="${entry.hidden}" type="button">${entry.hidden ? '다시 표시' : '숨기기'}</button></div></article>`).join('') : '<div class="empty">작성된 방명록이 없습니다.</div>';
+}
+
+function renderStudentSpaces(data) {
+  const students = data.students.filter((student) => student.active);
+  if (!students.length) {
+    $('#student-space-list').innerHTML = '<div class="empty">등록된 학생이 없습니다.</div>';
+    $('#student-space-detail').innerHTML = '<div class="empty">학생 명단을 먼저 등록하세요.</div>';
+    return;
+  }
+  if (!students.some((student) => student.id === state.selectedStudentId)) state.selectedStudentId = students[0].id;
+  $('#student-space-list').innerHTML = students.map((student) => {
+    const receivedGuestbooks = data.guestbook.filter((entry) => entry.target_student_id === student.id).length;
+    const giver = data.assignments.find((assignment) => assignment.receiver_id === student.id);
+    const receivedProofs = giver ? data.proofs.filter((proof) => proof.student_id === giver.giver_id).length : 0;
+    return `<button class="student-space-button ${student.id === state.selectedStudentId ? 'active' : ''}" data-student-space="${student.id}" type="button"><span>${student.student_no}번</span><b>${esc(student.name)}</b><small>메시지 ${receivedGuestbooks} · 인증 ${receivedProofs}</small></button>`;
+  }).join('');
+
+  const student = students.find((item) => item.id === state.selectedStudentId);
+  const givesTo = data.assignments.find((assignment) => assignment.giver_id === student.id);
+  const receivesFrom = data.assignments.find((assignment) => assignment.receiver_id === student.id);
+  const receivedGuestbooks = data.guestbook.filter((entry) => entry.target_student_id === student.id);
+  const sentGuestbooks = data.guestbook.filter((entry) => entry.author_student_id === student.id);
+  const sentProofs = data.proofs.filter((proof) => proof.student_id === student.id);
+  const receivedProofs = receivesFrom ? data.proofs.filter((proof) => proof.student_id === receivesFrom.giver_id) : [];
+  const relationship = `<div class="student-space-summary"><div><span>내가 챙길 친구</span><strong>${givesTo ? `${givesTo.receiver_no}번 ${esc(givesTo.receiver_name)}` : '아직 미배정'}</strong></div><div><span>나를 챙기는 마니또</span><strong>${receivesFrom ? `${receivesFrom.giver_no}번 ${esc(receivesFrom.giver_name)}` : '아직 미배정'}</strong></div></div>`;
+  $('#student-space-detail').classList.remove('empty');
+  $('#student-space-detail').innerHTML = `<div class="student-space-title"><div><span class="class-code">${student.student_no}번</span><h2>${esc(student.name)} 학생의 공간</h2></div><span class="mini-status">교사 전용</span></div>
+    ${relationship}
+    ${studentSpaceSection('받은 방명록', `${receivedGuestbooks.length}건`, receivedGuestbooks.map((entry) => guestbookSpaceCard(entry, '받음')).join(''))}
+    ${studentSpaceSection('마니또에게 받은 미션 인증', `${receivedProofs.length}건`, receivedProofs.map((proof) => proofSpaceCard(proof, receivesFrom ? `${receivesFrom.giver_no}번 ${receivesFrom.giver_name}` : '')).join(''))}
+    ${studentSpaceSection('내가 보낸 미션 인증', `${sentProofs.length}건`, sentProofs.map((proof) => proofSpaceCard(proof, givesTo ? `${givesTo.receiver_no}번 ${givesTo.receiver_name}에게` : '')).join(''))}
+    ${studentSpaceSection('작성한 방명록', `${sentGuestbooks.length}건`, sentGuestbooks.map((entry) => guestbookSpaceCard(entry, `${esc(entry.target_name)}에게`)).join(''))}`;
+}
+
+function studentSpaceSection(title, count, content) {
+  return `<section class="student-space-section"><header><h3>${title}</h3><span>${count}</span></header><div class="student-space-items">${content || '<div class="empty compact-empty">아직 기록이 없습니다.</div>'}</div></section>`;
+}
+
+function guestbookSpaceCard(entry, direction) {
+  return `<article class="space-entry"><div class="space-entry-head"><b>${direction} · ${esc(entry.author_name)} → ${esc(entry.target_name)}</b><span class="mini-status">${entry.hidden ? '숨김' : entry.display_mode === 'anonymous' ? '학생에게 익명' : '공개'}</span></div><p>${esc(entry.message)}</p><small>${formatDate(entry.created_at)}</small></article>`;
+}
+
+function proofSpaceCard(proof, relation) {
+  return `<article class="space-entry"><div class="space-entry-head"><div><b>${esc(proof.mission_title)}</b>${relation ? `<small>${relation}</small>` : ''}</div><span class="mini-status ${esc(proof.status)}">${proofStatusName(proof.status)}</span></div><p>${esc(proof.proof_text || '사진으로 인증했습니다.')}</p>${proof.photoUrl ? `<a class="space-photo-link" href="${esc(proof.photoUrl)}" target="_blank" rel="noopener"><img src="${esc(proof.photoUrl)}" alt="미션 인증 사진" loading="lazy"><span>사진 크게 보기</span></a>` : ''}<small>${formatDate(proof.submitted_at)}</small></article>`;
 }
 
 function renderCredentials(rows) {
@@ -495,6 +547,10 @@ function clearRecords() {
   $('#assignment-list').innerHTML = '<div class="empty">활동을 선택해 주세요.</div>';
   $('#proof-admin-list').innerHTML = '';
   $('#guestbook-admin-list').innerHTML = '';
+  $('#student-space-list').innerHTML = '<div class="empty">활동을 선택해 주세요.</div>';
+  $('#student-space-detail').classList.add('empty');
+  $('#student-space-detail').innerHTML = '왼쪽에서 학생을 선택하세요.';
+  state.selectedStudentId = null;
 }
 
 function parseRoster(text) {
