@@ -5,7 +5,7 @@ window.GENESIS_ASSETS = [
     category: 'opening',
     categoryLabel: '오프닝 배경',
     title: '빛을 향한 복도 · ZEP 스케일',
-    subtitle: '문 높이를 ZEP 캐릭터 2~3명 정도로 줄인 2D 측면 복도',
+    subtitle: '자연스러운 비율의 네 구역을 이어 만든 ZEP용 2D 측면 복도',
     thumbnail: 'assets/genesis/thumbs/genesis-opening-corridor-zep-scale.jpg',
     background: 'assets/genesis/genesis-opening-corridor-zep-scale.png',
     archiveBackground: 'assets/genesis/genesis-opening-corridor.png',
@@ -13,8 +13,8 @@ window.GENESIS_ASSETS = [
     size: '4096 × 512',
     layers: '아랫배경 1장',
     tags: ['2D 측면', 'ZEP 스케일', '스토리 워크', '에어록'],
-    description: '작은 ZEP 캐릭터가 거대한 격납고 안에 있는 것처럼 보이지 않도록 문과 복도 높이를 캐릭터 2~3명 정도로 줄인 오프닝 배경입니다. 위아래 검정 여백으로 통로에 시선이 모이며 기존 4096 × 1024 원본도 보관되어 있습니다.',
-    prompt: '우주선 내부의 길고 어두운 2D 측면 복도. 작은 ZEP 캐릭터 기준으로 문과 벽 높이는 캐릭터 2~3명 정도이며, 천장과 바닥은 얕은 통로처럼 보인다. 위아래에는 넉넉한 검정 여백이 있다. 좌측은 어둡고 우측으로 갈수록 밝아지며 마지막은 열린 에어록이다. 텍스트·인물·UI 없음.'
+    description: '정비·배관, 통신·전력, 연구·관측, 에어록 접근 구역을 각각 자연스러운 건축 비율로 제작해 이어 붙인 오프닝 배경입니다. 문은 ZEP 캐릭터 2~3명 정도 높이이며, 왼쪽에서 오른쪽으로 갈수록 밝아집니다. 기존 4096 × 1024 원본도 보관되어 있습니다.',
+    prompt: '우주선 내부의 길고 어두운 2D 측면 복도. 정비·배관 구역, 통신·전력 구역, 연구·관측 구역, 밝은 에어록 접근 구역을 실제 새로운 공간으로 길게 이어 붙인다. 작은 ZEP 캐릭터 기준으로 문과 벽 높이는 캐릭터 2~3명 정도이며 건축물의 가로세로 비율을 찌그러뜨리지 않는다. 위아래에는 검정 여백이 있고 좌측에서 우측으로 갈수록 밝아진다. 텍스트·인물·UI 없음.'
   },
   {
     id: 'GEN-MAP-001', slug: 'space-corridor', category: 'map', categoryLabel: '맵 세트',
