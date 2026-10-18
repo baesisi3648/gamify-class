@@ -2,6 +2,7 @@
   'use strict';
   const assets = window.GENESIS_ASSETS || [];
   const rooms = (window.GENESIS_ROOMS || []).slice().sort((a, b) => a.order - b.order);
+  const storyPanels = (window.GENESIS_STORY_PANELS || []).slice().sort((a, b) => a.step - b.step);
   const assetById = new Map(assets.map(asset => [asset.id, asset]));
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
@@ -63,8 +64,14 @@
 
   function renderRooms() { $('#roomGrid').innerHTML = rooms.map(roomTemplate).join(''); }
 
+  function storyPanelPath(panel) { return `assets/genesis/story-panels/genesis-story-${String(panel.step).padStart(2, '0')}.png`; }
+  function storyPanelText(panel) { return `${panel.record}. ${panel.title}\n${panel.body.join('\n')}\n${panel.highlight}`; }
   function storyText(room) { return `${room.order + 1}. ${room.title} (${room.phase})\n${room.story}\n미션: ${room.mission}`; }
-  function fullStoryText() { return `프로젝트 제네시스 스토리보드\n\n${rooms.map(storyText).join('\n\n')}`; }
+  function fullStoryText() { return `프로젝트 제네시스 오프닝 패널\n\n${storyPanels.map(storyPanelText).join('\n\n')}\n\n프로젝트 제네시스 방별 스토리\n\n${rooms.map(storyText).join('\n\n')}`; }
+  function renderStoryPanels() {
+    $('#storyPanelGrid').innerHTML = storyPanels.map(panel => `<article data-panel-id="${panel.id}"><button class="story-panel-preview" type="button" data-panel-action="download"><img src="${storyPanelPath(panel)}" alt="${escapeText(panel.title)} 스토리 패널" loading="lazy" /></button><div><span>${panel.record} · ${escapeText(panel.status)}</span><h3>${escapeText(panel.title)}</h3><p>${escapeText(panel.highlight)}</p><div><button type="button" data-panel-action="copy">문구 복사</button><button type="button" data-panel-action="download">PNG 받기</button></div></div></article>`).join('');
+  }
+  function downloadAllStoryPanels() { storyPanels.forEach((panel, index) => setTimeout(() => downloadFile(storyPanelPath(panel)), index * 320)); toast('스토리 패널 PNG 7장의 다운로드를 시작했습니다.'); }
   function renderStory() {
     $('#storyTimeline').innerHTML = rooms.map(room => { const asset = assetById.get(room.backgroundId); return `<article data-story-id="${room.id}"><div class="story-index"><span>${String(room.order + 1).padStart(2, '0')}</span><i></i></div><div class="story-card"><img src="${asset?.thumbnail || ''}" alt="" loading="lazy" /><div><small>${escapeText(room.phase)}</small><h2>${escapeText(room.title)}</h2><p>${escapeText(room.story)}</p><b>미션</b><p>${escapeText(room.mission)}</p><button type="button" data-story-copy="${room.id}">이 장면 복사</button></div></div></article>`; }).join('');
   }
@@ -100,18 +107,20 @@
   $('#roomGrid').addEventListener('input', event => { if (!event.target.matches('[data-room-note]')) return; const notes = readJson(roomNoteKey); notes[event.target.dataset.roomNote] = event.target.value; saveJson(roomNoteKey, notes); });
   $('#expandRooms').addEventListener('click', () => { const details = $$('.room-detail'), open = details.some(detail => detail.hidden); details.forEach(detail => detail.hidden = !open); $$('.room-summary').forEach(button => button.setAttribute('aria-expanded', String(open))); $('#expandRooms').textContent = open ? '모두 접기' : '모두 펼치기'; });
   $('#storyTimeline').addEventListener('click', event => { const button = event.target.closest('[data-story-copy]'); if (!button) return; const room = rooms.find(item => item.id === button.dataset.storyCopy); copyText(storyText(room), '장면 스토리를 복사했습니다.'); });
+  $('#storyPanelGrid').addEventListener('click', event => { const card = event.target.closest('[data-panel-id]'), action = event.target.closest('[data-panel-action]')?.dataset.panelAction; if (!card || !action) return; const panel = storyPanels.find(item => item.id === card.dataset.panelId); if (action === 'copy') copyText(storyPanelText(panel), '패널 문구를 복사했습니다.'); if (action === 'download') downloadFile(storyPanelPath(panel)); });
   $('#copyAllStory').addEventListener('click', () => copyText(fullStoryText(), '전체 스토리를 복사했습니다.')); $('#downloadStory').addEventListener('click', () => downloadBlob('project-genesis-storyboard.txt', 'text/plain;charset=utf-8', fullStoryText()));
+  $('#downloadAllStoryPanels').addEventListener('click', downloadAllStoryPanels); $('#downloadStoryPanelSet').addEventListener('click', downloadAllStoryPanels);
   $('#assetGrid').addEventListener('click', event => { const card = event.target.closest('.asset-card'), action = event.target.closest('[data-action]')?.dataset.action; if (!card || !action || action === 'status') return; const asset = assetById.get(card.dataset.id); if (action === 'preview') openDialog(asset); if (action === 'download') downloadAsset(asset); });
   $('#assetGrid').addEventListener('change', event => { if (event.target.dataset.action !== 'status') return; const card = event.target.closest('.asset-card'), statuses = readJson(statusKey); statuses[card.dataset.id] = event.target.value; saveJson(statusKey, statuses); toast(`${card.querySelector('h3').textContent}: ${statusLabels[event.target.value]}`); });
   $('#filterTabs').addEventListener('click', event => { const button = event.target.closest('[data-filter]'); if (!button) return; filter = button.dataset.filter; $$('#filterTabs button').forEach(item => item.classList.toggle('active', item === button)); renderAssets(); });
   $('#assetSearch').addEventListener('input', event => { query = event.target.value.trim().toLowerCase(); renderAssets(); });
   $('#roomDownloads').addEventListener('click', event => { const button = event.target.closest('[data-download-action="room"]'); if (!button) return; const room = rooms.find(item => item.id === button.dataset.roomId); downloadAsset(assetById.get(room?.backgroundId)); });
   $('#downloadGuide').addEventListener('click', () => downloadBlob('project-genesis-teacher-guide.txt', 'text/plain;charset=utf-8', teacherGuide()));
-  $('#downloadManifest').addEventListener('click', () => downloadBlob('project-genesis-manifest.json', 'application/json;charset=utf-8', JSON.stringify({ project: 'Project Genesis', version: 1, rooms, assets }, null, 2)));
+  $('#downloadManifest').addEventListener('click', () => downloadBlob('project-genesis-manifest.json', 'application/json;charset=utf-8', JSON.stringify({ project: 'Project Genesis', version: 2, rooms, assets, storyPanels }, null, 2)));
   $('#downloadAllAssets').addEventListener('click', downloadAllAssets);
   $('#dialogClose').addEventListener('click', () => $('#assetDialog').close()); $('#assetDialog').addEventListener('click', event => { if (event.target === $('#assetDialog')) $('#assetDialog').close(); }); $('#copyPrompt').addEventListener('click', () => selectedAsset?.prompt && copyText(selectedAsset.prompt, '프롬프트를 복사했습니다.'));
 
   const memo = $('#projectMemo'); memo.value = localStorage.getItem(memoKey) || ''; let memoTimer; memo.addEventListener('input', () => { $('#memoState').textContent = '저장 중…'; clearTimeout(memoTimer); memoTimer = setTimeout(() => { localStorage.setItem(memoKey, memo.value); $('#memoState').textContent = '이 기기에 저장했습니다.'; }, 350); });
-  $('#roomCount').textContent = rooms.length; $('#roomTabCount').textContent = rooms.length; $('#assetCount').textContent = assets.length; $('#assetTabCount').textContent = assets.length; $('#downloadCount').textContent = new Set(assets.flatMap(assetFiles)).size;
-  renderFlow(); renderRooms(); renderStory(); renderAssets(); renderDownloads(); setView(location.hash.slice(1) || 'home', false);
+  $('#roomCount').textContent = rooms.length; $('#roomTabCount').textContent = rooms.length; $('#assetCount').textContent = assets.length; $('#assetTabCount').textContent = assets.length; $('#downloadCount').textContent = new Set([...assets.flatMap(assetFiles), ...storyPanels.map(storyPanelPath)]).size;
+  renderFlow(); renderRooms(); renderStoryPanels(); renderStory(); renderAssets(); renderDownloads(); setView(location.hash.slice(1) || 'home', false);
 })();
