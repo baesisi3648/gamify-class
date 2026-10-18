@@ -4,92 +4,71 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#070c17" />
-  <title>프로젝트 제네시스 — ZEP 맵 공방</title>
-  <meta name="description" content="SF 우주 방탈출 프로젝트 제네시스의 배경, 맵 세트와 제작 상태를 한곳에서 관리합니다." />
+  <title>프로젝트 제네시스 — 교사용 ZEP 제작 허브</title>
+  <meta name="description" content="프로젝트 제네시스의 방 구성, 스토리, 배경, 오브젝트와 다운로드 자료를 정리한 교사용 ZEP 방탈출 제작 허브입니다." />
   <link rel="preload" as="font" type="font/woff2" href="/fonts/PretendardVariable.woff2" crossorigin />
   <link rel="stylesheet" href="genesis.css" />
 </head>
 <body>
   <header class="genesis-topbar">
-    <a class="genesis-brand" href="index.html">
-      <span class="genesis-mark" aria-hidden="true">G</span>
-      <span><b>프로젝트 제네시스</b><small>ZEP SF ESCAPE PROJECT</small></span>
-    </a>
-    <nav aria-label="ZEP 공방 메뉴">
-      <a href="index.html">맵 편집실</a>
-      <a href="index.html?workspace=object">오브젝트 공방</a>
-      <a class="active" href="genesis.html" aria-current="page">프로젝트 제네시스</a>
-    </nav>
+    <a class="genesis-brand" href="index.html"><span class="genesis-mark" aria-hidden="true">G</span><span><b>프로젝트 제네시스</b><small>TEACHER BUILD KIT</small></span></a>
+    <nav aria-label="ZEP 공방 메뉴"><a href="index.html">맵 편집실</a><a href="index.html?workspace=object">오브젝트 공방</a><a class="active" href="genesis.html" aria-current="page">제네시스 허브</a></nav>
   </header>
 
+  <div class="project-tabs" role="tablist" aria-label="프로젝트 제네시스 문서">
+    <button class="active" type="button" data-view="home">프로젝트 홈</button>
+    <button type="button" data-view="rooms">방 구성 <span id="roomTabCount">8</span></button>
+    <button type="button" data-view="story">스토리보드</button>
+    <button type="button" data-view="assets">자산 보관함 <span id="assetTabCount">8</span></button>
+    <button type="button" data-view="downloads">다운로드</button>
+  </div>
+
   <main class="genesis-page">
-    <section class="genesis-hero">
-      <div class="hero-copy">
-        <span class="eyebrow">MISSION ASSET CONTROL</span>
-        <h1>PROJECT<br /><em>GENESIS</em></h1>
-        <p>SF 우주 방탈출의 장면과 맵을 한눈에 보고, 바로 공방에서 열어 편집하는 프로젝트 보드입니다.</p>
-        <div class="hero-actions">
-          <a class="primary-action" href="#assetBoard">자산 둘러보기</a>
-          <a class="secondary-action" href="index.html">새 맵 만들기</a>
+    <section class="view-panel active" data-view-panel="home">
+      <section class="genesis-hero">
+        <div class="hero-copy">
+          <span class="eyebrow">ZEP ESCAPE ROOM BUILD KIT</span><h1>PROJECT<br /><em>GENESIS</em></h1>
+          <p>선생님이 방별 설계와 스토리를 확인하고, 필요한 배경을 내려받아 ZEP에 바로 구성할 수 있는 SF 방탈출 제작 허브입니다.</p>
+          <div class="hero-actions"><button class="primary-action" type="button" data-go-view="rooms">방 설계부터 보기</button><button class="secondary-action" type="button" data-go-view="downloads">자료 내려받기</button></div>
         </div>
-      </div>
-      <div class="mission-panel" aria-label="프로젝트 현황">
-        <span class="mission-label">CURRENT MISSION</span>
-        <strong>우주기지에서 탈출하라</strong>
-        <div class="mission-stats">
-          <div><b id="assetCount">7</b><span>전체 자산</span></div>
-          <div><b id="mapCount">6</b><span>맵 세트</span></div>
-          <div><b id="openingCount">1</b><span>스토리 배경</span></div>
+        <div class="mission-panel" aria-label="프로젝트 현황">
+          <span class="mission-label">CURRENT MISSION</span><strong>우주기지에서 탈출하라</strong>
+          <div class="mission-stats"><div><b id="roomCount">8</b><span>방·장면</span></div><div><b id="assetCount">8</b><span>제작 자산</span></div><div><b id="downloadCount">0</b><span>PNG 파일</span></div></div>
+          <label for="projectMemo">교사 프로젝트 메모</label><textarea id="projectMemo" rows="4" placeholder="수업에 맞게 바꿀 스토리, 퍼즐, 오브젝트를 적어 두세요."></textarea><small id="memoState">이 기기에 자동 저장됩니다.</small>
         </div>
-        <label for="projectMemo">프로젝트 메모</label>
-        <textarea id="projectMemo" rows="4" placeholder="다음에 만들 장면이나 퍼즐 아이디어를 적어 두세요."></textarea>
-        <small id="memoState">이 기기에 자동 저장됩니다.</small>
-      </div>
+      </section>
+      <section class="home-section"><div class="section-heading"><div><span class="eyebrow">ROOM FLOW</span><h2>전체 진행 흐름</h2></div><button type="button" data-go-view="story">스토리 전체 보기</button></div><div class="flow-track" id="flowTrack"></div></section>
+      <section class="home-section teacher-start"><div class="section-heading"><div><span class="eyebrow">TEACHER START</span><h2>제작 시작 순서</h2></div></div>
+        <div class="start-grid"><article><span>01</span><b>방을 고릅니다</b><p>방 구성 탭에서 목적, 배경, 퍼즐과 필요한 오브젝트를 확인합니다.</p></article><article><span>02</span><b>배경을 받습니다</b><p>아랫배경과 윗배경을 내려받아 ZEP 맵 에디터의 알맞은 레이어에 올립니다.</p></article><article><span>03</span><b>장치를 배치합니다</b><p>제안된 오브젝트와 포털을 배치하고 충돌 영역과 상호작용을 설정합니다.</p></article><article><span>04</span><b>수업에 맞게 바꿉니다</b><p>스토리 문구와 퍼즐 답을 교과 내용과 학생 수준에 맞게 수정합니다.</p></article></div>
+      </section>
     </section>
 
-    <section class="board-section" id="assetBoard">
-      <div class="board-heading">
-        <div><span class="eyebrow">ASSET ARCHIVE</span><h2>제작 자산</h2></div>
-        <div class="board-tools">
-          <label class="search-box"><span aria-hidden="true">⌕</span><input id="assetSearch" type="search" placeholder="이름, ID, 태그 검색" /></label>
-          <div class="filter-tabs" id="filterTabs" role="tablist" aria-label="자산 분류">
-            <button class="active" type="button" data-filter="all">전체</button>
-            <button type="button" data-filter="opening">오프닝</button>
-            <button type="button" data-filter="map">맵 세트</button>
-          </div>
-        </div>
-      </div>
-      <div class="asset-grid" id="assetGrid"></div>
-      <p class="empty-state" id="emptyState" hidden>조건에 맞는 자산이 없습니다.</p>
+    <section class="view-panel" data-view-panel="rooms" hidden>
+      <div class="page-heading"><div><span class="eyebrow">ROOM BLUEPRINT</span><h1>방 구성</h1><p>각 방에서 사용할 배경, 오브젝트, 스토리, 퍼즐과 교사 설정을 한 장씩 확인합니다.</p></div><div class="heading-actions"><button type="button" id="expandRooms">모두 펼치기</button><button class="accent" type="button" data-go-view="downloads">파일 받기</button></div></div>
+      <div class="room-grid" id="roomGrid"></div>
     </section>
 
-    <section class="roadmap-section">
-      <div><span class="eyebrow">NEXT PRODUCTION</span><h2>다음 제작 칸</h2></div>
-      <div class="roadmap-grid">
-        <article><span>01</span><b>스토리 오브젝트</b><p>벽면 문구, 통신 기록, 경고 메시지</p></article>
-        <article><span>02</span><b>퍼즐 장치</b><p>키패드, 전력 패널, 연구 장비</p></article>
-        <article><span>03</span><b>전환 장면</b><p>엘리베이터, 비상 통로, 탈출 포드</p></article>
-      </div>
+    <section class="view-panel" data-view-panel="story" hidden>
+      <div class="page-heading"><div><span class="eyebrow">STORYBOARD</span><h1>스토리보드</h1><p>장면별 이야기와 미션을 복사해 ZEP 대화·이미지 오브젝트 문구로 활용합니다.</p></div><div class="heading-actions"><button type="button" id="copyAllStory">전체 스토리 복사</button><button class="accent" type="button" id="downloadStory">스토리 문서 받기</button></div></div>
+      <div class="story-timeline" id="storyTimeline"></div>
+    </section>
+
+    <section class="view-panel" data-view-panel="assets" hidden>
+      <section class="board-section" id="assetBoard">
+        <div class="board-heading"><div><span class="eyebrow">ASSET ARCHIVE</span><h1>자산 보관함</h1><p>원본을 내려받거나 공방에서 바로 열어 수정할 수 있습니다.</p></div><div class="board-tools"><label class="search-box"><span aria-hidden="true">⌕</span><input id="assetSearch" type="search" placeholder="이름, ID, 태그 검색" /></label><div class="filter-tabs" id="filterTabs" role="tablist" aria-label="자산 분류"><button class="active" type="button" data-filter="all">전체</button><button type="button" data-filter="opening">오프닝</button><button type="button" data-filter="map">맵 세트</button></div></div></div>
+        <div class="asset-grid" id="assetGrid"></div><p class="empty-state" id="emptyState" hidden>조건에 맞는 자산이 없습니다.</p>
+      </section>
+    </section>
+
+    <section class="view-panel" data-view-panel="downloads" hidden>
+      <div class="page-heading"><div><span class="eyebrow">DOWNLOAD CENTER</span><h1>다운로드 센터</h1><p>전체 설계 문서 또는 방별 관련 이미지를 내려받아 ZEP 제작에 사용합니다.</p></div></div>
+      <div class="download-tools"><article><span>교사용 문서</span><h2>제작 가이드</h2><p>방 순서, 스토리, 퍼즐, 오브젝트와 설정 방법을 한 문서로 받습니다.</p><button type="button" id="downloadGuide">TXT 가이드 받기</button></article><article><span>프로젝트 데이터</span><h2>설계 원본</h2><p>방과 자산 정보를 JSON으로 받아 다른 문서나 도구에서 활용합니다.</p><button type="button" id="downloadManifest">JSON 받기</button></article><article><span>전체 이미지</span><h2>모든 배경</h2><p>현재 프로젝트에 등록된 모든 배경·윗배경 PNG 다운로드를 시작합니다.</p><button type="button" id="downloadAllAssets">전체 PNG 받기</button></article></div>
+      <div class="section-heading download-list-heading"><div><span class="eyebrow">BY ROOM</span><h2>방별 관련 파일</h2></div></div><div class="room-download-grid" id="roomDownloads"></div>
     </section>
   </main>
 
-  <dialog id="assetDialog">
-    <div class="dialog-card">
-      <button class="dialog-close" id="dialogClose" type="button" aria-label="닫기">×</button>
-      <div class="dialog-preview"><img id="dialogImage" alt="" /></div>
-      <div class="dialog-body">
-        <span class="asset-code" id="dialogCode"></span>
-        <h2 id="dialogTitle"></h2>
-        <p id="dialogDescription"></p>
-        <div class="dialog-meta" id="dialogMeta"></div>
-        <details id="promptDetails"><summary>제작 프롬프트</summary><p id="dialogPrompt"></p><button type="button" id="copyPrompt">프롬프트 복사</button></details>
-        <div class="dialog-actions" id="dialogActions"></div>
-      </div>
-    </div>
-  </dialog>
-
+  <dialog id="assetDialog"><div class="dialog-card"><button class="dialog-close" id="dialogClose" type="button" aria-label="닫기">×</button><div class="dialog-preview"><img id="dialogImage" alt="" /></div><div class="dialog-body"><span class="asset-code" id="dialogCode"></span><h2 id="dialogTitle"></h2><p id="dialogDescription"></p><div class="dialog-meta" id="dialogMeta"></div><details id="promptDetails"><summary>제작 프롬프트</summary><p id="dialogPrompt"></p><button type="button" id="copyPrompt">프롬프트 복사</button></details><div class="dialog-actions" id="dialogActions"></div></div></div></dialog>
   <div class="genesis-toast" id="genesisToast" role="status"></div>
-  <script src="genesis-assets.js"></script>
-  <script src="genesis.js"></script>
+  <script src="genesis-assets.js"></script><script src="genesis-project.js"></script><script src="genesis.js"></script>
 </body>
 </html>
