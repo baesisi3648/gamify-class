@@ -17,6 +17,7 @@
     </a>
     <div class="top-actions">
       <span class="save-state" id="saveState"><i></i> 기기에 자동 저장됨</span>
+      <a class="button genesis-launch" href="genesis.html"><span aria-hidden="true">◈</span> 프로젝트 제네시스</a>
       <button class="button ai-launch" id="aiButton" type="button"><span aria-hidden="true">✦</span> AI로 만들기</button>
       <button class="button ghost" id="helpButton" type="button">사용법</button>
       <button class="button primary" id="exportProjectButton" type="button">프로젝트 저장</button>
@@ -51,32 +52,32 @@
         <div class="section-title"><h2>우주기지 배경 세트</h2><span>아랫배경 + 윗배경 · 6종</span></div>
         <p class="hint">바닥·뒤쪽 벽은 아랫배경, 앞쪽 벽·난간은 투명 윗배경으로 분리했습니다. 적용하면 960×640 새 맵에 두 레이어가 함께 들어갑니다.</p>
         <div class="space-background-gallery" id="spaceBackgroundGallery">
-          <article class="space-background-card" data-space-src="assets/space-backgrounds/space-corridor.png" data-space-top="assets/space-backgrounds/space-corridor-top.png" data-space-name="우주기지 복도" data-space-file="space-corridor.png">
+          <article class="space-background-card" data-space-id="space-corridor" data-space-src="assets/space-backgrounds/space-corridor.png" data-space-top="assets/space-backgrounds/space-corridor-top.png" data-space-name="우주기지 복도" data-space-file="space-corridor.png">
             <img src="assets/space-backgrounds/space-corridor.png" alt="우주기지 복도 배경 예시" loading="lazy" />
             <strong>우주기지 복도</strong><span>긴 이동 통로</span>
             <div><button type="button" data-space-action="apply">배경 세트 적용</button><button type="button" data-space-action="download" aria-label="우주기지 복도 배경 세트 PNG 다운로드" title="아랫배경과 윗배경 PNG 저장">2 PNG</button></div>
           </article>
-          <article class="space-background-card" data-space-src="assets/space-backgrounds/space-stair-room.png" data-space-top="assets/space-backgrounds/space-stair-room-top.png" data-space-name="계단·수직 이동실" data-space-file="space-stair-room.png">
+          <article class="space-background-card" data-space-id="space-stair-room" data-space-src="assets/space-backgrounds/space-stair-room.png" data-space-top="assets/space-backgrounds/space-stair-room-top.png" data-space-name="계단·수직 이동실" data-space-file="space-stair-room.png">
             <img src="assets/space-backgrounds/space-stair-room.png" alt="우주기지 계단실 배경 예시" loading="lazy" />
             <strong>계단·이동실</strong><span>계단과 경사로</span>
             <div><button type="button" data-space-action="apply">배경 세트 적용</button><button type="button" data-space-action="download" aria-label="계단 이동실 배경 세트 PNG 다운로드" title="아랫배경과 윗배경 PNG 저장">2 PNG</button></div>
           </article>
-          <article class="space-background-card" data-space-src="assets/space-backgrounds/space-research-lab.png" data-space-top="assets/space-backgrounds/space-research-lab-top.png" data-space-name="우주 연구실" data-space-file="space-research-lab.png">
+          <article class="space-background-card" data-space-id="space-research-lab" data-space-src="assets/space-backgrounds/space-research-lab.png" data-space-top="assets/space-backgrounds/space-research-lab-top.png" data-space-name="우주 연구실" data-space-file="space-research-lab.png">
             <img src="assets/space-backgrounds/space-research-lab.png" alt="우주 연구실 배경 예시" loading="lazy" />
             <strong>우주 연구실</strong><span>분석·관측 공간</span>
             <div><button type="button" data-space-action="apply">배경 세트 적용</button><button type="button" data-space-action="download" aria-label="우주 연구실 배경 세트 PNG 다운로드" title="아랫배경과 윗배경 PNG 저장">2 PNG</button></div>
           </article>
-          <article class="space-background-card" data-space-src="assets/space-backgrounds/space-experiment-lab.png" data-space-top="assets/space-backgrounds/space-experiment-lab-top.png" data-space-name="생명·화학 실험실" data-space-file="space-experiment-lab.png">
+          <article class="space-background-card" data-space-id="space-experiment-lab" data-space-src="assets/space-backgrounds/space-experiment-lab.png" data-space-top="assets/space-backgrounds/space-experiment-lab-top.png" data-space-name="생명·화학 실험실" data-space-file="space-experiment-lab.png">
             <img src="assets/space-backgrounds/space-experiment-lab.png" alt="우주 생명 화학 실험실 배경 예시" loading="lazy" />
             <strong>생명·화학 실험실</strong><span>밀폐 실험 공간</span>
             <div><button type="button" data-space-action="apply">배경 세트 적용</button><button type="button" data-space-action="download" aria-label="생명 화학 실험실 배경 세트 PNG 다운로드" title="아랫배경과 윗배경 PNG 저장">2 PNG</button></div>
           </article>
-          <article class="space-background-card" data-space-src="assets/space-backgrounds/space-command-center.png" data-space-top="assets/space-backgrounds/space-command-center-top.png" data-space-name="우주 관제실" data-space-file="space-command-center.png">
+          <article class="space-background-card" data-space-id="space-command-center" data-space-src="assets/space-backgrounds/space-command-center.png" data-space-top="assets/space-backgrounds/space-command-center-top.png" data-space-name="우주 관제실" data-space-file="space-command-center.png">
             <img src="assets/space-backgrounds/space-command-center.png" alt="우주 관제실 배경 예시" loading="lazy" />
             <strong>우주 관제실</strong><span>지휘·브리핑 공간</span>
             <div><button type="button" data-space-action="apply">배경 세트 적용</button><button type="button" data-space-action="download" aria-label="우주 관제실 배경 세트 PNG 다운로드" title="아랫배경과 윗배경 PNG 저장">2 PNG</button></div>
           </article>
-          <article class="space-background-card" data-space-src="assets/space-backgrounds/space-airlock-hangar.png" data-space-top="assets/space-backgrounds/space-airlock-hangar-top.png" data-space-name="에어록·격납고" data-space-file="space-airlock-hangar.png">
+          <article class="space-background-card" data-space-id="space-airlock-hangar" data-space-src="assets/space-backgrounds/space-airlock-hangar.png" data-space-top="assets/space-backgrounds/space-airlock-hangar-top.png" data-space-name="에어록·격납고" data-space-file="space-airlock-hangar.png">
             <img src="assets/space-backgrounds/space-airlock-hangar.png" alt="우주기지 에어록 격납고 배경 예시" loading="lazy" />
             <strong>에어록·격납고</strong><span>출발·도착 공간</span>
             <div><button type="button" data-space-action="apply">배경 세트 적용</button><button type="button" data-space-action="download" aria-label="에어록 격납고 배경 세트 PNG 다운로드" title="아랫배경과 윗배경 PNG 저장">2 PNG</button></div>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070c17" />
+  <title>프로젝트 제네시스 — ZEP 맵 공방</title>
+  <meta name="description" content="SF 우주 방탈출 프로젝트 제네시스의 배경, 맵 세트와 제작 상태를 한곳에서 관리합니다." />
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/PretendardVariable.woff2" crossorigin />
+  <link rel="stylesheet" href="genesis.css" />
+</head>
+<body>
+  <header class="genesis-topbar">
+    <a class="genesis-brand" href="index.html">
+      <span class="genesis-mark" aria-hidden="true">G</span>
+      <span><b>프로젝트 제네시스</b><small>ZEP SF ESCAPE PROJECT</small></span>
+    </a>
+    <nav aria-label="ZEP 공방 메뉴">
+      <a href="index.html">맵 편집실</a>
+      <a href="index.html?workspace=object">오브젝트 공방</a>
+      <a class="active" href="genesis.html" aria-current="page">프로젝트 제네시스</a>
+    </nav>
+  </header>
+
+  <main class="genesis-page">
+    <section class="genesis-hero">
+      <div class="hero-copy">
+        <span class="eyebrow">MISSION ASSET CONTROL</span>
+        <h1>PROJECT<br /><em>GENESIS</em></h1>
+        <p>SF 우주 방탈출의 장면과 맵을 한눈에 보고, 바로 공방에서 열어 편집하는 프로젝트 보드입니다.</p>
+        <div class="hero-actions">
+          <a class="primary-action" href="#assetBoard">자산 둘러보기</a>
+          <a class="secondary-action" href="index.html">새 맵 만들기</a>
+        </div>
+      </div>
+      <div class="mission-panel" aria-label="프로젝트 현황">
+        <span class="mission-label">CURRENT MISSION</span>
+        <strong>우주기지에서 탈출하라</strong>
+        <div class="mission-stats">
+          <div><b id="assetCount">7</b><span>전체 자산</span></div>
+          <div><b id="mapCount">6</b><span>맵 세트</span></div>
+          <div><b id="openingCount">1</b><span>스토리 배경</span></div>
+        </div>
+        <label for="projectMemo">프로젝트 메모</label>
+        <textarea id="projectMemo" rows="4" placeholder="다음에 만들 장면이나 퍼즐 아이디어를 적어 두세요."></textarea>
+        <small id="memoState">이 기기에 자동 저장됩니다.</small>
+      </div>
+    </section>
+
+    <section class="board-section" id="assetBoard">
+      <div class="board-heading">
+        <div><span class="eyebrow">ASSET ARCHIVE</span><h2>제작 자산</h2></div>
+        <div class="board-tools">
+          <label class="search-box"><span aria-hidden="true">⌕</span><input id="assetSearch" type="search" placeholder="이름, ID, 태그 검색" /></label>
+          <div class="filter-tabs" id="filterTabs" role="tablist" aria-label="자산 분류">
+            <button class="active" type="button" data-filter="all">전체</button>
+            <button type="button" data-filter="opening">오프닝</button>
+            <button type="button" data-filter="map">맵 세트</button>
+          </div>
+        </div>
+      </div>
+      <div class="asset-grid" id="assetGrid"></div>
+      <p class="empty-state" id="emptyState" hidden>조건에 맞는 자산이 없습니다.</p>
+    </section>
+
+    <section class="roadmap-section">
+      <div><span class="eyebrow">NEXT PRODUCTION</span><h2>다음 제작 칸</h2></div>
+      <div class="roadmap-grid">
+        <article><span>01</span><b>스토리 오브젝트</b><p>벽면 문구, 통신 기록, 경고 메시지</p></article>
+        <article><span>02</span><b>퍼즐 장치</b><p>키패드, 전력 패널, 연구 장비</p></article>
+        <article><span>03</span><b>전환 장면</b><p>엘리베이터, 비상 통로, 탈출 포드</p></article>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="assetDialog">
+    <div class="dialog-card">
+      <button class="dialog-close" id="dialogClose" type="button" aria-label="닫기">×</button>
+      <div class="dialog-preview"><img id="dialogImage" alt="" /></div>
+      <div class="dialog-body">
+        <span class="asset-code" id="dialogCode"></span>
+        <h2 id="dialogTitle"></h2>
+        <p id="dialogDescription"></p>
+        <div class="dialog-meta" id="dialogMeta"></div>
+        <details id="promptDetails"><summary>제작 프롬프트</summary><p id="dialogPrompt"></p><button type="button" id="copyPrompt">프롬프트 복사</button></details>
+        <div class="dialog-actions" id="dialogActions"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="genesis-toast" id="genesisToast" role="status"></div>
+  <script src="genesis-assets.js"></script>
+  <script src="genesis.js"></script>
+</body>
+</html>
