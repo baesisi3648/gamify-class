@@ -430,10 +430,11 @@
   async function applySpaceBackground(card){
     if(state.hasContent&&!confirm(`${card.dataset.spaceName} 배경으로 새 맵을 시작할까요?\n현재 맵은 실행 취소로 복구할 수 있습니다.`))return;
     try{
-      const image=await imageFromURL(card.dataset.spaceSrc);pushHistory();setupLayers(960,640);const floor=state.layers.floor.getContext('2d');floor.imageSmoothingEnabled=true;floor.imageSmoothingQuality='high';floor.drawImage(image,0,0,960,640);state.activeLayer='floor';state.soloLayer=null;state.hasContent=true;$('#projectName').value=`우주기지 - ${card.dataset.spaceName}`;syncActiveLayer();showAllLayers();changed();toast(`${card.dataset.spaceName}을 아랫배경에 적용했습니다.`);
-    }catch{toast('우주기지 배경을 불러오지 못했습니다.');}
+      const[image,topImage]=await Promise.all([imageFromURL(card.dataset.spaceSrc),imageFromURL(card.dataset.spaceTop)]);pushHistory();setupLayers(960,640);const floor=state.layers.floor.getContext('2d'),top=state.layers.top.getContext('2d');[floor,top].forEach(context=>{context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';});floor.drawImage(image,0,0,960,640);top.drawImage(topImage,0,0,960,640);state.activeLayer='floor';state.soloLayer=null;state.hasContent=true;$('#projectName').value=`우주기지 - ${card.dataset.spaceName}`;syncActiveLayer();showAllLayers();changed();toast(`${card.dataset.spaceName} 배경 세트를 적용했습니다.`);
+    }catch{toast('우주기지 배경 세트를 불러오지 못했습니다.');}
   }
-  function downloadSpaceBackground(card){const link=document.createElement('a');link.href=card.dataset.spaceSrc;link.download=card.dataset.spaceFile||'space-background.png';document.body.appendChild(link);link.click();link.remove();toast('원본 PNG 저장을 시작했습니다.');}
+  function downloadSpaceFile(src,name){const link=document.createElement('a');link.href=src;link.download=name;document.body.appendChild(link);link.click();link.remove();}
+  function downloadSpaceBackground(card){downloadSpaceFile(card.dataset.spaceSrc,card.dataset.spaceFile||'space-background.png');setTimeout(()=>downloadSpaceFile(card.dataset.spaceTop,(card.dataset.spaceFile||'space-background.png').replace(/\.png$/i,'-top.png')),260);toast('아랫배경·윗배경 PNG 2장 저장을 시작했습니다.');}
   function safeName(s){return (s||'zep-map').trim().replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_').slice(0,60)||'zep-map';}
   function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);}
   function downloadCanvas(c,name){c.toBlob(blob=>downloadBlob(blob,name),'image/png');}
