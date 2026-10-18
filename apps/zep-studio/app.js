@@ -403,10 +403,10 @@
   }
 
   function snapshot() {
-    return { workspace:state.workspace,activeLayer:state.activeLayer,layers:Object.fromEntries(Object.entries(state.layers).map(([k,c])=>[k,c.toDataURL()])),object:state.objectCanvas.toDataURL() };
+    return { workspace:state.workspace,activeLayer:state.activeLayer,mapWidth:state.mapWidth,mapHeight:state.mapHeight,objectWidth:state.objectWidth,objectHeight:state.objectHeight,layers:Object.fromEntries(Object.entries(state.layers).map(([k,c])=>[k,c.toDataURL()])),object:state.objectCanvas.toDataURL() };
   }
   function pushHistory() { state.history.push(snapshot());if(state.history.length>20)state.history.shift();state.redoHistory=[]; }
-  async function restoreSnapshot(s) { for(const[k,url]of Object.entries(s.layers))await drawDataURL(state.layers[k],url,true);await drawDataURL(state.objectCanvas,s.object,true);state.activeLayer=s.activeLayer||'floor';state.hasContent=Object.values(state.layers).some(hasPixels);syncActiveLayer();render(); }
+  async function restoreSnapshot(s) { if(s.mapWidth&&s.mapHeight&&(s.mapWidth!==state.mapWidth||s.mapHeight!==state.mapHeight))setupLayers(s.mapWidth,s.mapHeight);if(s.objectWidth&&s.objectHeight&&(s.objectWidth!==state.objectWidth||s.objectHeight!==state.objectHeight))setupObject(s.objectWidth,s.objectHeight);for(const[k,url]of Object.entries(s.layers))await drawDataURL(state.layers[k],url,true);await drawDataURL(state.objectCanvas,s.object,true);state.activeLayer=s.activeLayer||'floor';state.hasContent=Object.values(state.layers).some(hasPixels);syncActiveLayer();render(); }
   async function undo(){if(!state.history.length)return toast('되돌릴 내용이 없습니다.');state.redoHistory.push(snapshot());await restoreSnapshot(state.history.pop());scheduleSave();}
   async function redo(){if(!state.redoHistory.length)return toast('다시 실행할 내용이 없습니다.');state.history.push(snapshot());await restoreSnapshot(state.redoHistory.pop());scheduleSave();}
   function changed(){if(state.workspace==='map')state.hasContent=true;render();scheduleSave();}
@@ -427,6 +427,13 @@
   function loadImageFile(file,target,fit=true){if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{pushHistory();const c=target.getContext('2d');if(fit){c.clearRect(0,0,target.width,target.height);const scale=Math.min(target.width/img.width,target.height/img.height),w=img.width*scale,h=img.height*scale;c.drawImage(img,(target.width-w)/2,(target.height-h)/2,w,h);}else c.drawImage(img,0,0);changed();toast('이미지를 불러왔습니다.');};img.src=reader.result;};reader.readAsDataURL(file);}
   function drawDataURL(target,url,clear=false){return new Promise(resolve=>{const img=new Image();img.onload=()=>{const c=target.getContext('2d');if(clear)c.clearRect(0,0,target.width,target.height);c.drawImage(img,0,0);resolve();};img.onerror=resolve;img.src=url;});}
   function imageFromURL(url){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url;});}
+  async function applySpaceBackground(card){
+    if(state.hasContent&&!confirm(`${card.dataset.spaceName} 배경으로 새 맵을 시작할까요?\n현재 맵은 실행 취소로 복구할 수 있습니다.`))return;
+    try{
+      const image=await imageFromURL(card.dataset.spaceSrc);pushHistory();setupLayers(960,640);const floor=state.layers.floor.getContext('2d');floor.imageSmoothingEnabled=true;floor.imageSmoothingQuality='high';floor.drawImage(image,0,0,960,640);state.activeLayer='floor';state.soloLayer=null;state.hasContent=true;$('#projectName').value=`우주기지 - ${card.dataset.spaceName}`;syncActiveLayer();showAllLayers();changed();toast(`${card.dataset.spaceName}을 아랫배경에 적용했습니다.`);
+    }catch{toast('우주기지 배경을 불러오지 못했습니다.');}
+  }
+  function downloadSpaceBackground(card){const link=document.createElement('a');link.href=card.dataset.spaceSrc;link.download=card.dataset.spaceFile||'space-background.png';document.body.appendChild(link);link.click();link.remove();toast('원본 PNG 저장을 시작했습니다.');}
   function safeName(s){return (s||'zep-map').trim().replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_').slice(0,60)||'zep-map';}
   function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);}
   function downloadCanvas(c,name){c.toBlob(blob=>downloadBlob(blob,name),'image/png');}
@@ -680,6 +687,7 @@
     $('#mapImageInput').addEventListener('change',e=>{loadImageFile(e.target.files[0],state.layers[state.activeLayer]);e.target.value='';});
     $('#objectImageInput').addEventListener('change',e=>{loadImageFile(e.target.files[0],state.objectCanvas);e.target.value='';});
     $('#quickUploadButton').addEventListener('click',()=>$('#mapImageInput').click());
+    $('#spaceBackgroundGallery').addEventListener('click',e=>{const button=e.target.closest('[data-space-action]'),card=e.target.closest('.space-background-card');if(!button||!card)return;if(button.dataset.spaceAction==='apply')applySpaceBackground(card);else downloadSpaceBackground(card);});
     $$('[data-selection-target]').forEach(b=>b.addEventListener('click',()=>transferSelection(b.dataset.selectionTarget)));$('#clearSelectionButton').addEventListener('click',clearSelection);$('#growSelectionButton').addEventListener('click',growSelection);$('#startSplitButton').addEventListener('click',startLayerSplit);$('#finishSplitButton').addEventListener('click',finishLayerSplit);
     $('#gridToggle').addEventListener('change',e=>{state.grid=e.target.checked;render();});$('#tileSize').addEventListener('change',e=>{state.tileSize=+e.target.value;render();scheduleSave();});
     $('#zoomInButton').addEventListener('click',()=>{state.zoom=Math.min(4,state.zoom+.25);render();});$('#zoomOutButton').addEventListener('click',()=>{state.zoom=Math.max(.25,state.zoom-.25);render();});$('#fitButton').addEventListener('click',()=>{state.zoom=1;render();});
