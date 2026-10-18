@@ -6,6 +6,7 @@
 
 - `genesis-opening-corridor-zep-scale.png`: 정비·통신·연구·에어록의 네 구역을 자연스러운 비율로 연결한 기본 오프닝 복도, 4096×512
 - `genesis-opening-corridor.png`: 처음 제작한 넓은 복도 원본, 4096×1024
+- `genesis-dark-light-passage.png`: 검정 통로가 오른쪽 끝의 청백색 빛으로 이어지는 미니멀 오프닝 배경, 4096×512
 - `thumbs/`: 프로젝트 보드에서 사용하는 가벼운 미리보기 이미지
 - 기존 6종 맵 세트의 원본은 `../space-backgrounds/`에 있으며, 각 세트는 앞배경과 윗배경으로 분리되어 있습니다.
 

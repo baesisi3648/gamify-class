@@ -17,6 +17,22 @@ window.GENESIS_ASSETS = [
     prompt: '우주선 내부의 길고 어두운 2D 측면 복도. 정비·배관 구역, 통신·전력 구역, 연구·관측 구역, 밝은 에어록 접근 구역을 실제 새로운 공간으로 길게 이어 붙인다. 작은 ZEP 캐릭터 기준으로 문과 벽 높이는 캐릭터 2~3명 정도이며 건축물의 가로세로 비율을 찌그러뜨리지 않는다. 위아래에는 검정 여백이 있고 좌측에서 우측으로 갈수록 밝아진다. 텍스트·인물·UI 없음.'
   },
   {
+    id: 'GEN-OPEN-002',
+    slug: 'dark-light-passage',
+    category: 'opening',
+    categoryLabel: '오프닝 배경',
+    title: '암흑에서 빛으로',
+    subtitle: '검정 통로를 지나 오른쪽 끝의 빛으로 향하는 미니멀 배경',
+    thumbnail: 'assets/genesis/thumbs/genesis-dark-light-passage.jpg',
+    background: 'assets/genesis/genesis-dark-light-passage.png',
+    editorUrl: 'index.html?genesis=dark-light-passage',
+    size: '4096 × 512',
+    layers: '아랫배경 1장',
+    tags: ['2D 측면', '미니멀', '검정 통로', '빛의 출구'],
+    description: '화면 대부분을 검정으로 비우고 희미한 바닥선만 남긴 긴 통로입니다. 오른쪽 끝으로 갈수록 청백색 빛이 자연스럽게 강해져, 플레이어가 어둠에서 빛으로 걸어가는 오프닝에 적합합니다.',
+    prompt: '거의 순수한 검정으로 이루어진 매우 긴 2D 측면 통로. 희미한 바닥선만 왼쪽에서 오른쪽으로 이어지고, 오른쪽 마지막 10~15%에서만 청백색 출구 빛이 강해진다. 구조물·기계·문·패널·배관·소품·텍스트·인물·UI 없음.'
+  },
+  {
     id: 'GEN-MAP-001', slug: 'space-corridor', category: 'map', categoryLabel: '맵 세트',
     title: '우주기지 복도', subtitle: '긴 이동 통로와 분리된 앞쪽 방호벽',
     thumbnail: 'assets/genesis/thumbs/space-corridor.jpg', background: 'assets/space-backgrounds/space-corridor.png', top: 'assets/space-backgrounds/space-corridor-top.png',
