@@ -145,5 +145,12 @@ window.GENESIS_ASSETS = [
     thumbnail: 'assets/genesis/thumbs/space-airlock-hangar.jpg', background: 'assets/space-backgrounds/space-airlock-hangar.png', top: 'assets/space-backgrounds/space-airlock-hangar-top.png',
     editorUrl: 'index.html?space=space-airlock-hangar', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['아이소메트릭', '에어록', '탈출'],
     description: '게임의 출발점이나 마지막 탈출 장면에 적합합니다. 전면의 강화 방호벽이 윗배경으로 분리되어 있습니다.'
+  },
+  {
+    id: 'GEN-MAP-008', slug: 'space-biological-containment-lab', category: 'map', categoryLabel: '맵 세트',
+    title: '생체 격리 실험실', subtitle: '생체 실험 흔적과 중앙 배양 튜브가 있는 격리 연구 구역',
+    thumbnail: 'assets/genesis/thumbs/space-biological-containment-lab.jpg', background: 'assets/space-backgrounds/space-biological-containment-lab.png', top: 'assets/space-backgrounds/space-biological-containment-lab-top.png',
+    editorUrl: 'index.html?space=space-biological-containment-lab', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['아이소메트릭', '생체 실험', '격리 연구실', '배양 튜브'],
+    description: '벽면의 균열·오염 흔적과 생체 표본 창이 있는 어두운 연구실입니다. 넓은 이동 바닥은 아랫배경에, 중앙 원통형 배양 튜브는 캐릭터를 자연스럽게 가리는 투명 윗배경에 분리했습니다.'
   }
 ];
