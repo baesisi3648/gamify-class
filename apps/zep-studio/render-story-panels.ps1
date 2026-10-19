@@ -220,7 +220,7 @@ foreach ($panel in $panels) {
   $graphics.DrawLine($logoPen, 236, 154, 665, 154)
   $graphics.DrawString([string]$panel.title, $titleFont, $whiteBrush, 60, 162)
 
-  $bodyY = 232
+  $bodyY = 250
   $bodyText = (($panel.body | ForEach-Object { [string]$_ }) -join ' ')
   $bodyLines = Get-WrappedLines $graphics $bodyText $bodyFont 1180
   foreach ($line in $bodyLines) {
