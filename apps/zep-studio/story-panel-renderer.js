@@ -14,11 +14,12 @@
     landing: `<svg viewBox="0 0 300 300" aria-hidden="true"><defs><radialGradient id="landingGlow"><stop stop-color="white"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></radialGradient></defs><circle cx="150" cy="150" r="118" fill="url(#landingGlow)" opacity=".34"/><path class="stroke" d="M37 221q48-37 93-14 38-55 133 14M60 235h180"/><path class="stroke" d="M150 49l29 62-10 63h-38l-10-63zM121 111l-28 28 32 8M179 111l28 28-32 8"/><path class="hot" d="M137 174l13 60 13-60z"/><circle class="fill" cx="150" cy="101" r="13"/><circle class="stroke" cx="150" cy="101" r="13"/><path class="thin" d="M84 68l16 16M216 68l-16 16M61 131h25M214 131h25"/></svg>`
   };
 
+  const lines = values => values.map(line => `<span>${line}</span>`).join('');
   document.documentElement.style.setProperty('color-scheme', 'dark');
   document.body.innerHTML = `<main class="story-panel tone-${panel.tone}">
-    <header class="panel-header"><div class="agency"><span class="agency-mark">GSA</span><span><b>GLOBAL SPACE AGENCY</b><small>${panel.system}</small></span></div><span class="system-status"><i></i>${panel.status}</span></header>
-    <section class="panel-main"><div class="copy"><div class="record-row">${panel.record}</div><div class="eyebrow">${panel.eyebrow}</div><h1>${panel.title}</h1><div class="body-copy">${panel.body.map(line => `<p>${line}</p>`).join('')}</div><div class="highlight">${panel.highlight}</div></div><aside class="visual">${illustrations[panel.visual]}<span class="visual-label">VISUAL TELEMETRY // ${String(panel.step).padStart(2, '0')}</span></aside></section>
-    <footer class="panel-footer"><div class="meta"><small>EXPLORATION LOG INFORMATION</small><b>${panel.meta}</b></div><div class="progress">${Array.from({ length: 7 }, (_, index) => `<span class="${index < panel.step ? 'done' : ''}"></span>`).join('')}<b class="step-label">${String(panel.step).padStart(2, '0')} / 07</b></div></footer>
+    <header class="panel-header"><div class="agency"><span class="agency-mark">GSA</span><span><b>PROJECT GENESIS</b><small>LUNA MISSION ARCHIVE</small></span></div><span class="system-status"><i></i>${panel.header}</span></header>
+    <section class="panel-main"><div class="copy"><div class="record-row">${panel.subheader}</div><h1>${panel.title}</h1><div class="body-copy">${lines(panel.body)}</div><div class="highlight">${lines(panel.highlight)}</div></div><aside class="visual">${illustrations[panel.visual]}<span class="visual-label">VISUAL TELEMETRY // ${String(panel.step).padStart(2, '0')}</span></aside></section>
+    <footer class="panel-footer"><div class="meta"><small>MISSION ARCHIVE</small><b>${panel.footer}</b></div><div class="progress">${Array.from({ length: 7 }, (_, index) => `<span class="${index < panel.step ? 'done' : ''}"></span>`).join('')}<b class="step-label">${String(panel.step).padStart(2, '0')} / 07</b></div></footer>
   </main>`;
   document.fonts.ready.then(() => { document.documentElement.dataset.ready = 'true'; });
 })();

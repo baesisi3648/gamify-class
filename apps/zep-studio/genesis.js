@@ -64,12 +64,12 @@
 
   function renderRooms() { $('#roomGrid').innerHTML = rooms.map(roomTemplate).join(''); }
 
-  function storyPanelPath(panel) { return `assets/genesis/story-panels/genesis-story-${String(panel.step).padStart(2, '0')}.png`; }
-  function storyPanelText(panel) { return `${panel.record}. ${panel.title}\n${panel.body.join('\n')}\n${panel.highlight}`; }
+  function storyPanelPath(panel) { return `assets/genesis/story-panels/panel_${String(panel.step).padStart(2, '0')}.png`; }
+  function storyPanelText(panel) { return `${panel.header}\n${panel.subheader}\n${panel.title}\n${panel.body.join('\n')}\n${panel.highlight.join('\n')}\n${panel.footer}`; }
   function storyText(room) { return `${room.order + 1}. ${room.title} (${room.phase})\n${room.story}\n미션: ${room.mission}`; }
   function fullStoryText() { return `프로젝트 제네시스 오프닝 패널\n\n${storyPanels.map(storyPanelText).join('\n\n')}\n\n프로젝트 제네시스 방별 스토리\n\n${rooms.map(storyText).join('\n\n')}`; }
   function renderStoryPanels() {
-    $('#storyPanelGrid').innerHTML = storyPanels.map(panel => `<article data-panel-id="${panel.id}"><button class="story-panel-preview" type="button" data-panel-action="download"><img src="${storyPanelPath(panel)}" alt="${escapeText(panel.title)} 스토리 패널" loading="lazy" /></button><div><span>${panel.record} · ${escapeText(panel.status)}</span><h3>${escapeText(panel.title)}</h3><p>${escapeText(panel.highlight)}</p><div><button type="button" data-panel-action="copy">문구 복사</button><button type="button" data-panel-action="download">PNG 받기</button></div></div></article>`).join('');
+    $('#storyPanelGrid').innerHTML = storyPanels.map(panel => `<article data-panel-id="${panel.id}"><button class="story-panel-preview" type="button" data-panel-action="download"><img src="${storyPanelPath(panel)}" alt="${escapeText(panel.title)} 스토리 패널" loading="lazy" /></button><div><span>${escapeText(panel.subheader)} · ${escapeText(panel.header)}</span><h3>${escapeText(panel.title)}</h3><p>${escapeText(panel.highlight.join(' '))}</p><div><button type="button" data-panel-action="copy">문구 복사</button><button type="button" data-panel-action="download">PNG 받기</button></div></div></article>`).join('');
   }
   function downloadAllStoryPanels() { storyPanels.forEach((panel, index) => setTimeout(() => downloadFile(storyPanelPath(panel)), index * 320)); toast('스토리 패널 PNG 7장의 다운로드를 시작했습니다.'); }
   function renderStory() {

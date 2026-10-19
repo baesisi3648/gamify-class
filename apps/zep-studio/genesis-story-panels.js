@@ -1,51 +1,54 @@
-window.GENESIS_STORY_PANELS = [
+const GENESIS_STORY_PANELS = [
   {
-    id: 'GEN-STORY-01', step: 1, record: 'RECORD 01', system: 'GENESIS AEROSPACE ARCHIVE', status: 'CRISIS ARCHIVE', tone: 'blue', visual: 'earth',
-    title: '인류의 위기', eyebrow: '지구 생존 기록',
-    body: ['2089년, 지구의 기후 시스템은 회복 한계를 넘어섰다.', '인류에게 남은 시간은 길지 않았다.'],
-    highlight: '우리는 지구 밖에서 새로운 가능성을 찾아야 했다.',
-    meta: 'EARTH ORBIT · 2089.04.17 · CLASSIFIED'
+    id: 'GEN-STORY-01', step: 1, header: 'EARTH STATUS', subheader: 'RECORD 01 / 07', tone: 'blue', visual: 'earth',
+    title: '2087년, 인류의 위기',
+    body: ['서기 2087년.', '인류는 우주에 진출했지만,', '지구는 자원 고갈과 환경 위기,', '그리고 새로운 질병의 확산으로', '심각한 위기에 놓여 있다.'],
+    highlight: ['인류는 생존을 위한 새로운 돌파구를 찾고 있었다.'],
+    footer: 'LUNA EXPLORATION COMMAND'
   },
   {
-    id: 'GEN-STORY-02', step: 2, record: 'RECORD 02', system: 'LUNAR RESEARCH NETWORK', status: 'FACILITY ONLINE', tone: 'blue', visual: 'moonbase',
-    title: '루나-7', eyebrow: '달 뒷면 연구기지',
-    body: ['달 뒷면의 루나-7 기지는 인류의 마지막 연구 거점이었다.', '그곳에서는 새로운 에너지원과 생존 환경을 연구하고 있었다.'],
-    highlight: '그러나 72시간 전, 루나-7과의 모든 통신이 끊겼다.',
-    meta: 'LUNAR FAR SIDE · SECTOR L7 · SIGNAL LOST'
+    id: 'GEN-STORY-02', step: 2, header: 'LUNA-7 FILE', subheader: 'RECORD 02 / 07', tone: 'blue', visual: 'moonbase',
+    title: '달 뒷면의 연구기지, 루나-7',
+    body: ['20년 전,', '달 뒷면에는 인류의 생존 문제를 해결하기 위한', "비밀 연구기지 '루나-7'이 세워졌다.", '그러나 어느 날 모든 통신이 끊겼고,'],
+    highlight: ['연구기지는 공식적으로 폐쇄되었다.'],
+    footer: 'CLASSIFIED FACILITY DATA'
   },
   {
-    id: 'GEN-STORY-03', step: 3, record: 'RECORD 03', system: 'DEEP SPACE SIGNAL LAB', status: 'ANOMALY DETECTED', tone: 'amber', visual: 'signal',
-    title: '의문의 신호', eyebrow: '비정상 주파수 감지',
-    body: ['통신 두절 직전, 루나-7은 정체불명의 신호를 지구로 보냈다.', '잡음 속에는 일정한 간격으로 반복되는 패턴이 숨어 있었다.'],
-    highlight: '그 신호는 구조 요청일까, 아니면 경고일까?',
-    meta: 'FREQUENCY 14.07 MHz · SOURCE UNKNOWN'
+    id: 'GEN-STORY-03', step: 3, header: 'SIGNAL ANALYSIS', subheader: 'RECORD 03 / 07', tone: 'blue', visual: 'signal',
+    title: '20년 만에 수신된 의문의 신호',
+    body: ['며칠 전,', '폐쇄된 루나-7에서 정체불명의 구조 신호가 수신되었다.', '신호는 심하게 손상되어 있었지만,', '한 문장만은 분명하게 들렸다.'],
+    highlight: ['"제네시스를 중단해야 합니다."'],
+    footer: 'UNKNOWN TRANSMISSION DETECTED'
   },
   {
-    id: 'GEN-STORY-04', step: 4, record: 'RECORD 04', system: 'GENESIS MISSION CONTROL', status: 'CREW ASSIGNED', tone: 'blue', visual: 'astronaut',
-    title: '임무 브리핑', eyebrow: 'PROJECT GENESIS',
-    body: ['여러분은 제네시스 탐사대의 긴급 대응 요원으로 선발되었다.', '달에 착륙해 루나-7의 통신을 복구하고 연구 기록을 확보하라.'],
-    highlight: '모든 판단은 탐사대의 생존과 인류의 미래를 결정한다.',
-    meta: 'CREW CLEARANCE · LEVEL 7 · MISSION READY'
+    id: 'GEN-STORY-04', step: 4, header: 'MISSION BRIEFING', subheader: 'RECORD 04 / 07', tone: 'blue', visual: 'astronaut',
+    title: '탐사팀의 임무',
+    body: ['당신은 루나-7의 이상 신호를 조사하기 위해', '파견된 우주비행사이다.', '이번 임무의 목표는 세 가지.'],
+    highlight: ['신호의 발신자 확인,', '생존자 수색,', '그리고 연구기지 조사.'],
+    footer: 'OPERATION LUNA RESCUE'
   },
   {
-    id: 'GEN-STORY-05', step: 5, record: 'RECORD 05', system: 'EMERGENCY COMMS RELAY', status: 'LAST TRANSMISSION', tone: 'red', visual: 'warning',
-    title: '마지막 긴급 통신', eyebrow: '루나-7 수신 기록',
-    body: ['출발 직전, 손상된 영상 한 조각이 복원되었다.', '화면 속 연구원은 붉은 경고등 아래에서 같은 말을 반복했다.'],
-    highlight: '“기지 안의 시스템을 믿지 마십시오.”',
-    meta: 'VIDEO CORRUPTED · 11% RECOVERED · URGENT'
+    id: 'GEN-STORY-05', step: 5, header: 'EMERGENCY TRANSMISSION', subheader: 'RECORD 05 / 07', tone: 'red', visual: 'warning',
+    title: '마지막 통신 기록',
+    body: ['"여기는... 루나-7..."', '"우리가 만든 기술이... 잘못 사용되고 있습니다..."', '"연구원들은... 더 이상 안전하지 않습니다..."', '"제발... 너무 늦기 전에..."'],
+    highlight: ['[통신 두절]'],
+    footer: 'SIGNAL LOST'
   },
   {
-    id: 'GEN-STORY-06', step: 6, record: 'RECORD 06', system: 'ORBITAL NAVIGATION SYSTEM', status: 'PROXIMITY ALERT', tone: 'mixed', visual: 'navigation',
-    title: '달 궤도 진입', eyebrow: '미확인 비행체 접근',
-    body: ['제네시스호가 달 궤도에 진입하자 항법 장치가 흔들리기 시작했다.', '레이더에는 등록되지 않은 비행체가 탐사선을 따라오고 있었다.'],
-    highlight: '자동 항법을 해제하고 직접 착륙 지점을 선택하라.',
-    meta: 'LUNAR ORBIT · ALT 82 km · MANUAL CONTROL'
+    id: 'GEN-STORY-06', step: 6, header: 'ORBITAL SCAN', subheader: 'RECORD 06 / 07', tone: 'mixed', visual: 'navigation',
+    title: '달 궤도 진입',
+    body: ['목적지 루나-7 인근에 도착했습니다.', '달 표면에서 미확인 물체와', '비정상적인 에너지 반응이 감지되었습니다.', '지구 관제센터와의 통신 상태가 불안정합니다.'],
+    highlight: ['주의: 착륙 지점의 안전을 보장할 수 없습니다.'],
+    footer: 'ANOMALY DETECTED'
   },
   {
-    id: 'GEN-STORY-07', step: 7, record: 'RECORD 07', system: 'GENESIS LANDING PROTOCOL', status: 'MISSION START', tone: 'bright', visual: 'landing',
-    title: '달 착륙', eyebrow: '루나-7 진입 준비',
-    body: ['눈부신 청백색 빛 너머로 루나-7의 착륙장이 모습을 드러냈다.', '기지는 침묵하고 있지만, 내부에서 희미한 전력 반응이 감지된다.'],
-    highlight: '탐사 기록을 확인하고 루나-7의 진실을 밝혀라.',
-    meta: 'TOUCHDOWN COMPLETE · AIRLOCK CONNECTED'
+    id: 'GEN-STORY-07', step: 7, header: 'LANDING SEQUENCE', subheader: 'RECORD 07 / 07', tone: 'bright', visual: 'landing',
+    title: '착륙 준비 완료',
+    body: ['탐사팀, 곧 달 표면에 착륙합니다.', '루나-7의 통신이 끊긴 원인을 조사하십시오.', '무슨 일이 벌어지고 있든,', '반드시 살아서 돌아오십시오.'],
+    highlight: ['MISSION START'],
+    footer: 'LUNAR LANDING INITIATED'
   }
 ];
+
+if (typeof window !== 'undefined') window.GENESIS_STORY_PANELS = GENESIS_STORY_PANELS;
+if (typeof module !== 'undefined') module.exports = GENESIS_STORY_PANELS;

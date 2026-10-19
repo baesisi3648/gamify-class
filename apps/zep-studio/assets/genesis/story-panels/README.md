@@ -12,4 +12,10 @@
 node apps/zep-studio/render-story-panels.mjs
 ```
 
-파일 이름은 `genesis-story-01.png`부터 `genesis-story-07.png`까지 유지됩니다.
+Windows에서 브라우저 실행이 제한된 경우에는 같은 데이터 파일을 읽는 Canvas 렌더러를 사용할 수 있습니다.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File apps/zep-studio/render-story-panels.ps1
+```
+
+파일 이름은 `panel_01.png`부터 `panel_07.png`까지 유지됩니다.

@@ -41,7 +41,7 @@ mkdirSync(outputDir, { recursive: true });
 
 try {
   for (let step = 1; step <= 7; step += 1) {
-    const file = `genesis-story-${String(step).padStart(2, '0')}.png`;
+    const file = `panel_${String(step).padStart(2, '0')}.png`;
     const args = [
       '--headless=new', '--disable-gpu', '--no-sandbox', '--disable-crash-reporter', '--disable-breakpad',
       '--hide-scrollbars', '--force-device-scale-factor=1', '--default-background-color=00000000',
