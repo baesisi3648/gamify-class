@@ -1,6 +1,7 @@
 # Project Genesis 오프닝 스토리 패널
 
-- 출력 크기: 1280 × 720 PNG
+- 출력 크기: 1024 × 576 PNG
+- ZEP `나의 오브젝트` 업로드 제한(가로·세로 각 1024px 이내)에 맞춘 크기
 - 바깥 배경: 투명
 - 한글 폰트: `/fonts/PretendardVariable.woff2`
 - 문구 데이터: `apps/zep-studio/genesis-story-panels.js`
