@@ -438,11 +438,12 @@
   async function applyGenesisOpening(kind='opening-corridor'){
     const openings={
       'opening-corridor':{src:'assets/genesis/genesis-opening-corridor-zep-scale.png',name:'빛을 향한 복도 (ZEP 스케일)'},
-      'dark-light-passage':{src:'assets/genesis/genesis-dark-light-passage.png',name:'암흑에서 빛으로'}
+      'dark-light-passage':{src:'assets/genesis/genesis-dark-light-passage.png',name:'암흑에서 빛으로'},
+      'moon-surface-earth':{src:'assets/genesis/genesis-moon-surface-earth.png',name:'달 표면·지구 전망'}
     },opening=openings[kind];
     if(!opening)return;
     if(state.hasContent&&!confirm(`프로젝트 제네시스의 '${opening.name}' 배경으로 새 맵을 시작할까요?\n현재 맵은 실행 취소로 복구할 수 있습니다.`))return;
-    try{const image=await imageFromURL(opening.src);pushHistory();setupLayers(4096,512);const floor=state.layers.floor.getContext('2d');floor.imageSmoothingEnabled=true;floor.imageSmoothingQuality='high';floor.drawImage(image,0,0,4096,512);state.activeLayer='floor';state.soloLayer=null;state.hasContent=true;$('#projectName').value=`프로젝트 제네시스 - ${opening.name}`;syncActiveLayer();showAllLayers();changed();toast(`'${opening.name}' 배경을 불러왔습니다.`);}catch{toast('제네시스 오프닝 배경을 불러오지 못했습니다.');}
+    try{const image=await imageFromURL(opening.src),width=image.naturalWidth||image.width,height=image.naturalHeight||image.height;pushHistory();setupLayers(width,height);const floor=state.layers.floor.getContext('2d');floor.imageSmoothingEnabled=true;floor.imageSmoothingQuality='high';floor.drawImage(image,0,0,width,height);state.activeLayer='floor';state.soloLayer=null;state.hasContent=true;$('#projectName').value=`프로젝트 제네시스 - ${opening.name}`;syncActiveLayer();showAllLayers();changed();toast(`'${opening.name}' 배경을 불러왔습니다.`);}catch{toast('제네시스 배경을 불러오지 못했습니다.');}
   }
   function safeName(s){return (s||'zep-map').trim().replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_').slice(0,60)||'zep-map';}
   function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);}

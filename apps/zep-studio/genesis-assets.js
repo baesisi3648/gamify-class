@@ -33,6 +33,14 @@ window.GENESIS_ASSETS = [
     prompt: '거의 순수한 검정으로 이루어진 매우 긴 2D 측면 통로. 희미한 바닥선만 왼쪽에서 오른쪽으로 이어지고, 오른쪽 마지막 10~15%에서만 청백색 출구 빛이 강해진다. 구조물·기계·문·패널·배관·소품·텍스트·인물·UI 없음.'
   },
   {
+    id: 'GEN-MAP-007', slug: 'moon-surface-earth', category: 'map', categoryLabel: '맵 세트',
+    title: '달 표면·지구 전망', subtitle: '우주왕복선 에어록을 나서 처음 마주하는 달 표면',
+    thumbnail: 'assets/genesis/thumbs/genesis-moon-surface-earth.jpg', background: 'assets/genesis/genesis-moon-surface-earth.png',
+    editorUrl: 'index.html?genesis=moon-surface-earth', size: '1672 × 941', layers: '아랫배경 1장', tags: ['달 표면', '지구', '에어록', '야외 탐사'],
+    description: '우주왕복선 통로의 출구 프레임을 지나 넓은 달 표면으로 나오는 장면입니다. 중앙에는 캐릭터가 이동할 수 있는 넓은 탐사 공간을 두고, 왼쪽 하늘에는 푸르게 빛나는 지구가 보이도록 구성했습니다. 캐릭터·UI·문구·소품 없이 배경만 들어 있습니다.',
+    prompt: '우주왕복선 에어록 출구에서 바라본 넓은 달 표면. 아래쪽에는 어두운 금속 출구 문턱과 프레임, 중앙에는 캐릭터가 이동할 수 있는 넓고 평평한 달 탐사 공간, 왼쪽 먼 우주에는 푸르게 빛나는 지구가 보인다. 별과 옅은 청색 성운, 사실적인 달의 분화구와 암석 질감. 고품질 2D 게임 배경, 가로 16:9. 인물·우주인·차량·오브젝트·UI·문자·로고 없음.'
+  },
+  {
     id: 'GEN-MAP-001', slug: 'space-corridor', category: 'map', categoryLabel: '맵 세트',
     title: '우주기지 복도', subtitle: '긴 이동 통로와 분리된 앞쪽 방호벽',
     thumbnail: 'assets/genesis/thumbs/space-corridor.jpg', background: 'assets/space-backgrounds/space-corridor.png', top: 'assets/space-backgrounds/space-corridor-top.png',
