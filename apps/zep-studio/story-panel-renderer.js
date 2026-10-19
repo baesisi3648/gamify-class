@@ -15,10 +15,11 @@
   };
 
   const lines = values => values.map(line => `<span>${line}</span>`).join('');
+  const bodySizes = { 1: 41, 2: 40, 3: 42, 4: 42, 5: 42, 6: 42, 7: 39 };
   document.documentElement.style.setProperty('color-scheme', 'dark');
-  document.body.innerHTML = `<main class="story-panel tone-${panel.tone}">
+  document.body.innerHTML = `<main class="story-panel tone-${panel.tone}" style="--body-size:${bodySizes[panel.step] || 42}px">
     <header class="panel-header"><div class="agency"><span class="agency-mark">GSA</span><span><b>PROJECT GENESIS</b><small>LUNA MISSION ARCHIVE</small></span></div><span class="system-status"><i></i>${panel.header}</span></header>
-    <section class="panel-main"><div class="copy"><div class="record-row">${panel.subheader}</div><h1>${panel.title}</h1><div class="body-copy">${lines(panel.body)}</div><div class="highlight">${lines(panel.highlight)}</div></div></section>
+    <section class="panel-main"><div class="copy"><div class="record-row">${panel.subheader}</div><h1>${panel.title}</h1><div class="body-copy"><p>${panel.body.join(' ')}</p></div><div class="highlight">${lines(panel.highlight)}</div></div></section>
     <footer class="panel-footer"><div class="meta"><small>MISSION ARCHIVE</small><b>${panel.footer}</b></div><div class="progress">${Array.from({ length: 7 }, (_, index) => `<span class="${index < panel.step ? 'done' : ''}"></span>`).join('')}<b class="step-label">${String(panel.step).padStart(2, '0')} / 07</b></div></footer>
   </main>`;
   document.fonts.ready.then(() => { document.documentElement.dataset.ready = 'true'; });

@@ -37,6 +37,23 @@ function New-Font([string]$family, [float]$size, [System.Drawing.FontStyle]$styl
   return [System.Drawing.Font]::new($family, $size, $style, [System.Drawing.GraphicsUnit]::Pixel)
 }
 
+function Get-WrappedLines($graphics, [string]$text, $font, [float]$maxWidth) {
+  $words = $text -split '\s+'
+  $lines = [System.Collections.Generic.List[string]]::new()
+  $current = ''
+  foreach ($word in $words) {
+    $candidate = if ($current) { "$current $word" } else { $word }
+    if ($current -and $graphics.MeasureString($candidate, $font).Width -gt $maxWidth) {
+      $lines.Add($current)
+      $current = $word
+    } else {
+      $current = $candidate
+    }
+  }
+  if ($current) { $lines.Add($current) }
+  return $lines
+}
+
 function Draw-Visual($graphics, $panel, $palette) {
   $x = 900; $y = 164; $cx = 1048; $cy = 326
   $accentPen = [System.Drawing.Pen]::new($palette.Accent, 4)
@@ -176,12 +193,14 @@ foreach ($panel in $panels) {
   $microFont = New-Font $fontMedium 10 ([System.Drawing.FontStyle]::Bold)
   $smallFont = New-Font $fontMedium 11 ([System.Drawing.FontStyle]::Bold)
   $brandFont = New-Font $fontBlack 15 ([System.Drawing.FontStyle]::Bold)
-  $recordFont = New-Font $fontBlack 16 ([System.Drawing.FontStyle]::Bold)
-  $titleFont = New-Font $fontBlack 54 ([System.Drawing.FontStyle]::Bold)
-  $bodyFont = New-Font $fontMedium 34 ([System.Drawing.FontStyle]::Bold)
-  $highlightFont = New-Font $fontBlack $(if($panel.step -eq 7){44}else{36}) ([System.Drawing.FontStyle]::Bold)
+  $bodySize = switch ([int]$panel.step) { 1 { 41 } 2 { 40 } 7 { 39 } default { 42 } }
+  $bodyLineHeight = $bodySize + 13
+  $recordFont = New-Font $fontBlack 18
+  $titleFont = New-Font $fontBlack 64
+  $bodyFont = New-Font $fontBlack $bodySize
+  $highlightFont = New-Font $fontBlack $(if($panel.step -eq 7){52}else{44})
   $whiteBrush = [System.Drawing.SolidBrush]::new((New-Color '#f2f8ff'))
-  $bodyBrush = [System.Drawing.SolidBrush]::new((New-Color '#d7e4ee'))
+  $bodyBrush = [System.Drawing.SolidBrush]::new((New-Color '#f2f7fc'))
   $mutedBrush = [System.Drawing.SolidBrush]::new((New-Color '#7594aa'))
   $accentBrush = [System.Drawing.SolidBrush]::new($palette.Accent)
   $graphics.DrawString('GSA', $microFont, $accentBrush, 78, 68)
@@ -197,25 +216,27 @@ foreach ($panel in $panels) {
   $graphics.FillEllipse($accentBrush, $statusX+13, 71, 7, 7)
   $graphics.DrawString($statusText, $smallFont, $accentBrush, $statusX+28, 67)
 
-  $graphics.DrawString([string]$panel.subheader, $recordFont, $accentBrush, 72, 139)
-  $graphics.DrawLine($logoPen, 235, 155, 590, 155)
-  $graphics.DrawString([string]$panel.title, $titleFont, $whiteBrush, 72, 168)
+  $graphics.DrawString([string]$panel.subheader, $recordFont, $accentBrush, 60, 137)
+  $graphics.DrawLine($logoPen, 236, 154, 665, 154)
+  $graphics.DrawString([string]$panel.title, $titleFont, $whiteBrush, 60, 162)
 
-  $bodyY = 235
-  foreach ($line in $panel.body) {
-    $graphics.DrawString([string]$line, $bodyFont, $bodyBrush, 72, $bodyY)
-    $bodyY += 42
+  $bodyY = 232
+  $bodyText = (($panel.body | ForEach-Object { [string]$_ }) -join ' ')
+  $bodyLines = Get-WrappedLines $graphics $bodyText $bodyFont 1180
+  foreach ($line in $bodyLines) {
+    $graphics.DrawString($line, $bodyFont, $bodyBrush, 60, $bodyY)
+    $bodyY += $bodyLineHeight
   }
-  $highlightY = $bodyY + 5
-  $highlightHeight = [Math]::Max(72, 18 + (44 * $panel.highlight.Count))
-  $highlightBrush = [System.Drawing.Drawing2D.LinearGradientBrush]::new([System.Drawing.Rectangle]::new(72,$highlightY,1128,$highlightHeight), [System.Drawing.Color]::FromArgb(68,$palette.Hot), [System.Drawing.Color]::Transparent, 0)
-  $graphics.FillRectangle($highlightBrush, 72, $highlightY, 1128, $highlightHeight)
+  $highlightY = $bodyY + 6
+  $highlightHeight = [Math]::Max(80, 16 + (53 * $panel.highlight.Count))
+  $highlightBrush = [System.Drawing.Drawing2D.LinearGradientBrush]::new([System.Drawing.Rectangle]::new(60,$highlightY,1160,$highlightHeight), [System.Drawing.Color]::FromArgb(76,$palette.Hot), [System.Drawing.Color]::Transparent, 0)
+  $graphics.FillRectangle($highlightBrush, 60, $highlightY, 1160, $highlightHeight)
   $hotBarBrush = [System.Drawing.SolidBrush]::new($palette.Hot)
-  $graphics.FillRectangle($hotBarBrush, 72, $highlightY, 6, $highlightHeight)
+  $graphics.FillRectangle($hotBarBrush, 60, $highlightY, 7, $highlightHeight)
   $hy = $highlightY + 9
   foreach ($line in $panel.highlight) {
-    $graphics.DrawString([string]$line, $highlightFont, $whiteBrush, 94, $hy)
-    $hy += 44
+    $graphics.DrawString([string]$line, $highlightFont, $whiteBrush, 84, $hy)
+    $hy += 53
   }
 
   $graphics.DrawString('MISSION ARCHIVE', $microFont, $mutedBrush, 70, 629)
