@@ -152,5 +152,47 @@ window.GENESIS_ASSETS = [
     thumbnail: 'assets/genesis/thumbs/space-biological-containment-lab.jpg', background: 'assets/space-backgrounds/space-biological-containment-lab.png', top: 'assets/space-backgrounds/space-biological-containment-lab-top.png',
     editorUrl: 'index.html?space=space-biological-containment-lab', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['아이소메트릭', '생체 실험', '격리 연구실', '배양 튜브'],
     description: '벽면의 균열·오염 흔적과 생체 표본 창이 있는 어두운 연구실입니다. 넓은 이동 바닥은 아랫배경에, 중앙 원통형 배양 튜브는 캐릭터를 자연스럽게 가리는 투명 윗배경에 분리했습니다.'
+  },
+  {
+    id: 'GEN-MAP-009', slug: 'abandoned-space-corridor', category: 'map', categoryLabel: '맵 세트', theme: 'abandoned',
+    title: '폐쇄 기지 복도', subtitle: '오염과 고장 난 비상등이 남은 장거리 이동 통로',
+    thumbnail: 'assets/space-backgrounds/space-corridor.png', background: 'assets/space-backgrounds/space-corridor.png', top: 'assets/space-backgrounds/space-corridor-top.png', overlay: 'assets/space-backgrounds/abandoned-station-atmosphere.png', downloadName: 'abandoned-space-corridor.png',
+    editorUrl: 'index.html?space=abandoned-space-corridor', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['폐쇄 기지', '아이소메트릭', '복도', '음산한 분위기'],
+    description: '기존 우주기지 복도의 구조와 레이어 위치를 유지하면서 녹슨 벽, 균열, 늘어진 케이블과 불안정한 비상조명 분위기를 더한 버전입니다.'
+  },
+  {
+    id: 'GEN-MAP-010', slug: 'abandoned-space-stair-room', category: 'map', categoryLabel: '맵 세트', theme: 'abandoned',
+    title: '폐쇄 수직 이동실', subtitle: '멈춰 버린 계단과 경사로가 있는 이동 구역',
+    thumbnail: 'assets/space-backgrounds/space-stair-room.png', background: 'assets/space-backgrounds/space-stair-room.png', top: 'assets/space-backgrounds/space-stair-room-top.png', overlay: 'assets/space-backgrounds/abandoned-station-atmosphere.png', downloadName: 'abandoned-space-stair-room.png',
+    editorUrl: 'index.html?space=abandoned-space-stair-room', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['폐쇄 기지', '계단', '경사로', '수직 이동'],
+    description: '기존 수직 이동실의 계단·경사로 구조를 보존하고 조명 고장과 오염 흔적을 더했습니다. 앞쪽 난간은 투명 윗배경으로 유지됩니다.'
+  },
+  {
+    id: 'GEN-MAP-011', slug: 'abandoned-space-research-lab', category: 'map', categoryLabel: '맵 세트', theme: 'abandoned',
+    title: '폐쇄 우주 연구실', subtitle: '분석 장치와 관측창이 방치된 연구 구역',
+    thumbnail: 'assets/space-backgrounds/space-research-lab.png', background: 'assets/space-backgrounds/space-research-lab.png', top: 'assets/space-backgrounds/space-research-lab-top.png', overlay: 'assets/space-backgrounds/abandoned-station-atmosphere.png', downloadName: 'abandoned-space-research-lab.png',
+    editorUrl: 'index.html?space=abandoned-space-research-lab', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['폐쇄 기지', '연구실', '관측', '오염'],
+    description: '작동을 멈춘 분석 화면과 오염된 바닥 가장자리가 남은 폐쇄 연구실입니다. 기존 이동 공간과 레이어 구조는 그대로 유지됩니다.'
+  },
+  {
+    id: 'GEN-MAP-012', slug: 'abandoned-space-experiment-lab', category: 'map', categoryLabel: '맵 세트', theme: 'abandoned',
+    title: '폐쇄 생명·화학 실험실', subtitle: '배양 시설이 방치된 오염 실험 구역',
+    thumbnail: 'assets/space-backgrounds/space-experiment-lab.png', background: 'assets/space-backgrounds/space-experiment-lab.png', top: 'assets/space-backgrounds/space-experiment-lab-top.png', overlay: 'assets/space-backgrounds/abandoned-station-atmosphere.png', downloadName: 'abandoned-space-experiment-lab.png',
+    editorUrl: 'index.html?space=abandoned-space-experiment-lab', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['폐쇄 기지', '생명과학', '화학', '배양 시설'],
+    description: '기존 생명·화학 실험실에 부식과 누수, 고장 난 배양 시설 분위기를 더했습니다. 앞쪽 실험 방호벽은 투명 윗배경으로 분리됩니다.'
+  },
+  {
+    id: 'GEN-MAP-013', slug: 'abandoned-space-command-center', category: 'map', categoryLabel: '맵 세트', theme: 'abandoned',
+    title: '폐쇄 우주 관제실', subtitle: '통신이 끊기고 경보등만 남은 지휘 구역',
+    thumbnail: 'assets/space-backgrounds/space-command-center.png', background: 'assets/space-backgrounds/space-command-center.png', top: 'assets/space-backgrounds/space-command-center-top.png', overlay: 'assets/space-backgrounds/abandoned-station-atmosphere.png', downloadName: 'abandoned-space-command-center.png',
+    editorUrl: 'index.html?space=abandoned-space-command-center', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['폐쇄 기지', '관제실', '통신 두절', '비상조명'],
+    description: '관측창과 지휘 콘솔이 어둠 속에 방치된 관제실입니다. 기존 관제실의 바닥과 앞쪽 방호벽 레이어를 그대로 활용합니다.'
+  },
+  {
+    id: 'GEN-MAP-014', slug: 'abandoned-space-airlock-hangar', category: 'map', categoryLabel: '맵 세트', theme: 'abandoned',
+    title: '폐쇄 에어록·격납고', subtitle: '출입문이 잠긴 오염 수송 구역',
+    thumbnail: 'assets/space-backgrounds/space-airlock-hangar.png', background: 'assets/space-backgrounds/space-airlock-hangar.png', top: 'assets/space-backgrounds/space-airlock-hangar-top.png', overlay: 'assets/space-backgrounds/abandoned-station-atmosphere.png', downloadName: 'abandoned-space-airlock-hangar.png',
+    editorUrl: 'index.html?space=abandoned-space-airlock-hangar', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['폐쇄 기지', '에어록', '격납고', '탈출'],
+    description: '대형 출입문과 수송 바닥이 잠긴 채 방치된 에어록·격납고입니다. 앞쪽 안전벽은 캐릭터 가림용 윗배경으로 유지됩니다.'
   }
 ];
