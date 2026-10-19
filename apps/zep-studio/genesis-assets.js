@@ -37,8 +37,8 @@ window.GENESIS_ASSETS = [
     title: '달 표면·지구 전망', subtitle: '달의 큰 반원과 지구가 보이는 넓은 ZEP 야외 맵',
     thumbnail: 'assets/genesis/thumbs/genesis-moon-surface-earth.jpg', background: 'assets/genesis/genesis-moon-surface-earth.png',
     editorUrl: 'index.html?genesis=moon-surface-earth', size: '1672 × 941', layers: '아랫배경 1장', tags: ['달 표면', '지구', '에어록', '야외 탐사'],
-    description: '첨부된 ZEP 달 맵처럼 화면 아래쪽에는 캐릭터가 돌아다닐 수 있는 거대한 반원형 달 표면을, 왼쪽 우주에는 푸르게 빛나는 지구를 배치했습니다. 우주비행사·우주선·UI·문구·소품 없이 배경만 들어 있습니다.',
-    prompt: '가로 16:9 ZEP용 2D 야외 맵. 화면 아래쪽과 중앙에는 위에서 비스듬히 내려다본 거대한 반원형 달 표면이 넓게 펼쳐지고, 왼쪽 상단 우주에는 푸르게 빛나는 지구가 보인다. 별과 청색 성운, 선명한 달 분화구 질감, 넓은 캐릭터 이동 공간. 1인칭 시점·복도·출구 프레임·인물·우주인·우주선·차량·오브젝트·UI·문자·로고 없음.'
+    description: '화면 아래쪽에는 캐릭터가 돌아다닐 수 있는 거대한 반원형 달 표면을, 왼쪽 우주에는 푸르게 빛나는 지구를 배치했습니다. 사진처럼 거친 질감 대신 또렷한 윤곽과 부드러운 셀 셰이딩을 사용한 아기자기한 ZEP형 2D 게임 배경입니다.',
+    prompt: '가로 16:9 ZEP용 2D 야외 게임 맵. 화면 아래쪽과 중앙에는 위에서 비스듬히 내려다본 거대한 반원형 달 표면이 넓게 펼쳐지고, 왼쪽 상단 우주에는 푸르게 빛나는 지구가 보인다. 사진풍이 아닌 선명한 2D 게임 일러스트, 단순화된 넓은 분화구, 부드러운 셀 셰이딩, 남청색과 청록색의 우주광, 넓고 정돈된 캐릭터 이동 공간. 1인칭 시점·복도·출구 프레임·인물·우주인·우주선·차량·오브젝트·UI·문자·로고 없음.'
   },
   {
     id: 'GEN-MAP-001', slug: 'space-corridor', category: 'map', categoryLabel: '맵 세트',
