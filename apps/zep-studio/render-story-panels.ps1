@@ -163,8 +163,8 @@ foreach ($panel in $panels) {
   $graphics.DrawPath($borderPen, $panelPath)
 
   $gridPen = [System.Drawing.Pen]::new([System.Drawing.Color]::FromArgb(10, $palette.Accent), 1)
-  for ($gx=68; $gx -lt 840; $gx+=32) { $graphics.DrawLine($gridPen,$gx,111,$gx,603) }
-  for ($gy=111; $gy -lt 604; $gy+=32) { $graphics.DrawLine($gridPen,37,$gy,875,$gy) }
+  for ($gx=68; $gx -lt 1244; $gx+=32) { $graphics.DrawLine($gridPen,$gx,111,$gx,603) }
+  for ($gy=111; $gy -lt 604; $gy+=32) { $graphics.DrawLine($gridPen,37,$gy,1243,$gy) }
   $separatorPen = [System.Drawing.Pen]::new($palette.Line, 1)
   $graphics.DrawLine($separatorPen, 37, 110, 1243, 110)
   $graphics.DrawLine($separatorPen, 37, 604, 1243, 604)
@@ -176,10 +176,10 @@ foreach ($panel in $panels) {
   $microFont = New-Font $fontMedium 10 ([System.Drawing.FontStyle]::Bold)
   $smallFont = New-Font $fontMedium 11 ([System.Drawing.FontStyle]::Bold)
   $brandFont = New-Font $fontBlack 15 ([System.Drawing.FontStyle]::Bold)
-  $recordFont = New-Font $fontBlack 12 ([System.Drawing.FontStyle]::Bold)
-  $titleFont = New-Font $fontBlack 40 ([System.Drawing.FontStyle]::Bold)
-  $bodyFont = New-Font $fontMedium 22
-  $highlightFont = New-Font $fontBlack $(if($panel.step -eq 7){30}else{23}) ([System.Drawing.FontStyle]::Bold)
+  $recordFont = New-Font $fontBlack 16 ([System.Drawing.FontStyle]::Bold)
+  $titleFont = New-Font $fontBlack 54 ([System.Drawing.FontStyle]::Bold)
+  $bodyFont = New-Font $fontMedium 34 ([System.Drawing.FontStyle]::Bold)
+  $highlightFont = New-Font $fontBlack $(if($panel.step -eq 7){44}else{36}) ([System.Drawing.FontStyle]::Bold)
   $whiteBrush = [System.Drawing.SolidBrush]::new((New-Color '#f2f8ff'))
   $bodyBrush = [System.Drawing.SolidBrush]::new((New-Color '#d7e4ee'))
   $mutedBrush = [System.Drawing.SolidBrush]::new((New-Color '#7594aa'))
@@ -198,31 +198,25 @@ foreach ($panel in $panels) {
   $graphics.DrawString($statusText, $smallFont, $accentBrush, $statusX+28, 67)
 
   $graphics.DrawString([string]$panel.subheader, $recordFont, $accentBrush, 72, 139)
-  $graphics.DrawLine($logoPen, 205, 153, 342, 153)
-  $graphics.DrawString([string]$panel.title, $titleFont, $whiteBrush, 72, 174)
+  $graphics.DrawLine($logoPen, 235, 155, 590, 155)
+  $graphics.DrawString([string]$panel.title, $titleFont, $whiteBrush, 72, 168)
 
   $bodyY = 235
   foreach ($line in $panel.body) {
     $graphics.DrawString([string]$line, $bodyFont, $bodyBrush, 72, $bodyY)
-    $bodyY += 31
+    $bodyY += 42
   }
-  $highlightY = $bodyY + 11
-  $highlightHeight = [Math]::Max(62, 20 + (31 * $panel.highlight.Count))
-  $highlightBrush = [System.Drawing.Drawing2D.LinearGradientBrush]::new([System.Drawing.Rectangle]::new(72,$highlightY,770,$highlightHeight), [System.Drawing.Color]::FromArgb(58,$palette.Hot), [System.Drawing.Color]::Transparent, 0)
-  $graphics.FillRectangle($highlightBrush, 72, $highlightY, 770, $highlightHeight)
+  $highlightY = $bodyY + 5
+  $highlightHeight = [Math]::Max(72, 18 + (44 * $panel.highlight.Count))
+  $highlightBrush = [System.Drawing.Drawing2D.LinearGradientBrush]::new([System.Drawing.Rectangle]::new(72,$highlightY,1128,$highlightHeight), [System.Drawing.Color]::FromArgb(68,$palette.Hot), [System.Drawing.Color]::Transparent, 0)
+  $graphics.FillRectangle($highlightBrush, 72, $highlightY, 1128, $highlightHeight)
   $hotBarBrush = [System.Drawing.SolidBrush]::new($palette.Hot)
-  $graphics.FillRectangle($hotBarBrush, 72, $highlightY, 5, $highlightHeight)
-  $hy = $highlightY + 10
+  $graphics.FillRectangle($hotBarBrush, 72, $highlightY, 6, $highlightHeight)
+  $hy = $highlightY + 9
   foreach ($line in $panel.highlight) {
-    $graphics.DrawString([string]$line, $highlightFont, $whiteBrush, 91, $hy)
-    $hy += 31
+    $graphics.DrawString([string]$line, $highlightFont, $whiteBrush, 94, $hy)
+    $hy += 44
   }
-
-  $visualPath = New-RoundedPath 878 145 330 434 15
-  $visualFill = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(40, $palette.Panel2))
-  $graphics.FillPath($visualFill, $visualPath); $graphics.DrawPath($separatorPen, $visualPath)
-  Draw-Visual $graphics $panel $palette
-  $graphics.DrawString(('VISUAL TELEMETRY // {0:d2}' -f [int]$panel.step), $microFont, $mutedBrush, 1046, 550)
 
   $graphics.DrawString('MISSION ARCHIVE', $microFont, $mutedBrush, 70, 629)
   $graphics.DrawString([string]$panel.footer, $smallFont, $bodyBrush, 70, 649)
@@ -240,7 +234,7 @@ foreach ($panel in $panels) {
   Write-Output "created $(Split-Path -Leaf $output)"
 
   $microFont.Dispose(); $smallFont.Dispose(); $brandFont.Dispose(); $recordFont.Dispose(); $titleFont.Dispose(); $bodyFont.Dispose(); $highlightFont.Dispose()
-  $whiteBrush.Dispose(); $bodyBrush.Dispose(); $mutedBrush.Dispose(); $accentBrush.Dispose(); $statusBrush.Dispose(); $highlightBrush.Dispose(); $hotBarBrush.Dispose(); $visualFill.Dispose()
-  $logoPen.Dispose(); $gridPen.Dispose(); $separatorPen.Dispose(); $borderPen.Dispose(); $panelBrush.Dispose(); $statusPath.Dispose(); $visualPath.Dispose(); $panelPath.Dispose()
+  $whiteBrush.Dispose(); $bodyBrush.Dispose(); $mutedBrush.Dispose(); $accentBrush.Dispose(); $statusBrush.Dispose(); $highlightBrush.Dispose(); $hotBarBrush.Dispose()
+  $logoPen.Dispose(); $gridPen.Dispose(); $separatorPen.Dispose(); $borderPen.Dispose(); $panelBrush.Dispose(); $statusPath.Dispose(); $panelPath.Dispose()
   $graphics.Dispose(); $bitmap.Dispose()
 }
