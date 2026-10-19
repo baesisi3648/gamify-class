@@ -194,5 +194,47 @@ window.GENESIS_ASSETS = [
     thumbnail: 'assets/space-backgrounds/space-airlock-hangar.png', background: 'assets/space-backgrounds/space-airlock-hangar.png', top: 'assets/space-backgrounds/space-airlock-hangar-top.png', overlay: 'assets/space-backgrounds/abandoned-station-atmosphere.png', downloadName: 'abandoned-space-airlock-hangar.png',
     editorUrl: 'index.html?space=abandoned-space-airlock-hangar', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['폐쇄 기지', '에어록', '격납고', '탈출'],
     description: '대형 출입문과 수송 바닥이 잠긴 채 방치된 에어록·격납고입니다. 앞쪽 안전벽은 캐릭터 가림용 윗배경으로 유지됩니다.'
+  },
+  {
+    id: 'GEN-MAP-015', slug: 'weathered-space-corridor', category: 'map', categoryLabel: '맵 세트', theme: 'weathered',
+    title: '노후 기지 복도', subtitle: '밝은 조명 아래 균열과 녹이 남은 이동 통로',
+    thumbnail: 'assets/space-backgrounds/space-corridor.png', background: 'assets/space-backgrounds/space-corridor.png', top: 'assets/space-backgrounds/space-corridor-top.png', overlay: 'assets/space-backgrounds/weathered-station-atmosphere.png', downloadName: 'weathered-space-corridor.png',
+    editorUrl: 'index.html?space=weathered-space-corridor', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['노후 기지', '아이소메트릭', '복도', '밝은 폐허'],
+    description: '기존 복도의 밝기와 구조를 유지하면서 가장자리에 가는 균열, 녹, 누수와 오래된 케이블을 더한 버전입니다.'
+  },
+  {
+    id: 'GEN-MAP-016', slug: 'weathered-space-stair-room', category: 'map', categoryLabel: '맵 세트', theme: 'weathered',
+    title: '노후 수직 이동실', subtitle: '빛이 남아 있는 오래된 계단·경사로 구역',
+    thumbnail: 'assets/space-backgrounds/space-stair-room.png', background: 'assets/space-backgrounds/space-stair-room.png', top: 'assets/space-backgrounds/space-stair-room-top.png', overlay: 'assets/space-backgrounds/weathered-station-atmosphere.png', downloadName: 'weathered-space-stair-room.png',
+    editorUrl: 'index.html?space=weathered-space-stair-room', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['노후 기지', '계단', '경사로', '밝은 폐허'],
+    description: '수직 이동실의 계단과 경사로는 선명하게 보이고, 외곽에만 부식과 생물성 잔류 흔적이 남도록 구성했습니다.'
+  },
+  {
+    id: 'GEN-MAP-017', slug: 'weathered-space-research-lab', category: 'map', categoryLabel: '맵 세트', theme: 'weathered',
+    title: '노후 우주 연구실', subtitle: '오래된 분석 장치가 남은 밝은 연구 구역',
+    thumbnail: 'assets/space-backgrounds/space-research-lab.png', background: 'assets/space-backgrounds/space-research-lab.png', top: 'assets/space-backgrounds/space-research-lab-top.png', overlay: 'assets/space-backgrounds/weathered-station-atmosphere.png', downloadName: 'weathered-space-research-lab.png',
+    editorUrl: 'index.html?space=weathered-space-research-lab', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['노후 기지', '연구실', '관측', '낡은 시설'],
+    description: '분석 화면과 관측창을 알아볼 수 있는 밝기를 유지하며 벽과 바닥 가장자리에 오랜 방치 흔적을 더했습니다.'
+  },
+  {
+    id: 'GEN-MAP-018', slug: 'weathered-space-experiment-lab', category: 'map', categoryLabel: '맵 세트', theme: 'weathered',
+    title: '노후 생명·화학 실험실', subtitle: '낡은 배양 시설이 남은 밝은 실험 구역',
+    thumbnail: 'assets/space-backgrounds/space-experiment-lab.png', background: 'assets/space-backgrounds/space-experiment-lab.png', top: 'assets/space-backgrounds/space-experiment-lab-top.png', overlay: 'assets/space-backgrounds/weathered-station-atmosphere.png', downloadName: 'weathered-space-experiment-lab.png',
+    editorUrl: 'index.html?space=weathered-space-experiment-lab', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['노후 기지', '생명과학', '화학', '배양 시설'],
+    description: '생체 격리 실험실과 비슷한 밝기와 올리브빛 노후 질감으로 바꾼 생명·화학 실험실입니다.'
+  },
+  {
+    id: 'GEN-MAP-019', slug: 'weathered-space-command-center', category: 'map', categoryLabel: '맵 세트', theme: 'weathered',
+    title: '노후 우주 관제실', subtitle: '조명과 관측창이 남은 오래된 지휘 구역',
+    thumbnail: 'assets/space-backgrounds/space-command-center.png', background: 'assets/space-backgrounds/space-command-center.png', top: 'assets/space-backgrounds/space-command-center-top.png', overlay: 'assets/space-backgrounds/weathered-station-atmosphere.png', downloadName: 'weathered-space-command-center.png',
+    editorUrl: 'index.html?space=weathered-space-command-center', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['노후 기지', '관제실', '지휘', '낡은 시설'],
+    description: '관측창과 콘솔은 밝게 유지하고 조명 주변과 바닥 가장자리에만 균열·녹·누수 흔적을 더했습니다.'
+  },
+  {
+    id: 'GEN-MAP-020', slug: 'weathered-space-airlock-hangar', category: 'map', categoryLabel: '맵 세트', theme: 'weathered',
+    title: '노후 에어록·격납고', subtitle: '오래된 출입문과 수송 바닥이 남은 구역',
+    thumbnail: 'assets/space-backgrounds/space-airlock-hangar.png', background: 'assets/space-backgrounds/space-airlock-hangar.png', top: 'assets/space-backgrounds/space-airlock-hangar-top.png', overlay: 'assets/space-backgrounds/weathered-station-atmosphere.png', downloadName: 'weathered-space-airlock-hangar.png',
+    editorUrl: 'index.html?space=weathered-space-airlock-hangar', size: '960 × 640 편집', layers: '아랫배경 + 윗배경', tags: ['노후 기지', '에어록', '격납고', '밝은 폐허'],
+    description: '대형 에어록과 격납 바닥이 충분히 보이는 밝기를 유지하면서 오래 사용된 금속 표면과 균열을 표현했습니다.'
   }
 ];
