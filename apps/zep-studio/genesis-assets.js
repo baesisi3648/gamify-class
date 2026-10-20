@@ -132,7 +132,7 @@ window.GENESIS_ASSETS = [
     id: 'GEN-CELL-007', slug: 'ribosome-robot-arm-slow-loop', category: 'object', categoryLabel: '움직이는 오브젝트',
     title: '천천히 움직이는 리보솜 기계팔', subtitle: '앱 없이 나의 오브젝트에 직접 놓는 반복 GIF',
     thumbnail: 'assets/genesis/cell-factory/ribosome-robot-arm-slow-loop.gif', background: 'assets/genesis/cell-factory/ribosome-robot-arm-slow-loop.gif',
-    editorUrl: 'index.html?workspace=object', size: '80 × 160 · 0.29 MB', layers: '투명 GIF · 10프레임 · 무한 반복', tags: ['세포 공장', '기계팔', '반복 GIF', '앱 불필요', '느린 왕복'],
+    editorUrl: 'index.html?workspace=object', size: '96 × 160 · 0.35 MB', layers: '투명 GIF · 10프레임 · 무한 반복', tags: ['세포 공장', '기계팔', '반복 GIF', '앱 불필요', '느린 왕복'],
     description: '6개의 작업 자세를 앞뒤로 이어 약 4.5초마다 천천히 왕복하는 기계팔입니다. ZEP의 나의 오브젝트에 GIF를 그대로 올린 뒤 원하는 위치에 직접 배치하세요.',
     prompt: '아이보리색 SF 정밀 기계팔이 작업 위치를 향해 천천히 뻗었다가 원위치로 돌아오는 투명 배경 반복 애니메이션.'
   },

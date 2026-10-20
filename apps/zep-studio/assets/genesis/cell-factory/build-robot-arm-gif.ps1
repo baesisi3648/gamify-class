@@ -6,7 +6,7 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sourcePath = Join-Path $root 'weathered-biolab-app\ribosome-robot-arm-animated.png'
 $outputPath = Join-Path $root 'ribosome-robot-arm-slow-loop.gif'
 
-$frameWidth = 80
+$frameWidth = 96
 $frameHeight = 160
 $delayHundredths = 45
 $sequence = @(0, 1, 2, 3, 4, 5, 4, 3, 2, 1)
@@ -57,7 +57,110 @@ function Get-LzwBytes([byte[]]$indices) {
   return $bytes.ToArray()
 }
 
+function Get-CleanFrameMaps([System.Drawing.Bitmap]$source) {
+  $sourceWidth = $source.Width
+  $sourceHeight = $source.Height
+  $opaque = [bool[]]::new($sourceWidth * $sourceHeight)
+  $labels = [int[]]::new($sourceWidth * $sourceHeight)
+
+  for ($y = 0; $y -lt $sourceHeight; $y++) {
+    for ($x = 0; $x -lt $sourceWidth; $x++) {
+      $opaque[$y * $sourceWidth + $x] = $source.GetPixel($x, $y).A -ge 32
+    }
+  }
+
+  $components = [System.Collections.Generic.List[object]]::new()
+  $nextLabel = 0
+  $neighbors = @(
+    @(-1, -1), @(0, -1), @(1, -1),
+    @(-1, 0),             @(1, 0),
+    @(-1, 1),  @(0, 1),  @(1, 1)
+  )
+
+  for ($start = 0; $start -lt $opaque.Length; $start++) {
+    if (-not $opaque[$start] -or $labels[$start] -ne 0) { continue }
+    $nextLabel++
+    $queue = [System.Collections.Generic.Queue[int]]::new()
+    $queue.Enqueue($start)
+    $labels[$start] = $nextLabel
+    $count = 0
+    $minX = $sourceWidth
+    $maxX = 0
+
+    while ($queue.Count -gt 0) {
+      $point = $queue.Dequeue()
+      $x = $point % $sourceWidth
+      $y = [Math]::Floor($point / $sourceWidth)
+      $count++
+      $minX = [Math]::Min($minX, $x)
+      $maxX = [Math]::Max($maxX, $x)
+
+      foreach ($neighbor in $neighbors) {
+        $nextX = $x + $neighbor[0]
+        $nextY = $y + $neighbor[1]
+        if ($nextX -lt 0 -or $nextY -lt 0 -or $nextX -ge $sourceWidth -or $nextY -ge $sourceHeight) { continue }
+        $nextPoint = $nextY * $sourceWidth + $nextX
+        if ($opaque[$nextPoint] -and $labels[$nextPoint] -eq 0) {
+          $labels[$nextPoint] = $nextLabel
+          $queue.Enqueue($nextPoint)
+        }
+      }
+    }
+
+    if ($count -ge 1000) {
+      $components.Add([PSCustomObject]@{ Label = $nextLabel; Count = $count; MinX = $minX; MaxX = $maxX })
+    }
+  }
+
+  $components = @($components | Sort-Object MinX)
+  if ($components.Count -ne 5) {
+    throw "Expected five robot-arm components, found $($components.Count)."
+  }
+
+  # The image generator placed poses 2 and 3 close enough to touch by a few pixels.
+  # Split only that connected pair at its visual valley; all other poses use their full component.
+  $definitions = @(
+    @{ Label = $components[0].Label; MinX = 0;   MaxX = 479 },
+    @{ Label = $components[1].Label; MinX = 0;   MaxX = 168 },
+    @{ Label = $components[1].Label; MinX = 169; MaxX = 479 },
+    @{ Label = $components[2].Label; MinX = 0;   MaxX = 479 },
+    @{ Label = $components[3].Label; MinX = 0;   MaxX = 479 },
+    @{ Label = $components[4].Label; MinX = 0;   MaxX = 479 }
+  )
+
+  $maps = [System.Collections.Generic.List[byte[]]]::new()
+  foreach ($definition in $definitions) {
+    $selectedMinX = $sourceWidth
+    $selectedMaxX = -1
+    for ($y = 0; $y -lt $sourceHeight; $y++) {
+      for ($x = $definition.MinX; $x -le $definition.MaxX; $x++) {
+        if ($labels[$y * $sourceWidth + $x] -eq $definition.Label) {
+          $selectedMinX = [Math]::Min($selectedMinX, $x)
+          $selectedMaxX = [Math]::Max($selectedMaxX, $x)
+        }
+      }
+    }
+    if ($selectedMaxX -lt $selectedMinX) { throw 'A robot-arm pose contains no pixels.' }
+
+    $selectedWidth = $selectedMaxX - $selectedMinX + 1
+    if ($selectedWidth -gt $frameWidth) { throw "Robot-arm pose is wider than the GIF canvas ($selectedWidth px)." }
+    $leftPadding = [Math]::Floor(($frameWidth - $selectedWidth) / 2)
+    $indices = [byte[]]::new($frameWidth * $frameHeight)
+
+    for ($y = 0; $y -lt $sourceHeight; $y++) {
+      for ($x = $definition.MinX; $x -le $definition.MaxX; $x++) {
+        if ($labels[$y * $sourceWidth + $x] -ne $definition.Label) { continue }
+        $destinationX = $leftPadding + $x - $selectedMinX
+        $indices[$y * $frameWidth + $destinationX] = Get-PaletteIndex $source.GetPixel($x, $y)
+      }
+    }
+    $maps.Add($indices)
+  }
+  return $maps
+}
+
 $source = [System.Drawing.Bitmap]::new($sourcePath)
+$frameMaps = Get-CleanFrameMaps $source
 $stream = [System.IO.File]::Open($outputPath, [System.IO.FileMode]::Create)
 $writer = [System.IO.BinaryWriter]::new($stream)
 
@@ -88,14 +191,7 @@ try {
   $writer.Write([byte[]](0x03, 0x01, 0x00, 0x00, 0x00))
 
   foreach ($frameIndex in $sequence) {
-    $indices = [byte[]]::new($frameWidth * $frameHeight)
-    $offsetX = $frameIndex * $frameWidth
-    $cursor = 0
-    for ($y = 0; $y -lt $frameHeight; $y++) {
-      for ($x = 0; $x -lt $frameWidth; $x++) {
-        $indices[$cursor++] = Get-PaletteIndex $source.GetPixel($offsetX + $x, $y)
-      }
-    }
+    $indices = $frameMaps[$frameIndex]
 
     $writer.Write([byte[]](0x21, 0xf9, 0x04, 0x09))
     Write-UInt16LE $writer $delayHundredths
