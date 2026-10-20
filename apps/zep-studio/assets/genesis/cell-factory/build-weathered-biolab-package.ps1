@@ -7,6 +7,7 @@ $app = Join-Path $root 'weathered-biolab-app'
 $stationPath = Join-Path $root 'ribosome-epa-assembly-station.png'
 $cargoPath = Join-Path $root 'amino-acid-cargo-pod.png'
 $railPath = Join-Path $root 'ribosome-conveyor-straight.png'
+$robotArmAnimationPath = Join-Path $root 'ribosome-robot-arm-animation-source.png'
 $spaceRoot = Resolve-Path (Join-Path $root '..\..\space-backgrounds')
 $mapPath = Join-Path $spaceRoot 'space-experiment-lab.png'
 $topPath = Join-Path $spaceRoot 'space-experiment-lab-top.png'
@@ -58,6 +59,7 @@ for ($frame = 0; $frame -lt $frameCount; $frame++) {
   $sheetGraphics.DrawImage($cargo, $offsetX + $cargoX[$frame], $cargoY[$frame], 45, 30)
 }
 
+$sheet.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipX)
 $sheetPath = Join-Path $app 'ribosome-factory-line.png'
 $sheet.Save($sheetPath, [System.Drawing.Imaging.ImageFormat]::Png)
 $sheetGraphics.Dispose()
@@ -67,6 +69,7 @@ $cargo.Dispose()
 
 Save-ResizedPng $railPath (Join-Path $app 'ribosome-conveyor-straight.png') 192 96
 Save-ResizedPng $cargoPath (Join-Path $app 'amino-acid-cargo-pod.png') 56 56
+Save-ResizedPng $robotArmAnimationPath (Join-Path $app 'ribosome-robot-arm-animated.png') 480 160
 Save-ResizedPng $stationPath (Join-Path $app 'app-icon.png') 256 256
 
 # 960×640 실제 맵 위에 설치 위치를 합성한 교사용 미리보기입니다.
@@ -81,6 +84,7 @@ $top = [System.Drawing.Bitmap]::new($topPath)
 $factoryFrame = [System.Drawing.Bitmap]::new($sheetPath)
 $rail = [System.Drawing.Bitmap]::new((Join-Path $app 'ribosome-conveyor-straight.png'))
 $cargoPod = [System.Drawing.Bitmap]::new((Join-Path $app 'amino-acid-cargo-pod.png'))
+$robotArm = [System.Drawing.Bitmap]::new((Join-Path $app 'ribosome-robot-arm-animated.png'))
 
 $previewGraphics.DrawImage($map, 0, 0, 960, 640)
 $weatherAttributes = [System.Drawing.Imaging.ImageAttributes]::new()
@@ -88,11 +92,13 @@ $colorMatrix = [System.Drawing.Imaging.ColorMatrix]::new()
 $colorMatrix.Matrix33 = 0.52
 $weatherAttributes.SetColorMatrix($colorMatrix)
 $previewGraphics.DrawImage($weather, [System.Drawing.Rectangle]::new(0, 0, 960, 640), 0, 0, $weather.Width, $weather.Height, [System.Drawing.GraphicsUnit]::Pixel, $weatherAttributes)
-$previewGraphics.DrawImage($factoryFrame, [System.Drawing.Rectangle]::new(320, 256, 320, 224), 0, 0, 320, 224, [System.Drawing.GraphicsUnit]::Pixel)
-$previewGraphics.DrawImage($rail, 160, 448, 192, 96)
-$previewGraphics.DrawImage($rail, 352, 448, 192, 96)
-$previewGraphics.DrawImage($rail, 544, 448, 192, 96)
-$previewGraphics.DrawImage($cargoPod, 608, 448, 56, 56)
+$previewGraphics.DrawImage($factoryFrame, [System.Drawing.Rectangle]::new(560, 256, 320, 224), 0, 0, 320, 224, [System.Drawing.GraphicsUnit]::Pixel)
+$previewGraphics.DrawImage($rail, 320, 448, 192, 96)
+$previewGraphics.DrawImage($rail, 480, 384, 192, 96)
+$previewGraphics.DrawImage($rail, 640, 320, 192, 96)
+$previewGraphics.DrawImage($robotArm, [System.Drawing.Rectangle]::new(520, 288, 80, 160), 0, 0, 80, 160, [System.Drawing.GraphicsUnit]::Pixel)
+$previewGraphics.DrawImage($robotArm, [System.Drawing.Rectangle]::new(736, 288, 80, 160), 80, 0, 80, 160, [System.Drawing.GraphicsUnit]::Pixel)
+$previewGraphics.DrawImage($cargoPod, 608, 336, 56, 56)
 $previewGraphics.DrawImage($top, 0, 0, 960, 640)
 
 $previewPath = Join-Path $root 'weathered-biolab-ribosome-room-preview.png'
@@ -107,12 +113,14 @@ $top.Dispose()
 $factoryFrame.Dispose()
 $rail.Dispose()
 $cargoPod.Dispose()
+$robotArm.Dispose()
 
 $zipPath = Join-Path $root 'zep-weathered-biolab-ribosome-room-upload.zip'
 $uploadFiles = @(
   (Join-Path $app 'main.js'),
   (Join-Path $app 'ribosome-factory-line.png'),
   (Join-Path $app 'ribosome-conveyor-straight.png'),
+  (Join-Path $app 'ribosome-robot-arm-animated.png'),
   (Join-Path $app 'amino-acid-cargo-pod.png')
 )
 Compress-Archive -LiteralPath $uploadFiles -DestinationPath $zipPath -Force
