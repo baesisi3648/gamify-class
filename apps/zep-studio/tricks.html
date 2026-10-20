@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070b14" />
+  <title>방탈출 트릭 제작실 — ZEP 맵 공방</title>
+  <meta name="description" content="문구와 정답을 입력해 ZEP용 방탈출 트릭 이미지를 만드는 교사용 제작 도구" />
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/PretendardVariable.woff2" crossorigin />
+  <link rel="stylesheet" href="tricks.css" />
+</head>
+<body>
+  <header class="trick-topbar">
+    <a class="trick-brand" href="index.html"><span aria-hidden="true">T</span><b>ZEP 트릭 제작실<small>ESCAPE ROOM TOOLKIT</small></b></a>
+    <nav aria-label="ZEP 공방 메뉴">
+      <a href="index.html">맵 편집실</a>
+      <a href="genesis.html">프로젝트 제네시스</a>
+      <a class="active" href="tricks.html" aria-current="page">트릭 제작실</a>
+    </nav>
+  </header>
+
+  <main class="trick-page">
+    <section class="intro">
+      <div><span class="eyebrow">IMAGE TRICK MAKER</span><h1>문구만 바꾸면 완성되는<br /><em>방탈출 트릭 템플릿</em></h1></div>
+      <p>템플릿을 고르고 단서와 정답을 입력하세요. 한글이 정확하게 렌더링된 1280×720 PNG를 학생용 또는 교사용으로 바로 내려받을 수 있습니다.</p>
+    </section>
+
+    <section class="maker">
+      <aside class="template-pane">
+        <div class="pane-heading"><div><span>01</span><h2>트릭 선택</h2></div><b id="templateCount">10종</b></div>
+        <div class="category-tabs" id="categoryTabs" role="tablist" aria-label="트릭 분류">
+          <button class="active" type="button" data-category="all">전체</button>
+          <button type="button" data-category="code">암호</button>
+          <button type="button" data-category="document">문서</button>
+          <button type="button" data-category="visual">관찰</button>
+        </div>
+        <div class="template-list" id="templateList"></div>
+      </aside>
+
+      <section class="preview-pane">
+        <div class="preview-toolbar">
+          <div><span class="live-dot"></span><b>실시간 미리보기</b><small>1280 × 720 PNG</small></div>
+          <div class="preview-actions"><button id="resetButton" type="button">예시로 초기화</button><button class="primary" id="downloadButton" type="button">PNG 내려받기</button></div>
+        </div>
+        <div class="canvas-stage"><canvas id="trickCanvas" width="1280" height="720" aria-label="방탈출 트릭 이미지 미리보기"></canvas></div>
+        <div class="usage-strip"><span>① PNG 저장</span><i></i><span>② ZEP 오브젝트 업로드</span><i></i><span>③ 벽·책상·단말기에 배치</span></div>
+      </section>
+
+      <aside class="control-pane">
+        <div class="pane-heading"><div><span>02</span><h2>내용 편집</h2></div><b>자동 저장</b></div>
+        <form id="trickForm">
+          <label>제목<input id="titleInput" maxlength="34" autocomplete="off" /></label>
+          <label>단서 문장<textarea id="clueInput" rows="4" maxlength="150"></textarea></label>
+          <label>입력값·정답<input id="answerInput" maxlength="30" autocomplete="off" /></label>
+          <label>보조 안내<input id="hintInput" maxlength="70" autocomplete="off" /></label>
+          <div class="field-pair">
+            <label>난이도<select id="difficultyInput"><option>쉬움</option><option selected>보통</option><option>어려움</option></select></label>
+            <label>강조색<input id="colorInput" type="color" value="#50e3c2" /></label>
+          </div>
+          <label class="check-row"><input id="teacherInput" type="checkbox" /><span><b>교사용 정답 표시</b><small>학생용 이미지에는 정답을 숨깁니다.</small></span></label>
+          <label class="check-row"><input id="transparentInput" type="checkbox" checked /><span><b>바깥 배경 투명</b><small>ZEP 이미지 오브젝트에 적합합니다.</small></span></label>
+        </form>
+        <div class="teacher-tip"><span>교사 활용 팁</span><p id="teacherTip"></p></div>
+        <button class="download-all" id="downloadAllButton" type="button">10종 예시 PNG 모두 받기</button>
+      </aside>
+    </section>
+
+    <section class="guide">
+      <div class="guide-heading"><span class="eyebrow">TEMPLATE GUIDE</span><h2>어떤 상황에 쓰면 좋을까요?</h2><p>한 가지 정답만 맞히는 장치보다 서로 다른 관찰 방식을 섞으면 방탈출 흐름이 더 재미있어집니다.</p></div>
+      <div class="guide-grid" id="guideGrid"></div>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="tricks.js"></script>
+</body>
+</html>
