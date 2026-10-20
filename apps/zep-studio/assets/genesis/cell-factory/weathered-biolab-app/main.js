@@ -28,15 +28,15 @@ const robotArmSprite = App.loadSpritesheet(
 // 본체는 오른쪽 작업 구역에 두고 남서쪽을 향하도록 좌우 반전했습니다.
 // 대각선 레일의 끝점이 맞닿도록 남서쪽에서 북동쪽으로 이어 붙입니다.
 const railPositions = [
-  { x: 10, y: 14, key: 'weathered-biolab-rail-1' },
-  { x: 15, y: 12, key: 'weathered-biolab-rail-2' },
-  { x: 20, y: 10, key: 'weathered-biolab-rail-3' }
+  { x: 10, y: 15, key: 'weathered-biolab-rail-1' },
+  { x: 15, y: 13, key: 'weathered-biolab-rail-2' },
+  { x: 20, y: 11, key: 'weathered-biolab-rail-3' }
 ];
 
 const cargoRoute = [
-  { x: 20, y: 10, label: 'A 자리 · 아미노산 반입' },
-  { x: 15, y: 12, label: 'P 자리 · 펩타이드 결합' },
-  { x: 10, y: 14, label: '완성 단백질 배출' }
+  { x: 20, y: 11, label: 'A 자리 · 아미노산 반입' },
+  { x: 15, y: 13, label: 'P 자리 · 펩타이드 결합' },
+  { x: 10, y: 15, label: '완성 단백질 배출' }
 ];
 
 let initialized = false;
@@ -45,17 +45,17 @@ let routeIndex = 0;
 let routeDirection = 1;
 
 function placeRibosomeRoom() {
-  Map.putObjectWithKey(20, 8, factorySprite, {
+  Map.putObjectWithKey(25, 10, factorySprite, {
     key: FACTORY_KEY,
     overlap: true
   });
   Map.playObjectAnimationWithKey(FACTORY_KEY, 'work', -1);
 
-  Map.putObjectWithKey(17, 9, robotArmSprite, {
+  Map.putObjectWithKey(19, 9, robotArmSprite, {
     key: ARM_LEFT_KEY,
     overlap: true
   });
-  Map.putObjectWithKey(23, 9, robotArmSprite, {
+  Map.putObjectWithKey(21, 13, robotArmSprite, {
     key: ARM_RIGHT_KEY,
     overlap: true
   });
