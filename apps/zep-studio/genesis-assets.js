@@ -129,6 +129,14 @@ window.GENESIS_ASSETS = [
     prompt: '투명 배경의 ZEP용 아이소메트릭 3관절 정밀 로봇팔. 아미노산 화물과 tRNA 운반체를 다루는 리보솜 공장 장치.'
   },
   {
+    id: 'GEN-CELL-007', slug: 'ribosome-robot-arm-slow-loop', category: 'object', categoryLabel: '움직이는 오브젝트',
+    title: '천천히 움직이는 리보솜 기계팔', subtitle: '앱 없이 나의 오브젝트에 직접 놓는 반복 GIF',
+    thumbnail: 'assets/genesis/cell-factory/ribosome-robot-arm-slow-loop.gif', background: 'assets/genesis/cell-factory/ribosome-robot-arm-slow-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '80 × 160 · 0.29 MB', layers: '투명 GIF · 10프레임 · 무한 반복', tags: ['세포 공장', '기계팔', '반복 GIF', '앱 불필요', '느린 왕복'],
+    description: '6개의 작업 자세를 앞뒤로 이어 약 4.5초마다 천천히 왕복하는 기계팔입니다. ZEP의 나의 오브젝트에 GIF를 그대로 올린 뒤 원하는 위치에 직접 배치하세요.',
+    prompt: '아이보리색 SF 정밀 기계팔이 작업 위치를 향해 천천히 뻗었다가 원위치로 돌아오는 투명 배경 반복 애니메이션.'
+  },
+  {
     id: 'GEN-CELL-004', slug: 'ribosome-conveyor-straight', category: 'object', categoryLabel: '세포 공장',
     title: '리보솜 직선 이송 레일', subtitle: 'tRNA 운반체가 이동하는 모듈형 직선 컨베이어',
     thumbnail: 'assets/genesis/cell-factory/ribosome-conveyor-straight.png', background: 'assets/genesis/cell-factory/ribosome-conveyor-straight.png',
