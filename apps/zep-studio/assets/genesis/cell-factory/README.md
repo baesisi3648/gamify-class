@@ -9,6 +9,8 @@
 - `ribosome-conveyor-curve.png`: 90도 곡선 이송 레일
 - `amino-acid-cargo-pod.png`: 움직이는 아미노산 화물
 - `ribosome-conveyor-example.js`: ZEP Script 이동 예제
+- `zep-ribosome-factory-upload.zip`: ZEP에 바로 올리는 자동 생산 라인 앱
+- `zep-app/INSTALL.md`: 업로드와 좌표 변경 안내
 
 모든 PNG는 투명 배경입니다.
 
@@ -25,4 +27,6 @@
 레일 PNG 자체는 고정 배경 오브젝트입니다. 움직임이 필요한 tRNA 운반 로봇 또는 아미노산 화물 포드만 ZEP Script의 `Map.putObjectWithKey`와 `Map.moveObjectWithKey`로 이동시킵니다.
 
 현재 PNG는 한 프레임의 정적 오브젝트입니다. 로봇팔 관절이나 컨베이어 롤러 자체를 반복 애니메이션하려면 프레임별 스프라이트 시트를 별도로 제작한 뒤 `Map.playObjectAnimationWithKey`를 사용합니다.
+
+완성형 업로드 ZIP에는 리보솜 내부 애니메이션과 외부 포드 이동을 모두 포함했습니다.
 
