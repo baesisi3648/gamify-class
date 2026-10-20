@@ -455,13 +455,15 @@
   async function applyGenesisObject(kind){
     const objects={
       'space-shuttle':'탐사용 우주왕복선','lunar-lander':'달 착륙선','astronaut-explorer':'우주 탐사대원','astronaut-scientist':'우주 현장 연구원',
-      'helper-robot':'달 탐사 도우미 로봇','security-robot':'우주기지 경비 로봇','station-researcher':'우주기지 분석 연구원','astrobiology-researcher':'우주생물학 연구원'
-    },name=objects[kind];
+      'helper-robot':'달 탐사 도우미 로봇','security-robot':'우주기지 경비 로봇','station-researcher':'우주기지 분석 연구원','astrobiology-researcher':'우주생물학 연구원',
+      'ribosome-epa-assembly-station':'리보솜 E·P·A 조립 스테이션','trna-amino-acid-carrier':'tRNA 아미노산 운반 로봇','ribosome-robot-arm':'리보솜 작업 로봇팔',
+      'ribosome-conveyor-straight':'리보솜 직선 이송 레일','ribosome-conveyor-curve':'리보솜 곡선 이송 레일','amino-acid-cargo-pod':'아미노산 화물 포드'
+    },cellFactoryObjects=new Set(['ribosome-epa-assembly-station','trna-amino-acid-carrier','ribosome-robot-arm','ribosome-conveyor-straight','ribosome-conveyor-curve','amino-acid-cargo-pod']),name=objects[kind];
     if(!name)return;
     try{
-      const image=await imageFromURL(`assets/genesis/objects/${kind}.png`),temp=makeLayer(image.naturalWidth||image.width,image.naturalHeight||image.height),context=temp.getContext('2d');
+      const src=cellFactoryObjects.has(kind)?`assets/genesis/cell-factory/${kind}.png`:`assets/genesis/objects/${kind}.png`,image=await imageFromURL(src),temp=makeLayer(image.naturalWidth||image.width,image.naturalHeight||image.height),context=temp.getContext('2d');
       context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';context.drawImage(image,0,0);
-      const cropped=cropTransparent(temp,12);setupObject(cropped.width,cropped.height);state.objectCanvas.getContext('2d').drawImage(cropped,0,0);$('#objectName').value=name;setWorkspace('object');changed();toast(`'${name}' 오브젝트를 공방으로 가져왔습니다.`);
+      const cropped=cropTransparent(temp,12),scale=Math.min(1,768/cropped.width,768/cropped.height),width=Math.max(1,Math.round(cropped.width*scale)),height=Math.max(1,Math.round(cropped.height*scale));setupObject(width,height);state.objectCanvas.getContext('2d').drawImage(cropped,0,0,width,height);$('#objectName').value=name;setWorkspace('object');changed();toast(`'${name}' 오브젝트를 공방으로 가져왔습니다.`);
     }catch{toast('제네시스 오브젝트를 불러오지 못했습니다.');}
   }
   function safeName(s){return (s||'zep-map').trim().replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_').slice(0,60)||'zep-map';}

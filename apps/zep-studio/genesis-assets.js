@@ -105,6 +105,54 @@ window.GENESIS_ASSETS = [
     prompt: 'ZEP형 치비 여성 우주생물학 연구원. 흰 실험복, 주황색 우주기지 제복, 시료병과 데이터 패드, 투명 배경.'
   },
   {
+    id: 'GEN-CELL-001', slug: 'ribosome-epa-assembly-station', category: 'object', categoryLabel: '세포 공장',
+    title: '리보솜 E·P·A 조립 스테이션', subtitle: '단백질 합성의 세 자리를 공장 설비로 표현한 핵심 장치',
+    thumbnail: 'assets/genesis/cell-factory/ribosome-epa-assembly-station.png', background: 'assets/genesis/cell-factory/ribosome-epa-assembly-station.png',
+    editorUrl: 'index.html?workspace=object&object=ribosome-epa-assembly-station', size: '1536 × 1024', layers: '투명 PNG 1장', tags: ['세포 공장', '리보솜', 'E 자리', 'P 자리', 'A 자리', '단백질 합성'],
+    description: '왼쪽부터 청록색 E 자리(빈 tRNA 배출), 주황색 P 자리(폴리펩타이드 사슬 유지), 자홍색 A 자리(새 아미노아실-tRNA 반입)를 하나의 생산 라인으로 구성했습니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 리보솜 단백질 공장. E·P·A 세 작업 베이와 mRNA 이송 레일, tRNA 도킹 소켓을 갖춘 SF 연구 설비.'
+  },
+  {
+    id: 'GEN-CELL-002', slug: 'trna-amino-acid-carrier', category: 'object', categoryLabel: '세포 공장',
+    title: 'tRNA 아미노산 운반 로봇', subtitle: '아미노산을 A 자리로 가져오는 소형 자율 운반체',
+    thumbnail: 'assets/genesis/cell-factory/trna-amino-acid-carrier.png', background: 'assets/genesis/cell-factory/trna-amino-acid-carrier.png',
+    editorUrl: 'index.html?workspace=object&object=trna-amino-acid-carrier', size: '1254 × 1254', layers: '투명 PNG 1장', tags: ['세포 공장', 'tRNA', '아미노산', '운반 로봇', '이동 오브젝트'],
+    description: 'tRNA의 운반 기능을 로봇으로 의인화한 오브젝트입니다. 레일 위를 이동시켜 A 자리에 아미노산 화물을 공급하고, E 자리에서 빈 운반체가 빠져나오는 장면에 사용할 수 있습니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 tRNA 운반 로봇. 클로버 형태 프레임, 상단 아미노산 구체, 하단 도킹 장치.'
+  },
+  {
+    id: 'GEN-CELL-003', slug: 'ribosome-robot-arm', category: 'object', categoryLabel: '세포 공장',
+    title: '리보솜 작업 로봇팔', subtitle: 'A·P 자리에서 결합과 전달 작업을 수행하는 정밀 장치',
+    thumbnail: 'assets/genesis/cell-factory/ribosome-robot-arm.png', background: 'assets/genesis/cell-factory/ribosome-robot-arm.png',
+    editorUrl: 'index.html?workspace=object&object=ribosome-robot-arm', size: '1374 × 1145', layers: '투명 PNG 1장', tags: ['세포 공장', '로봇팔', '펩타이드 결합', 'A 자리', 'P 자리'],
+    description: '도착한 tRNA를 고정하고 아미노산을 이어 붙이는 과정을 정밀 로봇팔로 표현했습니다. 여러 개를 배치해 A·P·E 자리별 작업 흐름을 만들 수 있습니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 3관절 정밀 로봇팔. 아미노산 화물과 tRNA 운반체를 다루는 리보솜 공장 장치.'
+  },
+  {
+    id: 'GEN-CELL-004', slug: 'ribosome-conveyor-straight', category: 'object', categoryLabel: '세포 공장',
+    title: '리보솜 직선 이송 레일', subtitle: 'tRNA 운반체가 이동하는 모듈형 직선 컨베이어',
+    thumbnail: 'assets/genesis/cell-factory/ribosome-conveyor-straight.png', background: 'assets/genesis/cell-factory/ribosome-conveyor-straight.png',
+    editorUrl: 'index.html?workspace=object&object=ribosome-conveyor-straight', size: '1774 × 887', layers: '투명 PNG 1장', tags: ['세포 공장', '레일', '컨베이어', '직선', 'mRNA'],
+    description: '리보솜 방의 동선을 만드는 직선 레일입니다. 레일 이미지는 고정하고, tRNA 운반 로봇이나 화물 포드를 ZEP Script로 그 위에 이동시키는 방식으로 사용합니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 직선 컨베이어 레일. 흑연색 레일, 청록 조명, 아이보리 패널, 화물 없음.'
+  },
+  {
+    id: 'GEN-CELL-005', slug: 'ribosome-conveyor-curve', category: 'object', categoryLabel: '세포 공장',
+    title: '리보솜 곡선 이송 레일', subtitle: '생산 동선을 꺾어 주는 90도 컨베이어 모듈',
+    thumbnail: 'assets/genesis/cell-factory/ribosome-conveyor-curve.png', background: 'assets/genesis/cell-factory/ribosome-conveyor-curve.png',
+    editorUrl: 'index.html?workspace=object&object=ribosome-conveyor-curve', size: '1536 × 1024', layers: '투명 PNG 1장', tags: ['세포 공장', '레일', '컨베이어', '곡선', '동선'],
+    description: '직선 레일과 조합해 A 자리 반입선과 E 자리 배출선을 구분할 수 있는 90도 곡선 모듈입니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 90도 곡선 컨베이어 레일. 직선 레일과 동일한 SF 연구실 재질과 조명.'
+  },
+  {
+    id: 'GEN-CELL-006', slug: 'amino-acid-cargo-pod', category: 'object', categoryLabel: '세포 공장',
+    title: '아미노산 화물 포드', subtitle: '레일 위에서 이동하는 분자 화물 캡슐',
+    thumbnail: 'assets/genesis/cell-factory/amino-acid-cargo-pod.png', background: 'assets/genesis/cell-factory/amino-acid-cargo-pod.png',
+    editorUrl: 'index.html?workspace=object&object=amino-acid-cargo-pod', size: '1536 × 1024', layers: '투명 PNG 1장', tags: ['세포 공장', '아미노산', '화물', '포드', '이동 오브젝트'],
+    description: '아미노산 분자를 보호 캡슐에 넣은 이동 화물입니다. 레일 위에서 A 자리까지 움직이게 하거나 로봇팔이 집어 드는 목표물로 사용할 수 있습니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 아미노산 화물 포드. 분자 구체를 고정한 소형 레일 운반 플랫폼.'
+  },
+  {
     id: 'GEN-MAP-001', slug: 'space-corridor', category: 'map', categoryLabel: '맵 세트',
     title: '우주기지 복도', subtitle: '긴 이동 통로와 분리된 앞쪽 방호벽',
     thumbnail: 'assets/genesis/thumbs/space-corridor.jpg', background: 'assets/space-backgrounds/space-corridor.png', top: 'assets/space-backgrounds/space-corridor-top.png',
