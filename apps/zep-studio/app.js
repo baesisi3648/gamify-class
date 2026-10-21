@@ -455,7 +455,7 @@
   async function applyGenesisObject(kind){
     const objects={
       'space-shuttle':'탐사용 우주왕복선','lunar-lander':'달 착륙선','astronaut-explorer':'우주 탐사대원','astronaut-scientist':'우주 현장 연구원',
-      'helper-robot':'달 탐사 도우미 로봇','security-robot':'우주기지 경비 로봇','dormant-nuclear-loader-robot':'휴면 핵물질 적재 로봇','station-researcher':'우주기지 분석 연구원','astrobiology-researcher':'우주생물학 연구원',
+      'helper-robot':'달 탐사 도우미 로봇','security-robot':'우주기지 경비 로봇','dormant-nuclear-loader-robot-grounded':'휴면 핵물질 적재 로봇','dormant-nuclear-launch-platform':'휴면 핵 발사대','station-researcher':'우주기지 분석 연구원','astrobiology-researcher':'우주생물학 연구원',
       'ribosome-epa-assembly-station':'리보솜 E·P·A 조립 스테이션','trna-amino-acid-carrier':'tRNA 아미노산 운반 로봇','ribosome-robot-arm':'리보솜 작업 로봇팔',
       'ribosome-conveyor-straight':'리보솜 직선 이송 레일','ribosome-conveyor-curve':'리보솜 곡선 이송 레일','amino-acid-cargo-pod':'아미노산 화물 포드'
     },cellFactoryObjects=new Set(['ribosome-epa-assembly-station','trna-amino-acid-carrier','ribosome-robot-arm','ribosome-conveyor-straight','ribosome-conveyor-curve','amino-acid-cargo-pod']),name=objects[kind];

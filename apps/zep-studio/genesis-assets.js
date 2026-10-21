@@ -89,12 +89,20 @@ window.GENESIS_ASSETS = [
     prompt: 'ZEP형 치비 경비 로봇. 흑연색 장갑, 주황색 바이저와 표시등, 방패형 스캐너, 투명 배경.'
   },
   {
-    id: 'GEN-OBJ-009', slug: 'dormant-nuclear-loader-robot', category: 'object', categoryLabel: '오브젝트',
+    id: 'GEN-OBJ-009', slug: 'dormant-nuclear-loader-robot-grounded', category: 'object', categoryLabel: '오브젝트',
     title: '휴면 핵물질 적재 로봇', subtitle: '밀폐된 핵물질 용기를 발사체로 운반하는 휴면형 중장비 로봇',
-    thumbnail: 'assets/genesis/objects/dormant-nuclear-loader-robot.png', background: 'assets/genesis/objects/dormant-nuclear-loader-robot.png',
-    editorUrl: 'index.html?workspace=object&object=dormant-nuclear-loader-robot', size: '1024 × 683 · 0.73 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['로봇', '핵물질', '적재 장치', '발사체', '휴면 상태'],
-    description: '달 기지에서 밀폐형 핵물질 용기를 발사체 적재 구역으로 운반하는 무인 중장비입니다. 두 적재팔과 고정 클램프가 접혀 있고 화면이 꺼진 채 작은 대기등만 켜져 있어 장기간 휴면 중인 상태를 표현했습니다.',
+    thumbnail: 'assets/genesis/objects/dormant-nuclear-loader-robot-grounded.png', background: 'assets/genesis/objects/dormant-nuclear-loader-robot-grounded.png',
+    editorUrl: 'index.html?workspace=object&object=dormant-nuclear-loader-robot-grounded', size: '1024 × 683 · 0.72 MB', layers: '접지 그림자 포함 투명 PNG 1장', tags: ['로봇', '핵물질', '적재 장치', '발사체', '휴면 상태'],
+    description: '달 기지에서 밀폐형 핵물질 용기를 발사체 적재 구역으로 운반하는 무인 중장비입니다. 두 적재팔과 고정 클램프가 접혀 있고 화면이 꺼진 채 작은 대기등만 켜져 있어 장기간 휴면 중인 상태를 표현했습니다. 투명 바닥에 은은한 접지 그림자를 넣어 ZEP 맵에서 떠 보이지 않습니다.',
     prompt: '투명 배경의 ZEP형 아이소메트릭 핵물질 적재 로봇. 낮은 궤도형 차체, 접힌 적재팔, 밀폐 용기와 고정 클램프, 꺼진 화면, 희미한 주황색 대기등, 낡은 달 기지 장비.'
+  },
+  {
+    id: 'GEN-OBJ-010', slug: 'dormant-nuclear-launch-platform', category: 'object', categoryLabel: '오브젝트',
+    title: '휴면 핵 발사대', subtitle: '적재 로봇의 밀폐 용기를 장착하는 폐쇄형 달 기지 발사 장치',
+    thumbnail: 'assets/genesis/objects/dormant-nuclear-launch-platform.png', background: 'assets/genesis/objects/dormant-nuclear-launch-platform.png',
+    editorUrl: 'index.html?workspace=object&object=dormant-nuclear-launch-platform', size: '1024 × 683 · 0.92 MB', layers: '접지 그림자 포함 투명 PNG 1장', tags: ['핵 발사대', '달 기지', '적재구', '휴면 상태', '발사 장치'],
+    description: '휴면 적재 로봇이 운반한 밀폐 용기를 앞쪽 원형 적재구에 넣는 가상의 달 기지 발사대입니다. 발사관과 고정 장치가 모두 잠겨 있고 화면이 꺼진 채 대기등만 남아 있어 비가동 상태로 배치할 수 있습니다.',
+    prompt: '투명 배경의 ZEP형 아이소메트릭 휴면 핵 발사대. 원형 측면 적재구, 기울어진 밀폐 발사관, 고정 클램프, 접힌 정비 구조물, 꺼진 화면, 희미한 주황색 대기등, 부드러운 접지 그림자.'
   },
   {
     id: 'GEN-OBJ-007', slug: 'station-researcher', category: 'object', categoryLabel: '오브젝트',
