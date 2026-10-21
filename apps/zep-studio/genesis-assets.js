@@ -89,6 +89,14 @@ window.GENESIS_ASSETS = [
     prompt: 'ZEP형 치비 경비 로봇. 흑연색 장갑, 주황색 바이저와 표시등, 방패형 스캐너, 투명 배경.'
   },
   {
+    id: 'GEN-OBJ-009', slug: 'dormant-nuclear-loader-robot', category: 'object', categoryLabel: '오브젝트',
+    title: '휴면 핵물질 적재 로봇', subtitle: '밀폐된 핵물질 용기를 발사체로 운반하는 휴면형 중장비 로봇',
+    thumbnail: 'assets/genesis/objects/dormant-nuclear-loader-robot.png', background: 'assets/genesis/objects/dormant-nuclear-loader-robot.png',
+    editorUrl: 'index.html?workspace=object&object=dormant-nuclear-loader-robot', size: '1024 × 683 · 0.73 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['로봇', '핵물질', '적재 장치', '발사체', '휴면 상태'],
+    description: '달 기지에서 밀폐형 핵물질 용기를 발사체 적재 구역으로 운반하는 무인 중장비입니다. 두 적재팔과 고정 클램프가 접혀 있고 화면이 꺼진 채 작은 대기등만 켜져 있어 장기간 휴면 중인 상태를 표현했습니다.',
+    prompt: '투명 배경의 ZEP형 아이소메트릭 핵물질 적재 로봇. 낮은 궤도형 차체, 접힌 적재팔, 밀폐 용기와 고정 클램프, 꺼진 화면, 희미한 주황색 대기등, 낡은 달 기지 장비.'
+  },
+  {
     id: 'GEN-OBJ-007', slug: 'station-researcher', category: 'object', categoryLabel: '오브젝트',
     title: '우주기지 분석 연구원', subtitle: '태블릿을 든 안경 쓴 연구원',
     thumbnail: 'assets/genesis/objects/station-researcher.png', background: 'assets/genesis/objects/station-researcher.png',
