@@ -458,12 +458,18 @@
       'helper-robot':'달 탐사 도우미 로봇','security-robot':'우주기지 경비 로봇','dormant-nuclear-loader-robot-grounded':'휴면 핵물질 적재 로봇','dormant-nuclear-launch-platform':'휴면 핵 발사대','station-researcher':'우주기지 분석 연구원','astrobiology-researcher':'우주생물학 연구원',
       'ribosome-epa-assembly-station':'리보솜 E·P·A 조립 스테이션','trna-amino-acid-carrier':'tRNA 아미노산 운반 로봇','ribosome-robot-arm':'리보솜 작업 로봇팔',
       'ribosome-conveyor-straight':'리보솜 직선 이송 레일','ribosome-conveyor-curve':'리보솜 곡선 이송 레일','amino-acid-cargo-pod':'아미노산 화물 포드'
-    },cellFactoryObjects=new Set(['ribosome-epa-assembly-station','trna-amino-acid-carrier','ribosome-robot-arm','ribosome-conveyor-straight','ribosome-conveyor-curve','amino-acid-cargo-pod']),name=objects[kind];
+    },cellFactoryObjects=new Set(['ribosome-epa-assembly-station','trna-amino-acid-carrier','ribosome-robot-arm','ribosome-conveyor-straight','ribosome-conveyor-curve','amino-acid-cargo-pod']),objectMaxSizes={
+      'nucleus-command-core':480,'dna-genomic-data-archive':230,'nucleolus-fabrication-core':240,'nuclear-pore-gateway':180,'chromatin-data-spool-rack':240
+    };
+    Object.assign(objects,{
+      'nucleus-command-core':'핵 이중막 통제 코어','dna-genomic-data-archive':'DNA 유전체 데이터 보관소','nucleolus-fabrication-core':'인 조립·생산 코어','nuclear-pore-gateway':'핵공 수송 게이트','chromatin-data-spool-rack':'염색질 데이터 스풀 보관대'
+    });
+    const name=objects[kind];
     if(!name)return;
     try{
       const src=cellFactoryObjects.has(kind)?`assets/genesis/cell-factory/${kind}.png`:`assets/genesis/objects/${kind}.png`,image=await imageFromURL(src),temp=makeLayer(image.naturalWidth||image.width,image.naturalHeight||image.height),context=temp.getContext('2d');
       context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';context.drawImage(image,0,0);
-      const cropped=cropTransparent(temp,12),scale=Math.min(1,768/cropped.width,768/cropped.height),width=Math.max(1,Math.round(cropped.width*scale)),height=Math.max(1,Math.round(cropped.height*scale));setupObject(width,height);state.objectCanvas.getContext('2d').drawImage(cropped,0,0,width,height);$('#objectName').value=name;setWorkspace('object');changed();toast(`'${name}' 오브젝트를 공방으로 가져왔습니다.`);
+      const cropped=cropTransparent(temp,12),maxSize=objectMaxSizes[kind]||768,scale=Math.min(1,maxSize/cropped.width,maxSize/cropped.height),width=Math.max(1,Math.round(cropped.width*scale)),height=Math.max(1,Math.round(cropped.height*scale));setupObject(width,height);state.objectCanvas.getContext('2d').drawImage(cropped,0,0,width,height);$('#objectName').value=name;setWorkspace('object');changed();toast(`'${name}' 오브젝트를 공방으로 가져왔습니다.`);
     }catch{toast('제네시스 오브젝트를 불러오지 못했습니다.');}
   }
   function safeName(s){return (s||'zep-map').trim().replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_').slice(0,60)||'zep-map';}

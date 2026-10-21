@@ -105,6 +105,46 @@ window.GENESIS_ASSETS = [
     prompt: '투명 배경의 ZEP형 아이소메트릭 휴면 핵 발사대. 원형 측면 적재구, 기울어진 밀폐 발사관, 고정 클램프, 접힌 정비 구조물, 꺼진 화면, 희미한 주황색 대기등, 부드러운 접지 그림자.'
   },
   {
+    id: 'GEN-NUC-001', slug: 'nucleus-command-core', category: 'object', categoryLabel: '핵 방',
+    title: '핵 이중막 통제 코어', subtitle: '핵막과 중앙 관제 시스템을 결합한 핵 방의 중심 오브젝트',
+    thumbnail: 'assets/genesis/objects/nucleus-command-core.png', background: 'assets/genesis/objects/nucleus-command-core.png',
+    editorUrl: 'index.html?workspace=object&object=nucleus-command-core', size: '1024 × 683', layers: '접지 그림자 포함 투명 PNG 1장', tags: ['핵 방', '핵막', '이중막', '통제 센터', 'DNA'],
+    description: '핵의 이중막을 두 겹의 원형 관제 링으로 표현하고, 핵공처럼 보이는 출입 모듈과 다수의 컴퓨터 콘솔을 배치했습니다. 중앙 DNA 홀로그램이 유전 정보 통제를 상징합니다. 공방에서는 방 중앙용 480px 크기로 불러옵니다.',
+    prompt: '투명 배경의 ZEP형 아이소메트릭 핵 통제 센터. 원형 이중 핵막, 핵공 출입구, 낡은 컴퓨터 콘솔, 중앙 DNA 홀로그램, 아이보리 금속과 청록 조명.'
+  },
+  {
+    id: 'GEN-NUC-002', slug: 'dna-genomic-data-archive', category: 'object', categoryLabel: '핵 방',
+    title: 'DNA 유전체 데이터 보관소', subtitle: '염색체 데이터를 세 개의 발광 캡슐에 저장한 기록 장치',
+    thumbnail: 'assets/genesis/objects/dna-genomic-data-archive.png', background: 'assets/genesis/objects/dna-genomic-data-archive.png',
+    editorUrl: 'index.html?workspace=object&object=dna-genomic-data-archive', size: '1024 × 683', layers: '접지 그림자 포함 투명 PNG 1장', tags: ['핵 방', 'DNA', '유전체', '염색체', '데이터 보관'],
+    description: '서로 다른 염색체 데이터를 보관하는 세 개의 DNA 캡슐과 분석 콘솔입니다. 핵 방의 뒤쪽 벽이나 좌우 보조 구역에 1~2개 배치하면 유전 정보 저장소 역할이 분명해집니다. 공방 권장 크기는 230px입니다.',
+    prompt: '투명 배경의 ZEP형 아이소메트릭 DNA 데이터 보관소. 세 개의 유리 캡슐, 청록·보라색 이중나선, 분석 콘솔, 낡은 우주 관제실 재질.'
+  },
+  {
+    id: 'GEN-NUC-003', slug: 'nucleolus-fabrication-core', category: 'object', categoryLabel: '핵 방',
+    title: '인 조립·생산 코어', subtitle: '리보솜 구성 요소를 생산해 내보내는 핵 속 제조 장치',
+    thumbnail: 'assets/genesis/objects/nucleolus-fabrication-core.png', background: 'assets/genesis/objects/nucleolus-fabrication-core.png',
+    editorUrl: 'index.html?workspace=object&object=nucleolus-fabrication-core', size: '1024 × 683', layers: '접지 그림자 포함 투명 PNG 1장', tags: ['핵 방', '인', '리보솜', '생산 장치', 'rRNA'],
+    description: '핵 속 인에서 rRNA와 리보솜 소단위체가 만들어지는 과정을 구형 생산 코어와 세 개의 배출 라인으로 표현했습니다. 중앙 코어 옆 생산 구역에 두면 좋으며 공방 권장 크기는 240px입니다.',
+    prompt: '투명 배경의 ZEP형 아이소메트릭 인 생산 장치. 보라색 구형 코어, 세 개의 리보솜 소단위체 배출 라인, 낡은 아이보리 우주 장비, 청록 조명.'
+  },
+  {
+    id: 'GEN-NUC-004', slug: 'nuclear-pore-gateway', category: 'object', categoryLabel: '핵 방',
+    title: '핵공 수송 게이트', subtitle: '핵막 안팎의 물질 이동을 통제하는 선택적 출입문',
+    thumbnail: 'assets/genesis/objects/nuclear-pore-gateway.png', background: 'assets/genesis/objects/nuclear-pore-gateway.png',
+    editorUrl: 'index.html?workspace=object&object=nuclear-pore-gateway', size: '1024 × 683', layers: '접지 그림자 포함 투명 PNG 1장', tags: ['핵 방', '핵공', '선택적 수송', '게이트', '출입문'],
+    description: '핵공 복합체의 고리 구조를 여덟 개 잠금 모듈과 발광 수송 통로로 재해석했습니다. 출입구나 이중막 링의 끊어진 지점에 배치해 핵막의 선택적 투과를 보여 줍니다. 공방 권장 크기는 180px입니다.',
+    prompt: '투명 배경의 ZEP형 아이소메트릭 핵공 수송 게이트. 원형 이중 링, 여덟 개 단백질 잠금 모듈, 청록색 통로, 작은 검사 콘솔.'
+  },
+  {
+    id: 'GEN-NUC-005', slug: 'chromatin-data-spool-rack', category: 'object', categoryLabel: '핵 방',
+    title: '염색질 데이터 스풀 보관대', subtitle: 'DNA가 단백질 스풀에 감긴 구조를 데이터 릴로 표현한 장치',
+    thumbnail: 'assets/genesis/objects/chromatin-data-spool-rack.png', background: 'assets/genesis/objects/chromatin-data-spool-rack.png',
+    editorUrl: 'index.html?workspace=object&object=chromatin-data-spool-rack', size: '1024 × 683', layers: '접지 그림자 포함 투명 PNG 1장', tags: ['핵 방', '염색질', '히스톤', 'DNA 포장', '데이터 릴'],
+    description: 'DNA가 히스톤 단백질에 감겨 염색질을 이루는 모습을 네 개의 발광 데이터 릴로 표현했습니다. 벽면 기록 구역에 반복 배치하면 핵 속에 방대한 유전 정보가 저장된 느낌을 줄 수 있습니다. 공방 권장 크기는 240px입니다.',
+    prompt: '투명 배경의 ZEP형 아이소메트릭 염색질 데이터 스풀 랙. 네 개의 보라·청록 발광 릴, 히스톤 클램프, 분석 콘솔, 낡은 우주 관제실 재질.'
+  },
+  {
     id: 'GEN-OBJ-007', slug: 'station-researcher', category: 'object', categoryLabel: '오브젝트',
     title: '우주기지 분석 연구원', subtitle: '태블릿을 든 안경 쓴 연구원',
     thumbnail: 'assets/genesis/objects/station-researcher.png', background: 'assets/genesis/objects/station-researcher.png',
