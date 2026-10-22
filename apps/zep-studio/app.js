@@ -458,12 +458,17 @@
       'helper-robot':'달 탐사 도우미 로봇','security-robot':'우주기지 경비 로봇','dormant-nuclear-loader-robot-grounded':'휴면 핵물질 적재 로봇','dormant-nuclear-launch-platform':'휴면 핵 발사대','station-researcher':'우주기지 분석 연구원','astrobiology-researcher':'우주생물학 연구원',
       'rough-er-protein-processing-system':'거친면 소포체 단백질 가공 시스템','smooth-er-calcium-reservoir':'매끈면 소포체 칼슘 이온 저장소',
       'golgi-modification-stack':'골지체 단계별 가공 스택','golgi-vesicle-sorting-packaging-terminal':'골지체 수송 소낭 분류·포장 터미널','downsized-human-biocapsule-packaging-unit':'다운사이징 인체 생명유지 포장 장치',
+      'lysosome-acidic-digestion-reactor':'라이소솜 산성 효소 분해 반응로','synthetic-biopart-dismantling-station':'합성 생체 부품 해체 스테이션','failed-synthetic-human-recovery-capsule':'불량 합성 인체 회수·재처리 캡슐',
+      'lysosome-modular-conveyor-straight':'라이소솜 연결용 직선 이송 레일',
+      'lysosome-conveyor-curve-left':'라이소솜 좌회전 곡선 레일','lysosome-conveyor-curve-right':'라이소솜 우회전 곡선 레일','lysosome-conveyor-t-junction':'라이소솜 T자 분기 레일',
       'ribosome-epa-assembly-station':'리보솜 E·P·A 조립 스테이션','trna-amino-acid-carrier':'tRNA 아미노산 운반 로봇','ribosome-robot-arm':'리보솜 작업 로봇팔',
       'ribosome-conveyor-straight':'리보솜 직선 이송 레일','ribosome-conveyor-curve':'리보솜 곡선 이송 레일','amino-acid-cargo-pod':'아미노산 화물 포드'
     },cellFactoryObjects=new Set(['ribosome-epa-assembly-station','trna-amino-acid-carrier','ribosome-robot-arm','ribosome-conveyor-straight','ribosome-conveyor-curve','amino-acid-cargo-pod']),objectMaxSizes={
       'nucleus-command-core':480,'dna-genomic-data-archive':230,'nucleolus-fabrication-core':240,'nuclear-pore-gateway':180,'chromatin-data-spool-rack':240,
       'rough-er-protein-processing-system':430,'smooth-er-calcium-reservoir':360,
-      'golgi-modification-stack':430,'golgi-vesicle-sorting-packaging-terminal':410,'downsized-human-biocapsule-packaging-unit':400
+      'golgi-modification-stack':430,'golgi-vesicle-sorting-packaging-terminal':410,'downsized-human-biocapsule-packaging-unit':400,
+      'lysosome-acidic-digestion-reactor':410,'synthetic-biopart-dismantling-station':420,'failed-synthetic-human-recovery-capsule':400,'lysosome-modular-conveyor-straight':460,
+      'lysosome-conveyor-curve-left':430,'lysosome-conveyor-curve-right':430,'lysosome-conveyor-t-junction':430
     };
     Object.assign(objects,{
       'nucleus-command-core':'핵 이중막 통제 코어','dna-genomic-data-archive':'DNA 유전체 데이터 보관소','nucleolus-fabrication-core':'인 조립·생산 코어','nuclear-pore-gateway':'핵공 수송 게이트','chromatin-data-spool-rack':'염색질 데이터 스풀 보관대'

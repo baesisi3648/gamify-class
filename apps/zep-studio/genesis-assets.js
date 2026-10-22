@@ -265,6 +265,118 @@ window.GENESIS_ASSETS = [
     prompt: '다운사이징 인체 생명유지 캡슐을 유지하고 링 조명 맥동, 내부 스캔선, 출고 레일 신호만 추가한 투명 반복 애니메이션.'
   },
   {
+    id: 'GEN-LYS-001', slug: 'lysosome-acidic-digestion-reactor', category: 'object', categoryLabel: '라이소솜 방',
+    title: '라이소솜 산성 효소 분해 반응로', subtitle: '불량 합성 물질을 산성 효소로 분해하고 재생 원료를 회수하는 밀폐 반응로',
+    thumbnail: 'assets/genesis/objects/lysosome-acidic-digestion-reactor.png', background: 'assets/genesis/objects/lysosome-acidic-digestion-reactor.png',
+    editorUrl: 'index.html?workspace=object&object=lysosome-acidic-digestion-reactor', size: '1024 × 683 · 1.20 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['라이소솜 방', '산성 효소', '분해', '재활용', '생체 폐기물'],
+    description: '밀폐된 주황색 반응조에서 불량 합성 물질을 작은 분자로 분해하고 청록색 재생 원료로 회수하는 장치입니다. 라이소솜의 가수분해 기능을 폐기물 재처리 공장으로 표현했습니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 라이소솜 산성 분해 반응로. 밀폐된 주황색 효소 반응조, 불량 합성 물질 투입구, 청록색 분자 원료 배출 컨베이어.'
+  },
+  {
+    id: 'GEN-LYS-002', slug: 'lysosome-acidic-digestion-reactor-loop', category: 'object', categoryLabel: '움직이는 라이소솜',
+    title: '움직이는 산성 효소 분해 반응로', subtitle: '효소 기포가 상승하고 회수된 분자 원료가 배출되는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/lysosome-acidic-digestion-reactor-loop.gif', background: 'assets/genesis/objects/lysosome-acidic-digestion-reactor-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['라이소솜 방', '효소 기포', '분자 회수', '반복 GIF', 'ZEP 업로드'],
+    description: '반응조 내부의 효소 기포가 올라가고 분해가 끝난 청록색 분자 원료가 출구로 이동합니다. ZEP에 GIF 오브젝트로 바로 올릴 수 있습니다.',
+    prompt: '라이소솜 산성 분해 반응로를 유지하고 주황색 효소 기포 상승과 청록색 회수 분자의 배출 움직임만 추가한 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-LYS-003', slug: 'synthetic-biopart-dismantling-station', category: 'object', categoryLabel: '라이소솜 방',
+    title: '합성 생체 부품 해체 스테이션', subtitle: '폐기된 인공장기 캡슐과 의수·의족을 밀폐 장치에서 분해하는 자가포식 라인',
+    thumbnail: 'assets/genesis/objects/synthetic-biopart-dismantling-station.png', background: 'assets/genesis/objects/synthetic-biopart-dismantling-station.png',
+    editorUrl: 'index.html?workspace=object&object=synthetic-biopart-dismantling-station', size: '1024 × 683 · 1.08 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['라이소솜 방', '인공장기', '의수', '의족', '자가포식'],
+    description: '명확히 기계로 보이는 의수·의족과 밀폐된 인공장기 캡슐을 로봇팔이 회수해 분해기에 넣습니다. 피나 상처 없이 세포의 자가포식과 손상 소기관 제거를 설명할 수 있습니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 합성 생체 부품 해체 공장. 인공 의수와 의족, 밀폐 장기 캡슐, 로봇팔, 주황색 밀폐 분해기. 실제 신체나 상처는 없음.'
+  },
+  {
+    id: 'GEN-LYS-004', slug: 'synthetic-biopart-dismantling-station-loop', category: 'object', categoryLabel: '움직이는 라이소솜',
+    title: '움직이는 합성 생체 부품 해체기', subtitle: '회수 부품이 투입되고 밀폐 분해 코어가 작동하는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/synthetic-biopart-dismantling-station-loop.gif', background: 'assets/genesis/objects/synthetic-biopart-dismantling-station-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['라이소솜 방', '합성 부품', '해체 장치', '반복 GIF', 'ZEP 업로드'],
+    description: '회수된 합성 부품이 투입구로 움직이고 밀폐된 분해 코어 안에서 주황색 처리 신호가 회전합니다. 모든 부품은 인공물로 표현했습니다.',
+    prompt: '합성 생체 부품 해체 스테이션을 유지하고 투입되는 청록색 회수 신호와 밀폐 분해 코어의 주황색 작동 불빛만 추가한 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-LYS-005', slug: 'failed-synthetic-human-recovery-capsule', category: 'object', categoryLabel: '라이소솜 방',
+    title: '불량 합성 인체 회수·재처리 캡슐', subtitle: '실패한 다운사이징 인공 개체를 빛 입자와 분자 원료로 환원하는 비밀 공정',
+    thumbnail: 'assets/genesis/objects/failed-synthetic-human-recovery-capsule.png', background: 'assets/genesis/objects/failed-synthetic-human-recovery-capsule.png',
+    editorUrl: 'index.html?workspace=object&object=failed-synthetic-human-recovery-capsule', size: '1024 × 683 · 1.18 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['라이소솜 방', '다운사이징 인류', '불량 개체', '분자 재활용', '스토리 단서'],
+    description: '얼굴과 신원이 없는 보호복형 합성 개체가 밀폐 캡슐 안에서 빛 입자와 분자 아이콘으로 환원됩니다. 폭력적인 훼손 대신 제네시스 계획의 어두운 재활용 공정을 상징적으로 보여 주는 핵심 단서입니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 불량 합성 인체 회수 캡슐. 완전히 밀폐된 주황색 튜브, 얼굴 없는 보호복형 인공 개체, 청록색 빛 입자와 분자 원료, 로봇 감시팔. 피와 상처 없음.'
+  },
+  {
+    id: 'GEN-LYS-006', slug: 'failed-synthetic-human-recovery-capsule-loop', category: 'object', categoryLabel: '움직이는 라이소솜',
+    title: '움직이는 합성 인체 재처리 캡슐', subtitle: '스캔선과 분자 환원 신호가 반복되는 제네시스 비밀 공정 GIF',
+    thumbnail: 'assets/genesis/objects/failed-synthetic-human-recovery-capsule-loop.gif', background: 'assets/genesis/objects/failed-synthetic-human-recovery-capsule-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['라이소솜 방', '합성 인체', '재처리 캡슐', '반복 GIF', 'ZEP 업로드'],
+    description: '청록색 스캔선이 밀폐 캡슐을 지나고 분자 회수 신호가 출구로 이동합니다. 인체 훼손을 보여 주지 않으면서 실패 개체가 재활용된다는 반전을 전달합니다.',
+    prompt: '불량 합성 인체 회수 캡슐을 유지하고 청록색 스캔선, 주황색 상태 링, 출구로 이동하는 분자 빛 신호만 추가한 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-LYS-007', slug: 'lysosome-modular-conveyor-straight', category: 'object', categoryLabel: '라이소솜 방',
+    title: '라이소솜 연결용 직선 이송 레일', subtitle: '분해 반응로와 해체기, 회수 캡슐을 같은 높이로 이어 주는 빈 모듈형 컨베이어',
+    thumbnail: 'assets/genesis/objects/lysosome-modular-conveyor-straight.png', background: 'assets/genesis/objects/lysosome-modular-conveyor-straight.png',
+    editorUrl: 'index.html?workspace=object&object=lysosome-modular-conveyor-straight', size: '1024 × 512 · 0.53 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['라이소솜 방', '연결 레일', '직선 컨베이어', '모듈', '고정 PNG'],
+    description: '라이소솜 장치들의 레일 높이와 색상을 맞춘 빈 직선 연결 모듈입니다. 여러 장을 끝과 끝이 맞닿게 배치해 긴 폐기물 이송 라인을 만들 수 있습니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 라이소솜 직선 컨베이어. 아이보리 금속 프레임, 검은 롤러, 청록색 가이드 조명과 주황색 격리 표시. 양쪽 끝이 같은 높이로 이어지는 빈 모듈.'
+  },
+  {
+    id: 'GEN-LYS-008', slug: 'lysosome-modular-conveyor-straight-loop', category: 'object', categoryLabel: '움직이는 라이소솜',
+    title: '움직이는 라이소솜 연결 레일', subtitle: '밀폐된 합성 폐기물 캡슐이 레일을 따라 이동하는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/lysosome-modular-conveyor-straight-loop.gif', background: 'assets/genesis/objects/lysosome-modular-conveyor-straight-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['라이소솜 방', '움직이는 레일', '폐기물 캡슐', '반복 GIF', 'ZEP 업로드'],
+    description: '고정 레일과 동일한 외형 위로 색상별 밀폐 폐기물 캡슐이 이동합니다. 고정 PNG와 번갈아 사용하거나 연속 배치하면 장치 사이의 생산 라인이 살아 움직이는 것처럼 보입니다.',
+    prompt: '라이소솜 직선 연결 레일은 그대로 유지하고 아이보리 밀폐 캡슐 세 개가 청록·주황·자홍색 상태등을 켠 채 한 방향으로 이동하는 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-LYS-009', slug: 'lysosome-conveyor-curve-left', category: 'object', categoryLabel: '라이소솜 방',
+    title: '라이소솜 좌회전 곡선 레일', subtitle: '직선 이송선을 왼쪽 방향으로 연결하는 빈 90도 곡선 컨베이어',
+    thumbnail: 'assets/genesis/objects/lysosome-conveyor-curve-left.png', background: 'assets/genesis/objects/lysosome-conveyor-curve-left.png',
+    editorUrl: 'index.html?workspace=object&object=lysosome-conveyor-curve-left', size: '1024 × 683 · 0.66 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['라이소솜 방', '좌회전 레일', '곡선 컨베이어', '연결 모듈', '고정 PNG'],
+    description: '직선 레일과 같은 폭·높이·재질로 설계한 좌회전 곡선 모듈입니다. 장치 배치를 피해 이송선을 꺾거나 방의 동선을 둘러 연결할 때 사용합니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 라이소솜 좌회전 90도 컨베이어. 아이보리 금속 프레임, 검은 롤러, 청록색 가이드 조명과 주황색 경고등, 양 끝 동일 연결 규격.'
+  },
+  {
+    id: 'GEN-LYS-010', slug: 'lysosome-conveyor-curve-left-loop', category: 'object', categoryLabel: '움직이는 라이소솜',
+    title: '움직이는 좌회전 곡선 레일', subtitle: '밀폐 폐기물 캡슐이 곡선을 따라 방향을 바꾸는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/lysosome-conveyor-curve-left-loop.gif', background: 'assets/genesis/objects/lysosome-conveyor-curve-left-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['라이소솜 방', '좌회전 레일', '움직이는 컨베이어', '반복 GIF', 'ZEP 업로드'],
+    description: '주황색과 청록색 밀폐 캡슐이 좌회전 곡선의 실제 경로를 따라 이동합니다.',
+    prompt: '좌회전 곡선 레일은 그대로 유지하고 밀폐 폐기물 캡슐 두 개가 곡선을 따라 방향을 바꾸는 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-LYS-011', slug: 'lysosome-conveyor-curve-right', category: 'object', categoryLabel: '라이소솜 방',
+    title: '라이소솜 우회전 곡선 레일', subtitle: '직선 이송선을 오른쪽 방향으로 연결하는 빈 90도 곡선 컨베이어',
+    thumbnail: 'assets/genesis/objects/lysosome-conveyor-curve-right.png', background: 'assets/genesis/objects/lysosome-conveyor-curve-right.png',
+    editorUrl: 'index.html?workspace=object&object=lysosome-conveyor-curve-right', size: '1024 × 683 · 0.63 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['라이소솜 방', '우회전 레일', '곡선 컨베이어', '연결 모듈', '고정 PNG'],
+    description: '좌회전 레일의 반대 방향으로 꺾이는 우회전 연결 모듈입니다. 두 곡선 레일을 조합해 S자형 이송선도 만들 수 있습니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 라이소솜 우회전 90도 컨베이어. 아이보리 금속 프레임, 검은 롤러, 청록색 가이드 조명과 주황색 경고등, 양 끝 동일 연결 규격.'
+  },
+  {
+    id: 'GEN-LYS-012', slug: 'lysosome-conveyor-curve-right-loop', category: 'object', categoryLabel: '움직이는 라이소솜',
+    title: '움직이는 우회전 곡선 레일', subtitle: '밀폐 폐기물 캡슐이 반대 방향 곡선을 통과하는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/lysosome-conveyor-curve-right-loop.gif', background: 'assets/genesis/objects/lysosome-conveyor-curve-right-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['라이소솜 방', '우회전 레일', '움직이는 컨베이어', '반복 GIF', 'ZEP 업로드'],
+    description: '청록색과 자홍색 밀폐 캡슐이 우회전 곡선의 실제 경로를 따라 이동합니다.',
+    prompt: '우회전 곡선 레일은 그대로 유지하고 밀폐 폐기물 캡슐 두 개가 반대 방향 곡선을 따라 이동하는 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-LYS-013', slug: 'lysosome-conveyor-t-junction', category: 'object', categoryLabel: '라이소솜 방',
+    title: '라이소솜 T자 분기 레일', subtitle: '하나의 폐기물 이송선을 두 개의 처리 장치로 나누는 3방향 분기 컨베이어',
+    thumbnail: 'assets/genesis/objects/lysosome-conveyor-t-junction.png', background: 'assets/genesis/objects/lysosome-conveyor-t-junction.png',
+    editorUrl: 'index.html?workspace=object&object=lysosome-conveyor-t-junction', size: '1024 × 683 · 0.67 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['라이소솜 방', 'T자 분기', '분류 레일', '3방향', '고정 PNG'],
+    description: '동일 규격의 세 연결구와 중앙 분기 코어가 있는 T자 레일입니다. 산성 반응로와 부품 해체기 등 두 목적지로 폐기물을 나누는 장면에 적합합니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 라이소솜 T자 컨베이어. 세 방향 동일 연결구, 중앙 로봇 분기판, 아이보리 프레임, 검은 롤러, 청록색과 주황색 조명.'
+  },
+  {
+    id: 'GEN-LYS-014', slug: 'lysosome-conveyor-t-junction-loop', category: 'object', categoryLabel: '움직이는 라이소솜',
+    title: '움직이는 T자 분기 레일', subtitle: '두 폐기물 캡슐이 중앙에서 서로 다른 출구로 분기되는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/lysosome-conveyor-t-junction-loop.gif', background: 'assets/genesis/objects/lysosome-conveyor-t-junction-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['라이소솜 방', 'T자 분기', '분류 컨베이어', '반복 GIF', 'ZEP 업로드'],
+    description: '중앙 분기 코어가 맥동하고 두 밀폐 캡슐이 각각 다른 처리 방향으로 나뉘어 이동합니다.',
+    prompt: 'T자 분기 레일은 그대로 유지하고 중앙 코어의 청록색 맥동과 두 밀폐 폐기물 캡슐의 서로 다른 출구 이동을 추가한 투명 반복 애니메이션.'
+  },
+  {
     id: 'GEN-OBJ-007', slug: 'station-researcher', category: 'object', categoryLabel: '오브젝트',
     title: '우주기지 분석 연구원', subtitle: '태블릿을 든 안경 쓴 연구원',
     thumbnail: 'assets/genesis/objects/station-researcher.png', background: 'assets/genesis/objects/station-researcher.png',
