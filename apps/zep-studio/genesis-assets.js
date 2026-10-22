@@ -89,6 +89,14 @@ window.GENESIS_ASSETS = [
     prompt: 'ZEP형 치비 경비 로봇. 흑연색 장갑, 주황색 바이저와 표시등, 방패형 스캐너, 투명 배경.'
   },
   {
+    id: 'GEN-OBJ-006B', slug: 'security-robot-back', category: 'object', categoryLabel: '오브젝트',
+    title: '우주기지 경비 로봇 · 뒷모습', subtitle: '기존 경비 로봇과 짝을 이루는 반대 방향 3/4 후면',
+    thumbnail: 'assets/genesis/objects/security-robot-back.png', background: 'assets/genesis/objects/security-robot-back.png',
+    editorUrl: 'index.html?workspace=object&object=security-robot-back', size: '990 × 1024 · 0.86 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['로봇', '경비', '뒷모습', '후면', '방향 전환'],
+    description: '기존 우주기지 경비 로봇이 카메라 반대쪽을 바라보는 실제 3/4 후면입니다. 뒤통수 장갑, 후면 전원 모듈, 발뒤꿈치와 주황색 상태등을 보여 주며 앞모습과 함께 방향별 NPC로 배치할 수 있습니다.',
+    prompt: '기존 우주기지 경비 로봇의 동일한 체형과 장갑을 유지한 반대 방향 3/4 뒷모습. 아이보리와 흑연색 장갑, 후면 전원 모듈, 주황색 상태등, 같은 팔의 방패형 스캐너, 투명 배경.'
+  },
+  {
     id: 'GEN-ROBOT-001', slug: 'genesis-worker-robot-idle', category: 'object', categoryLabel: '통합 작업 로봇',
     title: '통합 작업 로봇 · 기본 대기', subtitle: '연구기지 전 구역에 공통 배치하는 표준 작업 기종',
     thumbnail: 'assets/genesis/objects/genesis-worker-robot-idle.png', background: 'assets/genesis/objects/genesis-worker-robot-idle.png',
