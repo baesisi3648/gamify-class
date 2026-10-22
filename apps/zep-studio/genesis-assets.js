@@ -217,6 +217,54 @@ window.GENESIS_ASSETS = [
     prompt: '매끈면 소포체 저장 탱크 속 청백색 칼슘 이온이 천천히 상승하고 중앙 방출 코어가 점멸하는 투명 배경 반복 애니메이션.'
   },
   {
+    id: 'GEN-GOLGI-001', slug: 'golgi-modification-stack', category: 'object', categoryLabel: '골지체 방',
+    title: '골지체 단계별 가공 스택', subtitle: '소포체에서 온 물질을 순서대로 수정하고 완성품으로 만드는 다층 가공 설비',
+    thumbnail: 'assets/genesis/objects/golgi-modification-stack.png', background: 'assets/genesis/objects/golgi-modification-stack.png',
+    editorUrl: 'index.html?workspace=object&object=golgi-modification-stack', size: '1024 × 683 · 1.28 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['골지체 방', '단백질 가공', '시스면', '트랜스면', '수송 소낭'],
+    description: '소포체에서 들어온 청록색 수송 소낭이 여러 층의 골지체 가공 라인을 거치며 자홍색과 금색의 완성 물질로 변하는 과정을 공장 설비로 표현했습니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 골지체 가공 공장. 청록색 입력 소낭, 여러 겹의 가공 수조와 로봇 장치, 자홍색과 금색 완성 소낭.'
+  },
+  {
+    id: 'GEN-GOLGI-002', slug: 'golgi-modification-stack-loop', category: 'object', categoryLabel: '움직이는 골지체',
+    title: '움직이는 골지체 가공 스택', subtitle: '물질이 각 층을 지나며 색과 상태가 바뀌는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/golgi-modification-stack-loop.gif', background: 'assets/genesis/objects/golgi-modification-stack-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['골지체 방', '단계별 가공', '수송 소낭', '반복 GIF', 'ZEP 업로드'],
+    description: '청록색 원료가 골지체 층을 따라 이동하면서 보라색 중간체와 금색 완성품으로 바뀝니다. ZEP 오브젝트로 직접 올려 가공 라인의 작동을 보여 줄 수 있습니다.',
+    prompt: '골지체 다층 가공 설비를 유지하고, 층을 따라 이동하며 청록색에서 보라색과 금색으로 변하는 물질만 추가한 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-GOLGI-003', slug: 'golgi-vesicle-sorting-packaging-terminal', category: 'object', categoryLabel: '골지체 방',
+    title: '수송 소낭 분류·포장 터미널', subtitle: '가공이 끝난 물질에 목적지 표지를 붙이고 배송 노선별 소낭으로 포장하는 설비',
+    thumbnail: 'assets/genesis/objects/golgi-vesicle-sorting-packaging-terminal.png', background: 'assets/genesis/objects/golgi-vesicle-sorting-packaging-terminal.png',
+    editorUrl: 'index.html?workspace=object&object=golgi-vesicle-sorting-packaging-terminal', size: '1024 × 683 · 1.26 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['골지체 방', '분류', '포장', '수송 소낭', '목적지 표지'],
+    description: '중앙 스캐너가 완성 물질을 검사하고 네 갈래 로봇팔과 컨베이어가 목적지별 색상의 수송 소낭에 담는 출하 터미널입니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 골지체 분류 포장 터미널. 중앙 스캐너, 네 갈래 로봇팔, 색상별 목적지 소낭과 짧은 컨베이어.'
+  },
+  {
+    id: 'GEN-GOLGI-004', slug: 'golgi-vesicle-sorting-packaging-terminal-loop', category: 'object', categoryLabel: '움직이는 골지체',
+    title: '움직이는 소낭 분류·포장 터미널', subtitle: '중앙 스캐너와 네 갈래 배송 라인이 차례로 작동하는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/golgi-vesicle-sorting-packaging-terminal-loop.gif', background: 'assets/genesis/objects/golgi-vesicle-sorting-packaging-terminal-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['골지체 방', '소낭 분류', '배송', '반복 GIF', 'ZEP 업로드'],
+    description: '중앙 분류 코어가 맥동하고 색상별 화물이 각 배송 레일을 따라 이동합니다. 골지체가 물질을 목적지에 맞게 분류한다는 개념을 시각화합니다.',
+    prompt: '골지체 분류 포장 터미널을 유지하고 중앙 코어의 맥동과 네 갈래 레일을 이동하는 색상별 화물만 추가한 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-GOLGI-005', slug: 'downsized-human-biocapsule-packaging-unit', category: 'object', categoryLabel: '골지체 방',
+    title: '다운사이징 인체 생명유지 포장 장치', subtitle: '완성된 소형 인체를 생명유지 캡슐에 밀봉하고 출고하는 제네시스 최종 공정',
+    thumbnail: 'assets/genesis/objects/downsized-human-biocapsule-packaging-unit.png', background: 'assets/genesis/objects/downsized-human-biocapsule-packaging-unit.png',
+    editorUrl: 'index.html?workspace=object&object=downsized-human-biocapsule-packaging-unit', size: '1024 × 683 · 1.17 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['골지체 방', '다운사이징 인류', '생명유지 캡슐', '최종 포장', '스토리 오브젝트'],
+    description: '정체를 알아볼 수 없는 소형 보호복 인체가 청록색 생명유지 캡슐에 봉인되고 로봇팔의 검사를 거쳐 출고되는 비폭력적 SF 장치입니다. 세포 공장의 진짜 목적을 드러내는 핵심 단서로 사용할 수 있습니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 생명유지 포장 설비. 얼굴을 식별할 수 없는 소형 보호복 인체, 밀폐형 청록 캡슐, 봉인 로봇팔과 출고 레일. 비폭력적이고 교육적인 SF 표현.'
+  },
+  {
+    id: 'GEN-GOLGI-006', slug: 'downsized-human-biocapsule-packaging-unit-loop', category: 'object', categoryLabel: '움직이는 골지체',
+    title: '움직이는 다운사이징 인체 포장 장치', subtitle: '생체 스캔과 캡슐 밀봉, 출고 표시가 반복되는 최종 공정 GIF',
+    thumbnail: 'assets/genesis/objects/downsized-human-biocapsule-packaging-unit-loop.gif', background: 'assets/genesis/objects/downsized-human-biocapsule-packaging-unit-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['골지체 방', '다운사이징 인류', '생명유지 캡슐', '반복 GIF', 'ZEP 업로드'],
+    description: '캡슐의 상태등이 맥동하고 스캔선이 내부를 통과한 뒤 출고 신호가 레일을 따라 움직입니다. 골지체 방 퍼즐을 해결한 뒤 최종 생산물의 정체를 공개하는 연출에 적합합니다.',
+    prompt: '다운사이징 인체 생명유지 캡슐을 유지하고 링 조명 맥동, 내부 스캔선, 출고 레일 신호만 추가한 투명 반복 애니메이션.'
+  },
+  {
     id: 'GEN-OBJ-007', slug: 'station-researcher', category: 'object', categoryLabel: '오브젝트',
     title: '우주기지 분석 연구원', subtitle: '태블릿을 든 안경 쓴 연구원',
     thumbnail: 'assets/genesis/objects/station-researcher.png', background: 'assets/genesis/objects/station-researcher.png',
