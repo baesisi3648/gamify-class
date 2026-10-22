@@ -145,6 +145,38 @@ window.GENESIS_ASSETS = [
     prompt: '투명 배경의 ZEP형 아이소메트릭 염색질 데이터 스풀 랙. 네 개의 보라·청록 발광 릴, 히스톤 클램프, 분석 콘솔, 낡은 우주 관제실 재질.'
   },
   {
+    id: 'GEN-ER-001', slug: 'rough-er-protein-processing-system', category: 'object', categoryLabel: '소포체 방',
+    title: '거친면 소포체 단백질 가공 시스템', subtitle: '단백질 유입·접힘·품질검사·소낭 배출을 이어 주는 막성 가공 설비',
+    thumbnail: 'assets/genesis/objects/rough-er-protein-processing-system.png', background: 'assets/genesis/objects/rough-er-protein-processing-system.png',
+    editorUrl: 'index.html?workspace=object&object=rough-er-protein-processing-system', size: '1024 × 683 · 1.47 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['소포체 방', '거친면 소포체', '단백질 가공', '단백질 접힘', '품질검사'],
+    description: '막 표면의 여러 도킹 노드는 리보솜을, 내부 발광 라인은 새 단백질이 소포체 안으로 들어와 접히고 품질검사를 받은 뒤 수송 소낭으로 나가는 과정을 나타냅니다. 방 중앙에 320~430px 크기로 배치하면 단백질 가공 공장의 핵심 설비가 됩니다.',
+    prompt: '투명 배경의 ZEP형 아이소메트릭 거친면 소포체 단백질 가공 공장. 굽은 막성 통로, 표면 리보솜 도킹 노드, 단백질 접힘 챔버, 품질검사 스캐너, 수송 소낭 배출구.'
+  },
+  {
+    id: 'GEN-ER-002', slug: 'rough-er-protein-processing-system-loop', category: 'object', categoryLabel: '움직이는 소포체',
+    title: '움직이는 거친면 소포체 가공 시스템', subtitle: '단백질 입자가 가공 라인을 따라 이동하는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/rough-er-protein-processing-system-loop.gif', background: 'assets/genesis/objects/rough-er-protein-processing-system-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.59 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['소포체 방', '거친면 소포체', '단백질 이동', '반복 GIF', '앱 불필요'],
+    description: '세 가공 통로를 따라 자홍색 단백질 입자가 이동하고 품질검사 링이 점멸합니다. ZEP의 나의 오브젝트에 GIF를 그대로 업로드하면 별도 앱 없이 반복 재생됩니다.',
+    prompt: '거친면 소포체 가공 설비의 막성 통로를 따라 발광 단백질 입자가 천천히 흐르고 검사 장치가 점멸하는 투명 배경 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-ER-003', slug: 'smooth-er-calcium-reservoir', category: 'object', categoryLabel: '소포체 방',
+    title: '매끈면 소포체 칼슘 이온 저장소', subtitle: '연결된 관형 막과 저장 탱크로 칼슘 이온을 보관·방출하는 설비',
+    thumbnail: 'assets/genesis/objects/smooth-er-calcium-reservoir.png', background: 'assets/genesis/objects/smooth-er-calcium-reservoir.png',
+    editorUrl: 'index.html?workspace=object&object=smooth-er-calcium-reservoir', size: '1024 × 683 · 1.47 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['소포체 방', '매끈면 소포체', '칼슘 이온', '저장소', '방출 펌프'],
+    description: '매끈면 소포체의 연결된 관형 구조를 여러 저장 탱크와 펌프 밸브로 재해석했습니다. 청백색 구체는 저장된 칼슘 이온을 나타내며 방 옆쪽 보조 구역에 260~360px 크기로 배치하기 좋습니다.',
+    prompt: '투명 배경의 ZEP형 아이소메트릭 매끈면 소포체 칼슘 저장소. 연결된 관형 막, 투명 저장 탱크, 칼슘 이온 구체, 충전 펌프와 방출 밸브.'
+  },
+  {
+    id: 'GEN-ER-004', slug: 'smooth-er-calcium-reservoir-loop', category: 'object', categoryLabel: '움직이는 소포체',
+    title: '움직이는 칼슘 이온 저장소', subtitle: '저장 탱크 속 칼슘 이온과 방출 코어가 맥동하는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/smooth-er-calcium-reservoir-loop.gif', background: 'assets/genesis/objects/smooth-er-calcium-reservoir-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.59 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['소포체 방', '매끈면 소포체', '칼슘 이온', '반복 GIF', '앱 불필요'],
+    description: '여러 저장 탱크 안에서 칼슘 이온이 상승하고 중앙 방출 코어가 천천히 맥동합니다. ZEP의 나의 오브젝트에 GIF를 그대로 올려 저장·방출 장면을 만들 수 있습니다.',
+    prompt: '매끈면 소포체 저장 탱크 속 청백색 칼슘 이온이 천천히 상승하고 중앙 방출 코어가 점멸하는 투명 배경 반복 애니메이션.'
+  },
+  {
     id: 'GEN-OBJ-007', slug: 'station-researcher', category: 'object', categoryLabel: '오브젝트',
     title: '우주기지 분석 연구원', subtitle: '태블릿을 든 안경 쓴 연구원',
     thumbnail: 'assets/genesis/objects/station-researcher.png', background: 'assets/genesis/objects/station-researcher.png',
