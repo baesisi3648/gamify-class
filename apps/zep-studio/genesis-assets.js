@@ -145,6 +145,46 @@ window.GENESIS_ASSETS = [
     prompt: '투명 배경의 ZEP형 아이소메트릭 염색질 데이터 스풀 랙. 네 개의 보라·청록 발광 릴, 히스톤 클램프, 분석 콘솔, 낡은 우주 관제실 재질.'
   },
   {
+    id: 'GEN-NUC-006', slug: 'nucleus-command-core-loop', category: 'object', categoryLabel: '움직이는 핵 방',
+    title: '움직이는 핵 통제 코어', subtitle: 'DNA 홀로그램 입자와 중앙 관제 링이 천천히 순환하는 반복 GIF',
+    thumbnail: 'assets/genesis/objects/nucleus-command-core-loop.gif', background: 'assets/genesis/objects/nucleus-command-core-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.59 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['핵 방', 'DNA', '통제 코어', '반복 GIF', '앱 불필요'],
+    description: '기존 핵 이중막 통제 코어의 형태는 유지하면서 중앙 DNA 홀로그램 주변의 에너지 입자와 관제 링이 순환하도록 만들었습니다. ZEP의 나의 오브젝트에 GIF를 그대로 업로드하세요.',
+    prompt: '기존 핵 이중막 통제 코어를 그대로 유지하고 중앙 DNA 홀로그램 입자와 청록색 관제 링만 천천히 순환시키는 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-NUC-007', slug: 'dna-genomic-data-archive-loop', category: 'object', categoryLabel: '움직이는 핵 방',
+    title: '움직이는 DNA 유전체 보관소', subtitle: '세 캡슐 안의 유전체 신호가 차례로 상승하는 반복 GIF',
+    thumbnail: 'assets/genesis/objects/dna-genomic-data-archive-loop.gif', background: 'assets/genesis/objects/dna-genomic-data-archive-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.59 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['핵 방', 'DNA', '유전체 캡슐', '반복 GIF', '앱 불필요'],
+    description: '기존 세 DNA 캡슐 안에서 유전체 신호가 서로 다른 순서로 위쪽을 향해 이동합니다. 유전 정보가 계속 읽히고 저장되는 장면을 나타냅니다.',
+    prompt: '기존 DNA 유전체 보관소를 그대로 유지하고 세 투명 캡슐 안의 발광 유전체 신호만 순차적으로 상승시키는 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-NUC-008', slug: 'nucleolus-fabrication-core-loop', category: 'object', categoryLabel: '움직이는 핵 방',
+    title: '움직이는 인 생산 코어', subtitle: '리보솜 소단위체가 세 배출 라인으로 이동하는 반복 GIF',
+    thumbnail: 'assets/genesis/objects/nucleolus-fabrication-core-loop.gif', background: 'assets/genesis/objects/nucleolus-fabrication-core-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.59 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['핵 방', '인', '리보솜 소단위체', '반복 GIF', '앱 불필요'],
+    description: '중앙 인 생산 코어가 맥동하고 새로 만들어진 리보솜 소단위체가 세 방향의 배출 라인을 따라 이동합니다.',
+    prompt: '기존 인 생산 코어를 그대로 유지하고 중앙 보라색 코어의 맥동과 세 배출 라인을 따라 이동하는 리보솜 소단위체만 추가한 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-NUC-009', slug: 'nuclear-pore-gateway-loop', category: 'object', categoryLabel: '움직이는 핵 방',
+    title: '움직이는 핵공 수송 게이트', subtitle: '수송 입자가 포털 주변을 순환하고 통로가 맥동하는 반복 GIF',
+    thumbnail: 'assets/genesis/objects/nuclear-pore-gateway-loop.gif', background: 'assets/genesis/objects/nuclear-pore-gateway-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.59 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['핵 방', '핵공', '선택적 수송', '반복 GIF', '앱 불필요'],
+    description: '기존 핵공 게이트의 원형 구조를 따라 수송 입자가 회전하고 청록색 통로가 천천히 맥동합니다. 핵 안팎의 선택적 물질 이동을 보여 줍니다.',
+    prompt: '기존 핵공 수송 게이트를 그대로 유지하고 원형 통로를 따라 이동하는 입자와 청록색 포털의 맥동만 추가한 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-NUC-010', slug: 'chromatin-data-spool-rack-loop', category: 'object', categoryLabel: '움직이는 핵 방',
+    title: '움직이는 염색질 데이터 스풀', subtitle: '발광 데이터 띠가 네 개의 릴을 차례로 통과하는 반복 GIF',
+    thumbnail: 'assets/genesis/objects/chromatin-data-spool-rack-loop.gif', background: 'assets/genesis/objects/chromatin-data-spool-rack-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.59 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['핵 방', '염색질', '데이터 스풀', '반복 GIF', '앱 불필요'],
+    description: '기존 염색질 스풀 보관대의 네 릴을 따라 청록색 데이터 빛띠가 이동합니다. DNA가 감기고 풀리며 사용되는 느낌을 표현합니다.',
+    prompt: '기존 염색질 데이터 스풀 보관대를 그대로 유지하고 네 릴의 표면을 따라 이동하는 청록색 데이터 빛띠만 추가한 투명 반복 애니메이션.'
+  },
+  {
     id: 'GEN-ER-001', slug: 'rough-er-protein-processing-system', category: 'object', categoryLabel: '소포체 방',
     title: '거친면 소포체 단백질 가공 시스템', subtitle: '단백질 유입·접힘·품질검사·소낭 배출을 이어 주는 막성 가공 설비',
     thumbnail: 'assets/genesis/objects/rough-er-protein-processing-system.png', background: 'assets/genesis/objects/rough-er-protein-processing-system.png',
