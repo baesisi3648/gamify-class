@@ -456,7 +456,7 @@
     const objects={
       'space-shuttle':'탐사용 우주왕복선','lunar-lander':'달 착륙선','astronaut-explorer':'우주 탐사대원','astronaut-scientist':'우주 현장 연구원',
       'helper-robot':'달 탐사 도우미 로봇','security-robot':'우주기지 경비 로봇','dormant-nuclear-loader-robot-grounded':'휴면 핵물질 적재 로봇','dormant-nuclear-launch-platform':'휴면 핵 발사대','station-researcher':'우주기지 분석 연구원','astrobiology-researcher':'우주생물학 연구원',
-      'genesis-worker-robot-idle':'통합 작업 로봇 · 기본 대기','genesis-worker-robot-walking':'통합 작업 로봇 · 이동','genesis-worker-robot-console':'통합 작업 로봇 · 콘솔 조작','genesis-worker-robot-carrying':'통합 작업 로봇 · 화물 운반','genesis-worker-robot-maintenance':'통합 작업 로봇 · 설비 정비','genesis-worker-robot-alert':'통합 작업 로봇 · 경계 스캔',
+      'genesis-worker-robot-idle':'통합 작업 로봇 · 기본 대기','genesis-worker-robot-walking':'통합 작업 로봇 · 이동','genesis-worker-robot-console':'통합 작업 로봇 · 콘솔 조작','genesis-worker-robot-carrying':'통합 작업 로봇 · 화물 운반','genesis-worker-robot-maintenance':'통합 작업 로봇 · 설비 정비','genesis-worker-robot-alert':'통합 작업 로봇 · 경계 스캔','monitor-service-robot-omniwheel':'소형 모니터 서비스 로봇',
       'rough-er-protein-processing-system':'거친면 소포체 단백질 가공 시스템','smooth-er-calcium-reservoir':'매끈면 소포체 칼슘 이온 저장소',
       'golgi-modification-stack':'골지체 단계별 가공 스택','golgi-vesicle-sorting-packaging-terminal':'골지체 수송 소낭 분류·포장 터미널','downsized-human-biocapsule-packaging-unit':'다운사이징 인체 생명유지 포장 장치','downsized-synthetic-human-formation-hangar':'다운사이징 합성 인체 격납 대열',
       'lysosome-acidic-digestion-reactor':'라이소솜 산성 효소 분해 반응로','synthetic-biopart-dismantling-station':'합성 생체 부품 해체 스테이션','failed-synthetic-human-recovery-capsule':'불량 합성 인체 회수·재처리 캡슐',
@@ -472,7 +472,7 @@
       'lysosome-acidic-digestion-reactor':410,'synthetic-biopart-dismantling-station':420,'failed-synthetic-human-recovery-capsule':400,'lysosome-modular-conveyor-straight':460,
       'lysosome-conveyor-curve-left':430,'lysosome-conveyor-curve-right':430,'lysosome-conveyor-t-junction':430,
       'cytoskeleton-microtubule-cargo-highway':450,'cytoskeleton-actin-contraction-rig':430,'cytoskeleton-intermediate-filament-scaffold':400,
-      'genesis-worker-robot-idle':220,'genesis-worker-robot-walking':220,'genesis-worker-robot-console':250,'genesis-worker-robot-carrying':225,'genesis-worker-robot-maintenance':255,'genesis-worker-robot-alert':240
+      'genesis-worker-robot-idle':220,'genesis-worker-robot-walking':220,'genesis-worker-robot-console':250,'genesis-worker-robot-carrying':225,'genesis-worker-robot-maintenance':255,'genesis-worker-robot-alert':240,'monitor-service-robot-omniwheel':220
     };
     Object.assign(objects,{
       'nucleus-command-core':'핵 이중막 통제 코어','dna-genomic-data-archive':'DNA 유전체 데이터 보관소','nucleolus-fabrication-core':'인 조립·생산 코어','nuclear-pore-gateway':'핵공 수송 게이트','chromatin-data-spool-rack':'염색질 데이터 스풀 보관대'

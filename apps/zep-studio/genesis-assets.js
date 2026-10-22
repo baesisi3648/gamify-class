@@ -131,6 +131,14 @@ window.GENESIS_ASSETS = [
     description: '무기 없이 손목 스캐너로 위험 요소를 탐지하는 자세입니다. 라이소솜 폐기 구역, 격리실, 비상 경보 장면에 사용할 수 있습니다.'
   },
   {
+    id: 'GEN-ROBOT-007', slug: 'monitor-service-robot-omniwheel', category: 'object', categoryLabel: '통합 작업 로봇',
+    title: '소형 모니터 서비스 로봇', subtitle: '진단 화면과 세 개의 옴니휠을 갖춘 이동형 기지 단말',
+    thumbnail: 'assets/genesis/objects/monitor-service-robot-omniwheel.png', background: 'assets/genesis/objects/monitor-service-robot-omniwheel.png',
+    editorUrl: 'index.html?workspace=object&object=monitor-service-robot-omniwheel', size: '990 × 1024 · 1.08 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['ZEP형 로봇', '모니터', '서비스 로봇', '옴니휠', '이동 단말'],
+    description: '청록색 진단 화면, 짧은 작업팔, 삼각형으로 배치된 세 개의 옴니휠을 갖춘 소형 기지 로봇입니다. 사람형 작업 로봇보다 작게 배치해 안내 단말, 장비 점검, 자료 운반용 NPC로 활용할 수 있습니다.',
+    prompt: '프로젝트 제네시스용 독창적인 소형 산업용 서비스 로봇. 아이보리와 흑연색 몸체, 얼굴 대신 청록색 진단 모니터, 짧은 작업팔, 세 개의 옴니휠, 주황색 경고등, 투명 배경. 기존 영화 캐릭터의 고유 외형은 사용하지 않음.'
+  },
+  {
     id: 'GEN-OBJ-009', slug: 'dormant-nuclear-loader-robot-grounded', category: 'object', categoryLabel: '오브젝트',
     title: '휴면 핵물질 적재 로봇', subtitle: '밀폐된 핵물질 용기를 발사체로 운반하는 휴면형 중장비 로봇',
     thumbnail: 'assets/genesis/objects/dormant-nuclear-loader-robot-grounded.png', background: 'assets/genesis/objects/dormant-nuclear-loader-robot-grounded.png',
