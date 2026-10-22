@@ -89,6 +89,48 @@ window.GENESIS_ASSETS = [
     prompt: 'ZEP형 치비 경비 로봇. 흑연색 장갑, 주황색 바이저와 표시등, 방패형 스캐너, 투명 배경.'
   },
   {
+    id: 'GEN-ROBOT-001', slug: 'genesis-worker-robot-idle', category: 'object', categoryLabel: '통합 작업 로봇',
+    title: '통합 작업 로봇 · 기본 대기', subtitle: '연구기지 전 구역에 공통 배치하는 표준 작업 기종',
+    thumbnail: 'assets/genesis/objects/genesis-worker-robot-idle.png', background: 'assets/genesis/objects/genesis-worker-robot-idle.png',
+    editorUrl: 'index.html?workspace=object&object=genesis-worker-robot-idle', size: '990 × 1024', layers: '투명 PNG 1장', tags: ['ZEP형 로봇', '연구기지', '통합 디자인', '대기'],
+    description: 'ZEP 캐릭터와 어울리는 약 3등신의 짧고 단단한 체형에 무표정 바이저와 각진 산업용 장갑을 적용했습니다. 각 방의 로봇을 같은 기종으로 통일할 때 기준이 되는 대기 자세입니다.'
+  },
+  {
+    id: 'GEN-ROBOT-002', slug: 'genesis-worker-robot-walking', category: 'object', categoryLabel: '통합 작업 로봇',
+    title: '통합 작업 로봇 · 이동', subtitle: '복도 순찰과 작업 구역 이동을 표현하는 걷기 자세',
+    thumbnail: 'assets/genesis/objects/genesis-worker-robot-walking.png', background: 'assets/genesis/objects/genesis-worker-robot-walking.png',
+    editorUrl: 'index.html?workspace=object&object=genesis-worker-robot-walking', size: '989 × 1024', layers: '투명 PNG 1장', tags: ['ZEP형 로봇', '걷기', '순찰', '이동'],
+    description: '표준 기종의 외형을 유지한 이동 자세입니다. 복도, 물류 통로, 연구실 사이를 오가는 작업 로봇으로 배치할 수 있습니다.'
+  },
+  {
+    id: 'GEN-ROBOT-003', slug: 'genesis-worker-robot-console', category: 'object', categoryLabel: '통합 작업 로봇',
+    title: '통합 작업 로봇 · 콘솔 조작', subtitle: '연구 장비와 제어 단말을 운용하는 작업 자세',
+    thumbnail: 'assets/genesis/objects/genesis-worker-robot-console.png', background: 'assets/genesis/objects/genesis-worker-robot-console.png',
+    editorUrl: 'index.html?workspace=object&object=genesis-worker-robot-console', size: '989 × 1024', layers: '투명 PNG 1장', tags: ['ZEP형 로봇', '콘솔', '제어', '연구실'],
+    description: '같은 로봇이 소형 제어 콘솔을 조작하는 자세입니다. 핵 통제실, 소포체 가공실, 골지체 포장실 등 장치 앞에 놓기 좋습니다.'
+  },
+  {
+    id: 'GEN-ROBOT-004', slug: 'genesis-worker-robot-carrying', category: 'object', categoryLabel: '통합 작업 로봇',
+    title: '통합 작업 로봇 · 화물 운반', subtitle: '밀폐 시료 상자를 옮기는 물류 자세',
+    thumbnail: 'assets/genesis/objects/genesis-worker-robot-carrying.png', background: 'assets/genesis/objects/genesis-worker-robot-carrying.png',
+    editorUrl: 'index.html?workspace=object&object=genesis-worker-robot-carrying', size: '989 × 1024', layers: '투명 PNG 1장', tags: ['ZEP형 로봇', '화물', '시료', '물류'],
+    description: '표준 작업 로봇이 밀폐형 시료 상자를 양손으로 운반합니다. 리보솜, 소포체, 골지체로 이어지는 생산 공정의 물류 장면에 사용할 수 있습니다.'
+  },
+  {
+    id: 'GEN-ROBOT-005', slug: 'genesis-worker-robot-maintenance', category: 'object', categoryLabel: '통합 작업 로봇',
+    title: '통합 작업 로봇 · 설비 정비', subtitle: '바닥 장치와 배선을 점검하는 무릎 자세',
+    thumbnail: 'assets/genesis/objects/genesis-worker-robot-maintenance.png', background: 'assets/genesis/objects/genesis-worker-robot-maintenance.png',
+    editorUrl: 'index.html?workspace=object&object=genesis-worker-robot-maintenance', size: '989 × 1024', layers: '투명 PNG 1장', tags: ['ZEP형 로봇', '정비', '점검', '설비'],
+    description: '한쪽 무릎을 꿇고 열린 점검 패널을 진단하는 자세입니다. 고장 난 연구 장비나 방탈출 단서 주변에 배치하기 좋습니다.'
+  },
+  {
+    id: 'GEN-ROBOT-006', slug: 'genesis-worker-robot-alert', category: 'object', categoryLabel: '통합 작업 로봇',
+    title: '통합 작업 로봇 · 경계 스캔', subtitle: '위험 구역을 탐지하는 비무장 경계 자세',
+    thumbnail: 'assets/genesis/objects/genesis-worker-robot-alert.png', background: 'assets/genesis/objects/genesis-worker-robot-alert.png',
+    editorUrl: 'index.html?workspace=object&object=genesis-worker-robot-alert', size: '989 × 1024', layers: '투명 PNG 1장', tags: ['ZEP형 로봇', '경계', '스캔', '위험 감지'],
+    description: '무기 없이 손목 스캐너로 위험 요소를 탐지하는 자세입니다. 라이소솜 폐기 구역, 격리실, 비상 경보 장면에 사용할 수 있습니다.'
+  },
+  {
     id: 'GEN-OBJ-009', slug: 'dormant-nuclear-loader-robot-grounded', category: 'object', categoryLabel: '오브젝트',
     title: '휴면 핵물질 적재 로봇', subtitle: '밀폐된 핵물질 용기를 발사체로 운반하는 휴면형 중장비 로봇',
     thumbnail: 'assets/genesis/objects/dormant-nuclear-loader-robot-grounded.png', background: 'assets/genesis/objects/dormant-nuclear-loader-robot-grounded.png',
