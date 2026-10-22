@@ -8,6 +8,7 @@
   <meta name="description" content="문구와 정답을 입력해 ZEP용 방탈출 트릭 이미지를 만드는 교사용 제작 도구" />
   <link rel="preload" as="font" type="font/woff2" href="/fonts/PretendardVariable.woff2" crossorigin />
   <link rel="stylesheet" href="tricks.css" />
+  <link rel="stylesheet" href="tricks-difficulty.css" />
 </head>
 <body>
   <header class="trick-topbar">
@@ -54,7 +55,7 @@
           <label>입력값·정답<input id="answerInput" maxlength="30" autocomplete="off" /></label>
           <label>보조 안내<input id="hintInput" maxlength="70" autocomplete="off" /></label>
           <div class="field-pair">
-            <label>난이도<select id="difficultyInput"><option>쉬움</option><option selected>보통</option><option>어려움</option></select></label>
+            <label>난이도별 트릭<select id="difficultyInput"><option selected>쉬움</option><option>보통</option><option>어려움</option></select></label>
             <label>강조색<input id="colorInput" type="color" value="#50e3c2" /></label>
           </div>
           <label class="check-row"><input id="teacherInput" type="checkbox" /><span><b>교사용 정답 표시</b><small>학생용 이미지에는 정답을 숨깁니다.</small></span></label>
