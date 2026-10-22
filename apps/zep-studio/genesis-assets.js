@@ -307,6 +307,14 @@ window.GENESIS_ASSETS = [
     prompt: '다운사이징 인체 생명유지 캡슐을 유지하고 링 조명 맥동, 내부 스캔선, 출고 레일 신호만 추가한 투명 반복 애니메이션.'
   },
   {
+    id: 'GEN-GOLGI-007', slug: 'downsized-synthetic-human-formation-hangar', category: 'object', categoryLabel: '골지체 방',
+    title: '다운사이징 합성 인체 격납 대열', subtitle: '대량 생산된 소형 합성 인체가 군대처럼 정렬된 최종 출고 플랫폼',
+    thumbnail: 'assets/genesis/objects/downsized-synthetic-human-formation-hangar.png', background: 'assets/genesis/objects/downsized-synthetic-human-formation-hangar.png',
+    editorUrl: 'index.html?workspace=object&object=downsized-synthetic-human-formation-hangar', size: '1024 × 683 · 1.26 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['골지체 방', '다운사이징 인류', '합성 인체', '격납고', '대량 생산'],
+    description: '회색 전신 작업복을 입은 무표정 합성 인체 약 40개체가 청록색 유도선 위에 정확한 행과 열로 정렬되어 있습니다. 세포 공장에서 만들어진 최종 생산물이 단순한 장기가 아니라 대량 생산된 인조 인간이라는 사실을 드러내는 대형 스토리 오브젝트입니다.',
+    prompt: '기존 제네시스 골지체 장비와 같은 아이보리·흑연·청록색 ZEP형 아이소메트릭 격납 플랫폼. 무표정한 성인형 합성 인체 36~48개체가 동일한 회색 작업복을 입고 군대처럼 여러 줄로 정렬된 투명 배경 오브젝트. 비폭력적이며 장기나 상처 표현 없음.'
+  },
+  {
     id: 'GEN-LYS-001', slug: 'lysosome-acidic-digestion-reactor', category: 'object', categoryLabel: '라이소솜 방',
     title: '라이소솜 산성 효소 분해 반응로', subtitle: '불량 합성 물질을 산성 효소로 분해하고 재생 원료를 회수하는 밀폐 반응로',
     thumbnail: 'assets/genesis/objects/lysosome-acidic-digestion-reactor.png', background: 'assets/genesis/objects/lysosome-acidic-digestion-reactor.png',
