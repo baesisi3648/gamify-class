@@ -472,10 +472,12 @@
       'lysosome-acidic-digestion-reactor':410,'synthetic-biopart-dismantling-station':420,'failed-synthetic-human-recovery-capsule':400,'lysosome-modular-conveyor-straight':460,
       'lysosome-conveyor-curve-left':430,'lysosome-conveyor-curve-right':430,'lysosome-conveyor-t-junction':430,
       'cytoskeleton-microtubule-cargo-highway':450,'cytoskeleton-actin-contraction-rig':430,'cytoskeleton-intermediate-filament-scaffold':400,
-      'genesis-worker-robot-idle':220,'genesis-worker-robot-walking':220,'genesis-worker-robot-console':250,'genesis-worker-robot-carrying':225,'genesis-worker-robot-maintenance':255,'genesis-worker-robot-alert':240,'monitor-service-robot-omniwheel':220,'security-robot-back':220
+      'genesis-worker-robot-idle':220,'genesis-worker-robot-walking':220,'genesis-worker-robot-console':250,'genesis-worker-robot-carrying':225,'genesis-worker-robot-maintenance':255,'genesis-worker-robot-alert':240,'monitor-service-robot-omniwheel':220,'security-robot-back':220,
+      'floating-white-triangle-marker':96
     };
     Object.assign(objects,{
-      'nucleus-command-core':'핵 이중막 통제 코어','dna-genomic-data-archive':'DNA 유전체 데이터 보관소','nucleolus-fabrication-core':'인 조립·생산 코어','nuclear-pore-gateway':'핵공 수송 게이트','chromatin-data-spool-rack':'염색질 데이터 스풀 보관대'
+      'nucleus-command-core':'핵 이중막 통제 코어','dna-genomic-data-archive':'DNA 유전체 데이터 보관소','nucleolus-fabrication-core':'인 조립·생산 코어','nuclear-pore-gateway':'핵공 수송 게이트','chromatin-data-spool-rack':'염색질 데이터 스풀 보관대',
+      'floating-white-triangle-marker':'공중 부유 흰색 삼각 표식'
     });
     const name=objects[kind];
     if(!name)return;

@@ -563,6 +563,14 @@ window.GENESIS_ASSETS = [
     prompt: '투명 배경의 ZEP용 아이소메트릭 아미노산 화물 포드. 분자 구체를 고정한 소형 레일 운반 플랫폼.'
   },
   {
+    id: 'GEN-UI-001', slug: 'floating-white-triangle-marker-loop', category: 'object', categoryLabel: '공통 표식',
+    title: '공중 부유 흰색 삼각 표식', subtitle: '중요 오브젝트와 이동 목표를 통일해서 표시하는 반복 애니메이션',
+    thumbnail: 'assets/genesis/objects/floating-white-triangle-marker-loop.gif', background: 'assets/genesis/objects/floating-white-triangle-marker-loop.gif',
+    editorUrl: 'index.html?workspace=object&object=floating-white-triangle-marker', size: '96 × 128 · 12프레임', layers: '투명 반복 GIF + 정지 PNG', tags: ['공통 표식', '삼각형', '위아래 이동', '그림자', '목표 지점'],
+    description: '꼬리나 막대 없이 아래를 가리키는 흰색 입체 삼각형만 사용한 공중 표식입니다. 1.2초 동안 부드럽게 위아래로 왕복하고, 표식이 내려올수록 바닥 그림자가 넓고 진해집니다. 작은 96×128px 규격이라 ZEP에서 별도 축소 없이 공통 안내 표식으로 사용할 수 있습니다.',
+    prompt: '투명 배경의 작은 ZEP형 공중 표식. 흰색 입체 역삼각형 하나, 막대와 꼬리 없음, 부드러운 위아래 부유 동작, 바닥 거리와 연동되는 타원 그림자.'
+  },
+  {
     id: 'GEN-MAP-001', slug: 'space-corridor', category: 'map', categoryLabel: '맵 세트',
     title: '우주기지 복도', subtitle: '긴 이동 통로와 분리된 앞쪽 방호벽',
     thumbnail: 'assets/genesis/thumbs/space-corridor.jpg', background: 'assets/space-backgrounds/space-corridor.png', top: 'assets/space-backgrounds/space-corridor-top.png',
