@@ -377,6 +377,54 @@ window.GENESIS_ASSETS = [
     prompt: 'T자 분기 레일은 그대로 유지하고 중앙 코어의 청록색 맥동과 두 밀폐 폐기물 캡슐의 서로 다른 출구 이동을 추가한 투명 반복 애니메이션.'
   },
   {
+    id: 'GEN-CYTO-001', slug: 'cytoskeleton-microtubule-cargo-highway', category: 'object', categoryLabel: '세포 골격 방',
+    title: '미세소관 키네신 화물 운송로', subtitle: '속이 빈 튜불린 관 위를 키네신형 로봇이 소낭 화물과 함께 이동하는 수송 시스템',
+    thumbnail: 'assets/genesis/objects/cytoskeleton-microtubule-cargo-highway.png', background: 'assets/genesis/objects/cytoskeleton-microtubule-cargo-highway.png',
+    editorUrl: 'index.html?workspace=object&object=cytoskeleton-microtubule-cargo-highway', size: '1024 × 683 · 1.01 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['세포 골격 방', '미세소관', '튜불린', '키네신', '소낭 수송'],
+    description: '반복되는 튜불린 단위로 만든 굵고 속이 빈 세 개의 관과, 그 위에서 소낭 화물을 운반하는 키네신형 보행 로봇을 표현했습니다. 세포 골격의 지지 기능뿐 아니라 세포 내 수송 레일이라는 역할을 보여 줍니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 미세소관 화물 운송로. 속이 빈 청록색 튜불린 관 세 줄, 키네신형 보행 로봇, 밀폐 수송 소낭, 아이보리 지지대.'
+  },
+  {
+    id: 'GEN-CYTO-002', slug: 'cytoskeleton-microtubule-cargo-highway-loop', category: 'object', categoryLabel: '움직이는 세포 골격',
+    title: '움직이는 미세소관 화물 운송로', subtitle: '키네신 화물이 세 개의 관형 레일을 따라 이동하는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/cytoskeleton-microtubule-cargo-highway-loop.gif', background: 'assets/genesis/objects/cytoskeleton-microtubule-cargo-highway-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['세포 골격 방', '미세소관', '키네신 이동', '반복 GIF', 'ZEP 업로드'],
+    description: '색이 다른 세 화물이 각각의 미세소관 레일을 따라 이동하고 관 끝의 조립 게이트가 맥동합니다.',
+    prompt: '미세소관 운송로를 유지하고 키네신 화물 세 개가 각 관을 따라 이동하며 관 끝 조립 게이트가 맥동하는 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-CYTO-003', slug: 'cytoskeleton-actin-contraction-rig', category: 'object', categoryLabel: '세포 골격 방',
+    title: '미세섬유 액틴 수축 장치', subtitle: '가는 액틴 이중 나선과 미오신형 클램프가 세포 피질의 장력과 운동을 만드는 장치',
+    thumbnail: 'assets/genesis/objects/cytoskeleton-actin-contraction-rig.png', background: 'assets/genesis/objects/cytoskeleton-actin-contraction-rig.png',
+    editorUrl: 'index.html?workspace=object&object=cytoskeleton-actin-contraction-rig', size: '1024 × 683 · 1.11 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['세포 골격 방', '미세섬유', '액틴', '미오신', '세포 수축'],
+    description: '세포 골격 중 가장 가는 액틴 섬유를 자홍색 이중 나선 케이블로, 미오신을 섬유를 끌어당기는 로봇 클램프로 표현했습니다. 앞쪽의 얇은 그물은 세포 피질 지지를 나타냅니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 액틴 수축 장치. 가는 자홍색 이중 나선 섬유, 미오신형 로봇 클램프, 중앙 수축 링, 앞쪽 세포 피질 그물.'
+  },
+  {
+    id: 'GEN-CYTO-004', slug: 'cytoskeleton-actin-contraction-rig-loop', category: 'object', categoryLabel: '움직이는 세포 골격',
+    title: '움직이는 미세섬유 수축 장치', subtitle: '미오신 클램프와 액틴 화물 신호가 중앙을 향해 수축하는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/cytoskeleton-actin-contraction-rig-loop.gif', background: 'assets/genesis/objects/cytoskeleton-actin-contraction-rig-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['세포 골격 방', '미세섬유', '액틴 수축', '반복 GIF', 'ZEP 업로드'],
+    description: '양쪽 액틴 섬유의 작동 신호가 중앙 수축 링으로 모였다가 다시 늘어나는 과정을 반복합니다.',
+    prompt: '액틴 수축 장치를 유지하고 양쪽 작동 신호가 중앙 수축 링을 향해 이동하며 링이 맥동하는 투명 반복 애니메이션.'
+  },
+  {
+    id: 'GEN-CYTO-005', slug: 'cytoskeleton-intermediate-filament-scaffold', category: 'object', categoryLabel: '세포 골격 방',
+    title: '중간섬유 구조 보강 프레임', subtitle: '밧줄형 단백질 섬유와 충격 흡수 지지대가 핵과 세포 구조를 안정시키는 보강 설비',
+    thumbnail: 'assets/genesis/objects/cytoskeleton-intermediate-filament-scaffold.png', background: 'assets/genesis/objects/cytoskeleton-intermediate-filament-scaffold.png',
+    editorUrl: 'index.html?workspace=object&object=cytoskeleton-intermediate-filament-scaffold', size: '1024 × 683 · 1.22 MB', layers: 'ZEP 업로드용 투명 PNG 1장', tags: ['세포 골격 방', '중간섬유', '구조 안정', '장력', '핵 지지'],
+    description: '청록색과 금색의 밧줄형 단백질 섬유가 중앙 코어를 둘러싼 입체 보강망을 만들고, 스프링형 지지대가 외부 충격과 늘어남을 흡수합니다.',
+    prompt: '투명 배경의 ZEP용 아이소메트릭 중간섬유 지지 프레임. 청록색과 금색의 굵은 꼬임 밧줄, 중앙 보호 코어, 아이보리 앵커와 스프링 충격 흡수대.'
+  },
+  {
+    id: 'GEN-CYTO-006', slug: 'cytoskeleton-intermediate-filament-scaffold-loop', category: 'object', categoryLabel: '움직이는 세포 골격',
+    title: '움직이는 중간섬유 보강 프레임', subtitle: '중앙 보호 코어와 네 지지점이 장력 변화를 흡수하는 무한 반복 GIF',
+    thumbnail: 'assets/genesis/objects/cytoskeleton-intermediate-filament-scaffold-loop.gif', background: 'assets/genesis/objects/cytoskeleton-intermediate-filament-scaffold-loop.gif',
+    editorUrl: 'index.html?workspace=object', size: '256 × 171 · 0.57 MB', layers: '투명 GIF · 6프레임 · 무한 반복', tags: ['세포 골격 방', '중간섬유', '충격 흡수', '반복 GIF', 'ZEP 업로드'],
+    description: '중앙 보호 코어가 맥동하고 네 모서리 장력 지점이 청록색과 금색으로 반응하며 구조 안정 기능을 보여 줍니다.',
+    prompt: '중간섬유 보강 프레임을 유지하고 중앙 보호 코어의 맥동과 네 장력 지지점의 색상 반응을 추가한 투명 반복 애니메이션.'
+  },
+  {
     id: 'GEN-OBJ-007', slug: 'station-researcher', category: 'object', categoryLabel: '오브젝트',
     title: '우주기지 분석 연구원', subtitle: '태블릿을 든 안경 쓴 연구원',
     thumbnail: 'assets/genesis/objects/station-researcher.png', background: 'assets/genesis/objects/station-researcher.png',

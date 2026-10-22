@@ -461,6 +461,7 @@
       'lysosome-acidic-digestion-reactor':'라이소솜 산성 효소 분해 반응로','synthetic-biopart-dismantling-station':'합성 생체 부품 해체 스테이션','failed-synthetic-human-recovery-capsule':'불량 합성 인체 회수·재처리 캡슐',
       'lysosome-modular-conveyor-straight':'라이소솜 연결용 직선 이송 레일',
       'lysosome-conveyor-curve-left':'라이소솜 좌회전 곡선 레일','lysosome-conveyor-curve-right':'라이소솜 우회전 곡선 레일','lysosome-conveyor-t-junction':'라이소솜 T자 분기 레일',
+      'cytoskeleton-microtubule-cargo-highway':'미세소관 키네신 화물 운송로','cytoskeleton-actin-contraction-rig':'미세섬유 액틴 수축 장치','cytoskeleton-intermediate-filament-scaffold':'중간섬유 구조 보강 프레임',
       'ribosome-epa-assembly-station':'리보솜 E·P·A 조립 스테이션','trna-amino-acid-carrier':'tRNA 아미노산 운반 로봇','ribosome-robot-arm':'리보솜 작업 로봇팔',
       'ribosome-conveyor-straight':'리보솜 직선 이송 레일','ribosome-conveyor-curve':'리보솜 곡선 이송 레일','amino-acid-cargo-pod':'아미노산 화물 포드'
     },cellFactoryObjects=new Set(['ribosome-epa-assembly-station','trna-amino-acid-carrier','ribosome-robot-arm','ribosome-conveyor-straight','ribosome-conveyor-curve','amino-acid-cargo-pod']),objectMaxSizes={
@@ -468,7 +469,8 @@
       'rough-er-protein-processing-system':430,'smooth-er-calcium-reservoir':360,
       'golgi-modification-stack':430,'golgi-vesicle-sorting-packaging-terminal':410,'downsized-human-biocapsule-packaging-unit':400,
       'lysosome-acidic-digestion-reactor':410,'synthetic-biopart-dismantling-station':420,'failed-synthetic-human-recovery-capsule':400,'lysosome-modular-conveyor-straight':460,
-      'lysosome-conveyor-curve-left':430,'lysosome-conveyor-curve-right':430,'lysosome-conveyor-t-junction':430
+      'lysosome-conveyor-curve-left':430,'lysosome-conveyor-curve-right':430,'lysosome-conveyor-t-junction':430,
+      'cytoskeleton-microtubule-cargo-highway':450,'cytoskeleton-actin-contraction-rig':430,'cytoskeleton-intermediate-filament-scaffold':400
     };
     Object.assign(objects,{
       'nucleus-command-core':'핵 이중막 통제 코어','dna-genomic-data-archive':'DNA 유전체 데이터 보관소','nucleolus-fabrication-core':'인 조립·생산 코어','nuclear-pore-gateway':'핵공 수송 게이트','chromatin-data-spool-rack':'염색질 데이터 스풀 보관대'
