@@ -60,6 +60,7 @@ async function routeApi(request, env, url) {
   if (method === 'POST' && pathname === '/api/student/guestbook') return addGuestbook(request, env);
   if (method === 'POST' && pathname === '/api/student/board') return addBoardPost(request, env);
   if (method === 'POST' && pathname === '/api/student/proofs') return submitProof(request, env);
+  if (method === 'POST' && pathname === '/api/student/guess') return submitManittoGuess(request, env);
   if (method === 'POST' && pathname === '/api/student/profile-photo') return updateProfilePhoto(request, env);
   if (method === 'DELETE' && pathname === '/api/student/profile-photo') return deleteProfilePhoto(request, env);
 
@@ -91,6 +92,8 @@ async function routeApi(request, env, url) {
   if (method === 'GET' && activityMatch) return activityDetail(request, env, Number(activityMatch[1]));
   const statusMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)\/status$/);
   if (method === 'POST' && statusMatch) return updateActivityStatus(request, env, Number(statusMatch[1]));
+  const guessingMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)\/guessing$/);
+  if (method === 'POST' && guessingMatch) return updateGuessingWindow(request, env, Number(guessingMatch[1]));
   const resetMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)\/reset$/);
   if (method === 'POST' && resetMatch) return resetDraw(request, env, Number(resetMatch[1]));
   const fullResetMatch = pathname.match(/^\/api\/admin\/activities\/(\d+)\/full-reset$/);
@@ -194,6 +197,25 @@ async function studentDashboard(request, env) {
     FROM assignments a JOIN students r ON r.id=a.receiver_id
     WHERE a.activity_id=? AND a.giver_id=?
   `).bind(activity.id, student.id).first();
+  const savedGuess = await env.DB.prepare(`
+    SELECT mg.guessed_giver_id, mg.submitted_at, mg.updated_at,
+      guessed.student_no AS guessed_student_no, guessed.name AS guessed_student_name
+    FROM manitto_guesses mg JOIN students guessed ON guessed.id=mg.guessed_giver_id
+    WHERE mg.activity_id=? AND mg.student_id=?
+  `).bind(activity.id, student.id).first();
+  let guess = savedGuess || null;
+  if (activity.status === 'revealed') {
+    const actualGiver = await env.DB.prepare(`
+      SELECT giver.id AS actual_giver_id, giver.student_no AS actual_giver_no, giver.name AS actual_giver_name
+      FROM assignments a JOIN students giver ON giver.id=a.giver_id
+      WHERE a.activity_id=? AND a.receiver_id=?
+    `).bind(activity.id, student.id).first();
+    guess = {
+      ...(savedGuess || { guessed_giver_id: null, guessed_student_no: null, guessed_student_name: null, submitted_at: null, updated_at: null }),
+      ...(actualGiver || { actual_giver_id: null, actual_giver_no: null, actual_giver_name: null }),
+      is_correct: Boolean(savedGuess && actualGiver && Number(savedGuess.guessed_giver_id) === Number(actualGiver.actual_giver_id)),
+    };
+  }
   const missions = await env.DB.prepare(`
     SELECT m.*, p.id AS proof_id, p.proof_text, p.photo_key, p.status AS proof_status, p.teacher_note, p.submitted_at
     FROM student_missions sm
@@ -230,6 +252,7 @@ async function studentDashboard(request, env) {
     student: withProfilePhoto(student),
     activity,
     assignment,
+    guess,
     missions: missions.results.map((m) => ({ ...m, photoUrl: m.photo_key ? `/api/photos/${m.proof_id}` : null })),
     guestbook: guestbook.results,
     incomingProofs: incomingProofs.results.map((p) => ({ ...p, photoUrl: p.photo_key ? `/api/photos/${p.id}` : null })),
@@ -253,6 +276,36 @@ async function studentPublicSpace(request, env, targetStudentId) {
     WHERE g.activity_id=? AND g.target_student_id=? AND g.visibility='public' AND g.hidden=0
     ORDER BY g.id DESC`).bind(activity.id, target.id).all();
   return json({ student: withProfilePhoto(target), guestbook: entries.results });
+}
+
+async function submitManittoGuess(request, env) {
+  const session = await requireRole(request, env, 'student');
+  const body = await readJson(request);
+  const guessedGiverId = Number(body.guessedStudentId);
+  if (!Number.isInteger(guessedGiverId) || guessedGiverId === Number(session.student_id)) {
+    throw httpError(400, '나의 마니또로 예상되는 친구를 선택하세요.');
+  }
+
+  const activity = await env.DB.prepare(`SELECT id,class_id,status,guessing_open FROM activities
+    WHERE class_id=? AND status<>'closed' ORDER BY id DESC LIMIT 1`).bind(session.class_id).first();
+  if (!activity || activity.status !== 'active' || !activity.guessing_open) {
+    throw httpError(409, '지금은 마니또를 추측하는 시간이 아닙니다.');
+  }
+  const candidate = await env.DB.prepare(`SELECT id FROM students
+    WHERE id=? AND class_id=? AND active=1`).bind(guessedGiverId, session.class_id).first();
+  if (!candidate) throw httpError(400, '같은 반의 학생을 선택하세요.');
+  const incomingAssignment = await env.DB.prepare(`SELECT id FROM assignments
+    WHERE activity_id=? AND receiver_id=?`).bind(activity.id, session.student_id).first();
+  if (!incomingAssignment) throw httpError(409, '마니또 배정이 완료되지 않아 아직 추측할 수 없습니다.');
+
+  await env.DB.prepare(`
+    INSERT INTO manitto_guesses(activity_id,student_id,guessed_giver_id)
+    VALUES(?,?,?)
+    ON CONFLICT(activity_id,student_id) DO UPDATE SET
+      guessed_giver_id=excluded.guessed_giver_id,
+      updated_at=CURRENT_TIMESTAMP
+  `).bind(activity.id, session.student_id, guessedGiverId).run();
+  return json({ ok: true });
 }
 
 async function drawStudentMissions(request, env) {
@@ -694,7 +747,7 @@ async function activityDetail(request, env, activityId) {
   const activity = await env.DB.prepare(`SELECT a.*,c.name AS class_name,c.access_code FROM activities a JOIN classes c ON c.id=a.class_id WHERE a.id=?`)
     .bind(activityId).first();
   if (!activity) throw httpError(404, '활동을 찾을 수 없습니다.');
-  const [students, assignments, missions, proofs, guestbook, board] = await Promise.all([
+  const [students, assignments, missions, proofs, guestbook, board, guesses] = await Promise.all([
     env.DB.prepare('SELECT id,student_no,name,active,pin_initialized FROM students WHERE class_id=? ORDER BY student_no').bind(activity.class_id).all(),
     env.DB.prepare(`SELECT a.*,g.student_no AS giver_no,g.name AS giver_name,r.student_no AS receiver_no,r.name AS receiver_name,
       (SELECT COUNT(*) FROM student_missions sm WHERE sm.activity_id=a.activity_id AND sm.student_id=a.giver_id) AS mission_count,
@@ -710,9 +763,21 @@ async function activityDetail(request, env, activityId) {
     env.DB.prepare(`SELECT b.*,s.student_no,s.name AS author_name
       FROM board_posts b JOIN students s ON s.id=b.author_student_id
       WHERE b.activity_id=? ORDER BY b.id DESC`).bind(activityId).all(),
+    env.DB.prepare(`SELECT s.id AS student_id,s.student_no,s.name AS student_name,
+      mg.guessed_giver_id,mg.submitted_at,mg.updated_at,
+      guessed.student_no AS guessed_student_no,guessed.name AS guessed_student_name,
+      actual.giver_id AS actual_giver_id,giver.student_no AS actual_giver_no,giver.name AS actual_giver_name,
+      CASE WHEN mg.id IS NULL THEN NULL WHEN mg.guessed_giver_id=actual.giver_id THEN 1 ELSE 0 END AS is_correct
+      FROM students s
+      LEFT JOIN manitto_guesses mg ON mg.activity_id=? AND mg.student_id=s.id
+      LEFT JOIN students guessed ON guessed.id=mg.guessed_giver_id
+      LEFT JOIN assignments actual ON actual.activity_id=? AND actual.receiver_id=s.id
+      LEFT JOIN students giver ON giver.id=actual.giver_id
+      WHERE s.class_id=? AND s.active=1 ORDER BY s.student_no`).bind(activityId, activityId, activity.class_id).all(),
   ]);
   return json({ activity, students: students.results, assignments: assignments.results, missions: missions.results,
-    proofs: proofs.results.map((p) => ({ ...p, photoUrl: p.photo_key ? `/api/photos/${p.id}` : null })), guestbook: guestbook.results, board: board.results });
+    proofs: proofs.results.map((p) => ({ ...p, photoUrl: p.photo_key ? `/api/photos/${p.id}` : null })), guestbook: guestbook.results, board: board.results,
+    guesses: guesses.results });
 }
 
 async function updateActivityStatus(request, env, activityId) {
@@ -730,15 +795,46 @@ async function updateActivityStatus(request, env, activityId) {
     if (counts.students !== counts.assignments) throw httpError(409, `아직 ${counts.students - counts.assignments}명이 카드를 뽑지 않았습니다.`);
   }
   if (['drawing', 'active', 'revealed'].includes(status)) {
+    const statusUpdate = status === 'revealed'
+      ? env.DB.prepare("UPDATE activities SET status=?,guessing_open=0,guessing_closed_at=COALESCE(guessing_closed_at,CURRENT_TIMESTAMP) WHERE id=?").bind(status, activityId)
+      : env.DB.prepare('UPDATE activities SET status=? WHERE id=?').bind(status, activityId);
     await env.DB.batch([
       env.DB.prepare("UPDATE activities SET status='closed' WHERE class_id=? AND id<>? AND status<>'closed'")
         .bind(activity.class_id, activityId),
-      env.DB.prepare('UPDATE activities SET status=? WHERE id=?').bind(status, activityId),
+      statusUpdate,
     ]);
   } else {
-    await env.DB.prepare('UPDATE activities SET status=? WHERE id=?').bind(status, activityId).run();
+    if (status === 'closed') {
+      await env.DB.prepare("UPDATE activities SET status=?,guessing_open=0,guessing_closed_at=COALESCE(guessing_closed_at,CURRENT_TIMESTAMP) WHERE id=?")
+        .bind(status, activityId).run();
+    } else {
+      await env.DB.prepare('UPDATE activities SET status=? WHERE id=?').bind(status, activityId).run();
+    }
   }
   return json({ ok: true, status });
+}
+
+async function updateGuessingWindow(request, env, activityId) {
+  await requireRole(request, env, 'admin');
+  const body = await readJson(request);
+  const action = clean(body.action);
+  if (!['open', 'close'].includes(action)) throw httpError(400, '추측 열기 또는 마감을 선택하세요.');
+  const activity = await env.DB.prepare('SELECT id,class_id,status,guessing_open FROM activities WHERE id=?').bind(activityId).first();
+  if (!activity) throw httpError(404, '활동을 찾을 수 없습니다.');
+  if (activity.status !== 'active') throw httpError(409, '활동 중 상태에서만 마니또 추측을 운영할 수 있습니다.');
+
+  if (action === 'open') {
+    const counts = await env.DB.prepare(`SELECT
+      (SELECT COUNT(*) FROM students WHERE class_id=? AND active=1) AS students,
+      (SELECT COUNT(*) FROM assignments WHERE activity_id=?) AS assignments`).bind(activity.class_id, activityId).first();
+    if (Number(counts.students) !== Number(counts.assignments)) {
+      throw httpError(409, '모든 학생의 카드 뽑기가 끝난 뒤 추측을 열 수 있습니다.');
+    }
+    await env.DB.prepare('UPDATE activities SET guessing_open=1,guessing_closed_at=NULL WHERE id=?').bind(activityId).run();
+  } else {
+    await env.DB.prepare('UPDATE activities SET guessing_open=0,guessing_closed_at=CURRENT_TIMESTAMP WHERE id=?').bind(activityId).run();
+  }
+  return json({ ok: true, guessingOpen: action === 'open' });
 }
 
 async function resetDraw(request, env, activityId) {
@@ -748,9 +844,12 @@ async function resetDraw(request, env, activityId) {
   const activity = await env.DB.prepare('SELECT status FROM activities WHERE id=?').bind(activityId).first();
   if (!activity) throw httpError(404, '활동을 찾을 수 없습니다.');
   if (!['draft', 'drawing'].includes(activity.status)) throw httpError(409, '활동 시작 후에는 배정을 초기화할 수 없습니다.');
-  await env.DB.prepare('DELETE FROM student_missions WHERE activity_id=?').bind(activityId).run();
-  await env.DB.prepare('DELETE FROM assignments WHERE activity_id=?').bind(activityId).run();
-  await env.DB.prepare("UPDATE activities SET status='draft' WHERE id=?").bind(activityId).run();
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM manitto_guesses WHERE activity_id=?').bind(activityId),
+    env.DB.prepare('DELETE FROM student_missions WHERE activity_id=?').bind(activityId),
+    env.DB.prepare('DELETE FROM assignments WHERE activity_id=?').bind(activityId),
+    env.DB.prepare("UPDATE activities SET status='draft',guessing_open=0,guessing_closed_at=NULL WHERE id=?").bind(activityId),
+  ]);
   return json({ ok: true });
 }
 
@@ -769,17 +868,19 @@ async function fullResetActivity(request, env, activityId) {
       (SELECT COUNT(*) FROM student_missions WHERE activity_id=?) AS student_missions,
       (SELECT COUNT(*) FROM mission_proofs p JOIN missions m ON m.id=p.mission_id WHERE m.activity_id=?) AS proofs,
       (SELECT COUNT(*) FROM guestbook_entries WHERE activity_id=?) AS guestbooks,
-      (SELECT COUNT(*) FROM board_posts WHERE activity_id=?) AS board_posts
-    `).bind(activityId, activityId, activityId, activityId, activityId).first(),
+      (SELECT COUNT(*) FROM board_posts WHERE activity_id=?) AS board_posts,
+      (SELECT COUNT(*) FROM manitto_guesses WHERE activity_id=?) AS guesses
+    `).bind(activityId, activityId, activityId, activityId, activityId, activityId).first(),
   ]);
 
   const statements = [
     env.DB.prepare('DELETE FROM mission_proofs WHERE mission_id IN (SELECT id FROM missions WHERE activity_id=?)').bind(activityId),
     env.DB.prepare('DELETE FROM guestbook_entries WHERE activity_id=?').bind(activityId),
     env.DB.prepare('DELETE FROM board_posts WHERE activity_id=?').bind(activityId),
+    env.DB.prepare('DELETE FROM manitto_guesses WHERE activity_id=?').bind(activityId),
     env.DB.prepare('DELETE FROM student_missions WHERE activity_id=?').bind(activityId),
     env.DB.prepare('DELETE FROM assignments WHERE activity_id=?').bind(activityId),
-    env.DB.prepare("UPDATE activities SET status='draft' WHERE id=?").bind(activityId),
+    env.DB.prepare("UPDATE activities SET status='draft',guessing_open=0,guessing_closed_at=NULL WHERE id=?").bind(activityId),
   ];
   if (body.resetPins === true) {
     statements.push(env.DB.prepare('UPDATE students SET pin_initialized=0 WHERE class_id=? AND active=1').bind(activity.class_id));

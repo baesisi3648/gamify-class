@@ -1,0 +1,89 @@
+.guess-panel {
+  overflow: hidden;
+  border: 1px solid #d9cbed;
+  background: linear-gradient(145deg, #fffdf9, #f6f0ff);
+}
+
+.guess-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.guess-form label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.guess-form select {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+  padding: 13px;
+  font: inherit;
+}
+
+.guess-state {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 17px;
+  background: #fff;
+}
+
+.guess-state .guess-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #eee7fa;
+  color: var(--purple);
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.guess-state.correct .guess-icon { background: #dff5e9; color: #24744e; }
+.guess-state.wrong .guess-icon { background: #fff0ed; color: #b64036; }
+.guess-state h3 { margin: 0 0 4px; font-size: 19px; }
+.guess-state p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.guess-state strong { color: var(--purple-deep); }
+
+.guess-admin-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: -8px 0 28px;
+  padding: 18px;
+  border: 1px solid #d9cbed;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #fbf8ff, #fffaf0);
+}
+
+.guess-admin-control h3 { margin: 5px 0 3px; }
+.guess-admin-control p { margin: 0 0 8px; color: var(--muted); font-size: 12px; }
+.guess-admin-control strong { font-size: 13px; }
+.guess-admin-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.guess-result-heading { align-items: center; }
+.guess-result-heading > button { margin-left: auto; flex: 0 0 auto; }
+.guess-admin-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.guess-admin-summary span { padding: 7px 11px; border-radius: 999px; background: #f1ece5; font-size: 12px; font-weight: 800; }
+.guess-admin-summary .correct { background: #dff5e9; color: #24744e; }
+.guess-admin-summary .wrong { background: #fff0ed; color: #b64036; }
+
+@media (max-width: 600px) {
+  .guess-form { grid-template-columns: 1fr; }
+  .guess-form button { width: 100%; }
+  .guess-admin-control { align-items: stretch; flex-direction: column; }
+  .guess-admin-actions { display: grid; }
+  .guess-result-heading { flex-wrap: wrap; }
+  .guess-result-heading > button { width: 100%; margin-left: 52px; }
+}

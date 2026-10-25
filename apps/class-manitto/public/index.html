@@ -7,6 +7,7 @@
   <meta name="description" content="우리 반의 따뜻한 비밀 친구, 학급 마니또 활동">
   <title>학급 마니또 | GAMIFY CLASS</title>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/guessing.css">
   <script type="module" src="/app.js"></script>
 </head>
 <body>
@@ -109,6 +110,10 @@
           <section class="content-card"><div class="section-title"><span class="number">04</span><div><h2>나에게 온 방명록</h2><p>친구들이 남긴 마음입니다.</p></div></div><div id="guestbook-list" class="note-list"></div></section>
           <section class="content-card"><div class="section-title"><span class="number">05</span><div><h2>나를 위한 활동</h2><p>정체는 마지막 공개일까지 비밀이에요.</p></div></div><div id="incoming-proof-list" class="note-list"></div></section>
         </div>
+        <section id="guess-section" class="content-card guess-panel hidden">
+          <div class="section-title"><span class="number">?</span><div><h2>나의 마니또 맞히기</h2><p>나를 몰래 챙겨 준 친구가 누구인지 추측해 보세요.</p></div></div>
+          <div id="guess-content"></div>
+        </section>
         <section class="content-card friend-spaces-panel">
           <div class="section-title"><span class="number">06</span><div><h2>우리 반 미니홈피</h2><p>친구의 공간을 방문해 공개 방명록을 구경하고 따뜻한 글을 남겨 보세요.</p></div></div>
           <div id="friend-space-list" class="friend-space-list"></div>
@@ -166,6 +171,7 @@
             <article id="activity-control" class="content-card hidden">
               <div class="control-head"><div><span id="admin-activity-status" class="status-pill"></span><h2 id="admin-activity-title"></h2><p id="admin-activity-code"></p></div><div class="control-actions"><button data-status="drawing" class="secondary-btn" type="button">카드 뽑기 열기</button><button data-status="active" class="secondary-btn" type="button">활동 시작</button><button data-status="revealed" class="secondary-btn" type="button">정체 공개</button><button data-status="closed" class="ghost-btn" type="button">활동 종료</button></div></div>
               <div class="progress-block"><div><span>카드 뽑기 진행률</span><strong id="draw-progress-label"></strong></div><div class="progress-track"><span id="draw-progress-bar"></span></div></div>
+              <div class="guess-admin-control"><div><span class="eyebrow">FINAL GUESS</span><h3>마니또 추측 운영</h3><p>결과 공개 전에 학생들이 자신을 챙겨 준 마니또를 선택하게 하세요.</p><strong id="guess-progress-label">0 / 0명 제출</strong></div><div class="guess-admin-actions"><button id="open-guesses" class="secondary-btn" type="button">추측 열기</button><button id="close-guesses" class="danger-btn hidden" type="button">추측 마감</button></div></div>
               <div class="section-title mission-admin-heading"><span class="number">M</span><div><h2>랜덤 미션 준비</h2><p>제주 수학여행용 미션 18개를 한 번에 등록하거나 직접 추가하세요.</p></div><button id="install-jeju-missions" class="secondary-btn" type="button">제주 미션 18개 자동 등록</button></div>
               <form id="mission-form" class="inline-form mission-form-admin"><select name="category" aria-label="미션 종류"><option value="snack">간식 선물</option><option value="help">여행 도움</option><option value="memory">제주 추억</option></select><input name="title" placeholder="미션 제목" required><input name="description" placeholder="미션 설명"><button class="primary-btn" type="submit">미션 추가</button></form>
               <div id="mission-admin-list" class="chip-list"></div>
@@ -174,6 +180,7 @@
           </section>
 
           <section id="records-panel" class="admin-panel">
+            <article class="content-card"><div class="section-title guess-result-heading"><span class="number">?</span><div><h2>마니또 추측 결과</h2><p>정답자만 골라 상품 지급 명단으로 사용할 수 있습니다.</p></div><button id="copy-guess-winners" class="secondary-btn" type="button">정답자 명단 복사</button></div><div id="guess-admin-summary" class="guess-admin-summary"></div><div id="guess-admin-list" class="table-wrap empty">활동을 선택해 주세요.</div></article>
             <article class="content-card"><div class="section-title"><span class="number">A</span><div><h2>마니또 배정 현황</h2><p>이 정보는 교사에게만 표시됩니다.</p></div></div><div id="assignment-list" class="table-wrap empty">활동을 선택해 주세요.</div></article>
             <article class="content-card"><div class="section-title"><span class="number">B</span><div><h2>미션 인증 검토</h2><p>승인된 인증만 상대 학생의 공간에 익명으로 나타납니다.</p></div></div><div id="proof-admin-list" class="review-list"></div></article>
             <article class="content-card"><div class="section-title"><span class="number">C</span><div><h2>방명록 관리</h2><p>익명 글도 교사는 작성자를 확인하고 숨김 처리할 수 있습니다.</p></div></div><div id="guestbook-admin-list" class="review-list"></div></article>
