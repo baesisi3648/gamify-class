@@ -180,7 +180,8 @@ function renderGuess(data) {
   const section = $('#guess-section');
   const content = $('#guess-content');
   const revealed = data.activity.status === 'revealed';
-  const visible = Boolean(data.assignment && (revealed || data.activity.status === 'active'));
+  const drawing = data.activity.status === 'drawing';
+  const visible = Boolean(data.assignment && (drawing || revealed || data.activity.status === 'active'));
   section.classList.toggle('hidden', !visible);
   if (!visible) return;
 
@@ -199,7 +200,7 @@ function renderGuess(data) {
     return;
   }
 
-  if (data.activity.guessing_open) {
+  if (drawing || data.activity.guessing_open) {
     if (data.guess?.status === 'submitted') {
       content.innerHTML = `<div class="guess-state"><span class="guess-icon">✓</span><div><h3>최종 제출 완료</h3><p><strong>${data.guess.guessed_student_no}번 ${esc(data.guess.guessed_student_name)}</strong> 학생으로 제출했습니다. 정체 공개를 기다려 주세요.</p></div></div>`;
       return;

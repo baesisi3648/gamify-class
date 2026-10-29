@@ -290,7 +290,9 @@ async function submitManittoGuess(request, env) {
 
   const activity = await env.DB.prepare(`SELECT id,class_id,status,guessing_open FROM activities
     WHERE class_id=? AND status<>'closed' ORDER BY id DESC LIMIT 1`).bind(session.class_id).first();
-  if (!activity || activity.status !== 'active' || !activity.guessing_open) {
+  const guessingAllowed = activity?.status === 'drawing'
+    || (activity?.status === 'active' && activity.guessing_open);
+  if (!activity || !guessingAllowed) {
     throw httpError(409, '지금은 마니또를 추측하는 시간이 아닙니다.');
   }
   const candidate = await env.DB.prepare(`SELECT id FROM students
