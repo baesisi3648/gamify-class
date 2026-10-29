@@ -17,7 +17,8 @@
   font-weight: 750;
 }
 
-.guess-form select {
+.guess-form select,
+.guess-form input {
   display: block;
   width: 100%;
   margin-top: 7px;
@@ -27,6 +28,10 @@
   padding: 13px;
   font: inherit;
 }
+
+.guess-save-actions { display: flex; gap: 8px; }
+.guess-save-actions button { min-width: 112px; }
+.guess-help { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 
 .guess-state {
   display: flex;
@@ -82,6 +87,7 @@
 @media (max-width: 600px) {
   .guess-form { grid-template-columns: 1fr; }
   .guess-form button { width: 100%; }
+  .guess-save-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .guess-admin-control { align-items: stretch; flex-direction: column; }
   .guess-admin-actions { display: grid; }
   .guess-result-heading { flex-wrap: wrap; }

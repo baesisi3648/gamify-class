@@ -198,7 +198,7 @@ async function studentDashboard(request, env) {
     WHERE a.activity_id=? AND a.giver_id=?
   `).bind(activity.id, student.id).first();
   const savedGuess = await env.DB.prepare(`
-    SELECT mg.guessed_giver_id, mg.submitted_at, mg.updated_at,
+    SELECT mg.guessed_giver_id, mg.status, mg.submitted_at, mg.final_submitted_at, mg.updated_at,
       guessed.student_no AS guessed_student_no, guessed.name AS guessed_student_name
     FROM manitto_guesses mg JOIN students guessed ON guessed.id=mg.guessed_giver_id
     WHERE mg.activity_id=? AND mg.student_id=?
@@ -211,9 +211,9 @@ async function studentDashboard(request, env) {
       WHERE a.activity_id=? AND a.receiver_id=?
     `).bind(activity.id, student.id).first();
     guess = {
-      ...(savedGuess || { guessed_giver_id: null, guessed_student_no: null, guessed_student_name: null, submitted_at: null, updated_at: null }),
+      ...(savedGuess || { guessed_giver_id: null, guessed_student_no: null, guessed_student_name: null, status: null, submitted_at: null, final_submitted_at: null, updated_at: null }),
       ...(actualGiver || { actual_giver_id: null, actual_giver_no: null, actual_giver_name: null }),
-      is_correct: Boolean(savedGuess && actualGiver && Number(savedGuess.guessed_giver_id) === Number(actualGiver.actual_giver_id)),
+      is_correct: Boolean(savedGuess?.status === 'submitted' && actualGiver && Number(savedGuess.guessed_giver_id) === Number(actualGiver.actual_giver_id)),
     };
   }
   const missions = await env.DB.prepare(`
@@ -281,6 +281,8 @@ async function studentPublicSpace(request, env, targetStudentId) {
 async function submitManittoGuess(request, env) {
   const session = await requireRole(request, env, 'student');
   const body = await readJson(request);
+  const status = body.action === 'submit' ? 'submitted' : body.action === 'draft' ? 'draft' : '';
+  if (!status) throw httpError(400, '임시저장 또는 최종 제출을 선택하세요.');
   const guessedGiverId = Number(body.guessedStudentId);
   if (!Number.isInteger(guessedGiverId) || guessedGiverId === Number(session.student_id)) {
     throw httpError(400, '나의 마니또로 예상되는 친구를 선택하세요.');
@@ -298,14 +300,20 @@ async function submitManittoGuess(request, env) {
     WHERE activity_id=? AND receiver_id=?`).bind(activity.id, session.student_id).first();
   if (!incomingAssignment) throw httpError(409, '마니또 배정이 완료되지 않아 아직 추측할 수 없습니다.');
 
+  const existing = await env.DB.prepare('SELECT status FROM manitto_guesses WHERE activity_id=? AND student_id=?')
+    .bind(activity.id, session.student_id).first();
+  if (existing?.status === 'submitted') throw httpError(409, '이미 최종 제출하여 추측을 바꿀 수 없습니다.');
+
   await env.DB.prepare(`
-    INSERT INTO manitto_guesses(activity_id,student_id,guessed_giver_id)
-    VALUES(?,?,?)
+    INSERT INTO manitto_guesses(activity_id,student_id,guessed_giver_id,status,final_submitted_at)
+    VALUES(?,?,?,?,CASE WHEN ?='submitted' THEN CURRENT_TIMESTAMP ELSE NULL END)
     ON CONFLICT(activity_id,student_id) DO UPDATE SET
       guessed_giver_id=excluded.guessed_giver_id,
+      status=excluded.status,
+      final_submitted_at=excluded.final_submitted_at,
       updated_at=CURRENT_TIMESTAMP
-  `).bind(activity.id, session.student_id, guessedGiverId).run();
-  return json({ ok: true });
+  `).bind(activity.id, session.student_id, guessedGiverId, status, status).run();
+  return json({ ok: true, status });
 }
 
 async function drawStudentMissions(request, env) {
@@ -764,10 +772,10 @@ async function activityDetail(request, env, activityId) {
       FROM board_posts b JOIN students s ON s.id=b.author_student_id
       WHERE b.activity_id=? ORDER BY b.id DESC`).bind(activityId).all(),
     env.DB.prepare(`SELECT s.id AS student_id,s.student_no,s.name AS student_name,
-      mg.guessed_giver_id,mg.submitted_at,mg.updated_at,
+      mg.guessed_giver_id,mg.status AS guess_status,mg.submitted_at,mg.final_submitted_at,mg.updated_at,
       guessed.student_no AS guessed_student_no,guessed.name AS guessed_student_name,
       actual.giver_id AS actual_giver_id,giver.student_no AS actual_giver_no,giver.name AS actual_giver_name,
-      CASE WHEN mg.id IS NULL THEN NULL WHEN mg.guessed_giver_id=actual.giver_id THEN 1 ELSE 0 END AS is_correct
+      CASE WHEN mg.id IS NULL OR mg.status<>'submitted' THEN NULL WHEN mg.guessed_giver_id=actual.giver_id THEN 1 ELSE 0 END AS is_correct
       FROM students s
       LEFT JOIN manitto_guesses mg ON mg.activity_id=? AND mg.student_id=s.id
       LEFT JOIN students guessed ON guessed.id=mg.guessed_giver_id
@@ -797,7 +805,9 @@ async function updateActivityStatus(request, env, activityId) {
   if (['drawing', 'active', 'revealed'].includes(status)) {
     const statusUpdate = status === 'revealed'
       ? env.DB.prepare("UPDATE activities SET status=?,guessing_open=0,guessing_closed_at=COALESCE(guessing_closed_at,CURRENT_TIMESTAMP) WHERE id=?").bind(status, activityId)
-      : env.DB.prepare('UPDATE activities SET status=? WHERE id=?').bind(status, activityId);
+      : status === 'active'
+        ? env.DB.prepare('UPDATE activities SET status=?,guessing_open=1,guessing_closed_at=NULL WHERE id=?').bind(status, activityId)
+        : env.DB.prepare('UPDATE activities SET status=? WHERE id=?').bind(status, activityId);
     await env.DB.batch([
       env.DB.prepare("UPDATE activities SET status='closed' WHERE class_id=? AND id<>? AND status<>'closed'")
         .bind(activity.class_id, activityId),

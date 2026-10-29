@@ -180,8 +180,7 @@ function renderGuess(data) {
   const section = $('#guess-section');
   const content = $('#guess-content');
   const revealed = data.activity.status === 'revealed';
-  const wasOpened = Boolean(data.activity.guessing_open || data.activity.guessing_closed_at || data.guess);
-  const visible = Boolean(data.assignment && (revealed || (data.activity.status === 'active' && wasOpened)));
+  const visible = Boolean(data.assignment && (revealed || data.activity.status === 'active'));
   section.classList.toggle('hidden', !visible);
   if (!visible) return;
 
@@ -189,8 +188,8 @@ function renderGuess(data) {
     const actual = data.guess?.actual_giver_name
       ? `${data.guess.actual_giver_no}번 ${esc(data.guess.actual_giver_name)}`
       : '확인할 수 없음';
-    if (!data.guess?.guessed_giver_id) {
-      content.innerHTML = `<div class="guess-state"><span class="guess-icon">?</span><div><h3>추측을 제출하지 않았어요</h3><p>나의 실제 마니또는 <strong>${actual}</strong> 학생이었습니다.</p></div></div>`;
+    if (!data.guess?.guessed_giver_id || data.guess.status !== 'submitted') {
+      content.innerHTML = `<div class="guess-state"><span class="guess-icon">?</span><div><h3>최종 제출하지 않았어요</h3><p>나의 실제 마니또는 <strong>${actual}</strong> 학생이었습니다.</p></div></div>`;
       return;
     }
     const picked = `${data.guess.guessed_student_no}번 ${esc(data.guess.guessed_student_name)}`;
@@ -201,13 +200,18 @@ function renderGuess(data) {
   }
 
   if (data.activity.guessing_open) {
-    const options = data.classmates.map((student) => `<option value="${student.id}" ${Number(data.guess?.guessed_giver_id) === Number(student.id) ? 'selected' : ''}>${student.student_no}번 ${esc(student.name)}</option>`).join('');
-    content.innerHTML = `<form id="guess-form" class="guess-form"><label>나를 챙겨 준 마니또 예상<select name="guessedStudentId" required><option value="">친구를 선택하세요</option>${options}</select></label><button class="primary-btn warm" type="submit">${data.guess ? '추측 수정하기' : '추측 제출하기'}</button></form>`;
+    if (data.guess?.status === 'submitted') {
+      content.innerHTML = `<div class="guess-state"><span class="guess-icon">✓</span><div><h3>최종 제출 완료</h3><p><strong>${data.guess.guessed_student_no}번 ${esc(data.guess.guessed_student_name)}</strong> 학생으로 제출했습니다. 정체 공개를 기다려 주세요.</p></div></div>`;
+      return;
+    }
+    const savedName = data.guess?.guessed_giver_id ? `${data.guess.guessed_student_no}번 ${esc(data.guess.guessed_student_name)}` : '';
+    const options = data.classmates.map((student) => `<option value="${student.student_no}번 ${esc(student.name)}"></option>`).join('');
+    content.innerHTML = `<form id="guess-form" class="guess-form"><label>나를 도와준 마니또 이름<input name="guessedStudentName" list="guess-student-list" value="${savedName}" placeholder="이름 또는 번호를 입력하세요" autocomplete="off" required><datalist id="guess-student-list">${options}</datalist></label><div class="guess-save-actions"><button class="secondary-btn" type="submit" name="guessAction" value="draft">임시저장</button><button class="primary-btn warm" type="submit" name="guessAction" value="submit">최종 제출</button></div><p class="guess-help">임시저장은 다시 고칠 수 있습니다. 최종 제출 후에는 수정할 수 없습니다.</p></form>`;
     return;
   }
 
   content.innerHTML = data.guess
-    ? `<div class="guess-state"><span class="guess-icon">✓</span><div><h3>추측이 마감되었습니다</h3><p><strong>${data.guess.guessed_student_no}번 ${esc(data.guess.guessed_student_name)}</strong> 학생을 선택했습니다. 정체 공개를 기다려 주세요.</p></div></div>`
+    ? `<div class="guess-state"><span class="guess-icon">${data.guess.status === 'submitted' ? '✓' : '…'}</span><div><h3>${data.guess.status === 'submitted' ? '최종 제출 완료' : '임시저장 후 마감되었습니다'}</h3><p><strong>${data.guess.guessed_student_no}번 ${esc(data.guess.guessed_student_name)}</strong> 학생을 선택했습니다. 정체 공개를 기다려 주세요.</p></div></div>`
     : `<div class="guess-state"><span class="guess-icon">—</span><div><h3>추측이 마감되었습니다</h3><p>제출된 선택이 없습니다. 정체 공개를 기다려 주세요.</p></div></div>`;
 }
 
@@ -307,15 +311,22 @@ function bindStudentActions() {
     if (!formElement) return;
     event.preventDefault();
     const form = new FormData(formElement);
-    const button = formElement.querySelector('button[type="submit"]');
-    button.disabled = true;
+    const action = event.submitter?.value === 'submit' ? 'submit' : 'draft';
+    const enteredName = String(form.get('guessedStudentName') || '').trim();
+    const classmates = state.student?.classmates || [];
+    const normalized = enteredName.replace(/\s+/g, '');
+    const matches = classmates.filter((student) => `${student.student_no}번${student.name}`.replace(/\s+/g, '') === normalized || student.name.replace(/\s+/g, '') === normalized);
+    if (matches.length !== 1) return toast(matches.length > 1 ? '동명이인이 있습니다. 번호와 이름을 함께 입력해 주세요.' : '같은 반 학생의 이름을 목록에서 선택해 주세요.');
+    if (action === 'submit' && !confirm(`${matches[0].student_no}번 ${matches[0].name} 학생을 나의 마니또로 최종 제출할까요?\n최종 제출 후에는 수정할 수 없습니다.`)) return;
+    const buttons = [...formElement.querySelectorAll('button[type="submit"]')];
+    buttons.forEach((button) => { button.disabled = true; });
     try {
-      await api('/api/student/guess', { method: 'POST', body: { guessedStudentId: Number(form.get('guessedStudentId')) } });
-      toast('마니또 추측을 저장했습니다. 마감 전까지 수정할 수 있어요.');
+      await api('/api/student/guess', { method: 'POST', body: { guessedStudentId: Number(matches[0].id), action } });
+      toast(action === 'submit' ? '마니또 추측을 최종 제출했습니다.' : '마니또 추측을 임시저장했습니다. 다시 수정할 수 있어요.');
       await loadStudentDashboard();
     } catch (error) {
       toast(error.message);
-      button.disabled = false;
+      buttons.forEach((button) => { button.disabled = false; });
     }
   });
   $('#profile-photo-input').addEventListener('change', async (event) => {
@@ -570,9 +581,9 @@ function bindAdminActions() {
     const button = event.target.closest('[data-status]');
     if (!button || !state.activity) return;
     if (button.dataset.status === 'revealed') {
-      const submitted = (state.activity.guesses || []).filter((guess) => guess.guessed_giver_id).length;
+      const submitted = (state.activity.guesses || []).filter((guess) => guess.guess_status === 'submitted').length;
       const total = state.activity.students.filter((student) => student.active).length;
-      if (!confirm(`현재 ${submitted}/${total}명이 마니또를 추측했습니다.\n추측 접수를 마감하고 정체를 공개할까요?`)) return;
+      if (!confirm(`현재 ${submitted}/${total}명이 마니또 추측을 최종 제출했습니다.\n추측 접수를 마감하고 정체를 공개할까요?`)) return;
     }
     try {
       await api(`/api/admin/activities/${state.activity.activity.id}/status`, { method: 'POST', body: { status: button.dataset.status } });
@@ -797,7 +808,7 @@ async function loadActivity(activityId) {
   const picked = data.assignments.length;
   $('#draw-progress-label').textContent = `${picked} / ${activeStudents}명`;
   $('#draw-progress-bar').style.width = `${activeStudents ? (picked / activeStudents) * 100 : 0}%`;
-  const guessSubmitted = (data.guesses || []).filter((guess) => guess.guessed_giver_id).length;
+  const guessSubmitted = (data.guesses || []).filter((guess) => guess.guess_status === 'submitted').length;
   $('#guess-progress-label').textContent = `${guessSubmitted} / ${activeStudents}명 제출`;
   const canManageGuessing = data.activity.status === 'active';
   $('#open-guesses').classList.toggle('hidden', !canManageGuessing || Boolean(data.activity.guessing_open));
@@ -809,21 +820,27 @@ async function loadActivity(activityId) {
 
 function renderAdminRecords(data) {
   const guesses = data.guesses || [];
-  const submitted = guesses.filter((guess) => guess.guessed_giver_id).length;
-  const correct = guesses.filter((guess) => Number(guess.is_correct) === 1).length;
-  const wrong = guesses.filter((guess) => Number(guess.is_correct) === 0).length;
-  const pending = guesses.length - submitted;
-  $('#guess-admin-summary').innerHTML = `<span>제출 <b>${submitted}/${guesses.length}명</b></span><span class="correct">정답 <b>${correct}명</b></span><span class="wrong">오답 <b>${wrong}명</b></span><span>미제출 <b>${pending}명</b></span>`;
-  $('#copy-guess-winners').disabled = correct === 0;
+  const revealed = data.activity.status === 'revealed';
+  const submitted = guesses.filter((guess) => guess.guess_status === 'submitted').length;
+  const drafts = guesses.filter((guess) => guess.guess_status === 'draft').length;
+  const correct = revealed ? guesses.filter((guess) => Number(guess.is_correct) === 1).length : 0;
+  const wrong = revealed ? guesses.filter((guess) => guess.is_correct !== null && guess.is_correct !== undefined && Number(guess.is_correct) === 0).length : 0;
+  const pending = guesses.length - submitted - drafts;
+  $('#guess-admin-summary').innerHTML = `<span>최종 제출 <b>${submitted}/${guesses.length}명</b></span><span>임시저장 <b>${drafts}명</b></span>${revealed ? `<span class="correct">정답 <b>${correct}명</b></span><span class="wrong">오답 <b>${wrong}명</b></span>` : '<span>정체 공개 후 정오답 표시</span>'}<span>미작성 <b>${pending}명</b></span>`;
+  $('#copy-guess-winners').disabled = !revealed || correct === 0;
   $('#guess-admin-list').innerHTML = guesses.length ? `<table><thead><tr><th>학생</th><th>선택한 친구</th><th>실제 마니또</th><th>결과</th><th>제출 시각</th></tr></thead><tbody>${guesses.map((guess) => {
-    const pickedStudent = guess.guessed_giver_id ? `${guess.guessed_student_no}번 ${esc(guess.guessed_student_name)}` : '미제출';
-    const actualGiver = guess.actual_giver_id ? `${guess.actual_giver_no}번 ${esc(guess.actual_giver_name)}` : '배정 전';
-    const result = guess.is_correct === null || guess.is_correct === undefined
-      ? '<span class="mini-status">미제출</span>'
+    const pickedStudent = guess.guessed_giver_id ? `${guess.guessed_student_no}번 ${esc(guess.guessed_student_name)}` : '미작성';
+    const actualGiver = revealed ? (guess.actual_giver_id ? `${guess.actual_giver_no}번 ${esc(guess.actual_giver_name)}` : '배정 전') : '정체 공개 후 표시';
+    const result = guess.guess_status === 'draft'
+      ? '<span class="mini-status">임시저장</span>'
+      : guess.guess_status === 'submitted' && !revealed
+      ? '<span class="mini-status approved">최종 제출</span>'
+      : guess.is_correct === null || guess.is_correct === undefined
+      ? '<span class="mini-status">미작성</span>'
       : Number(guess.is_correct) === 1
         ? '<span class="mini-status approved">정답</span>'
         : '<span class="mini-status rejected">오답</span>';
-    return `<tr><td>${guess.student_no}번 ${esc(guess.student_name)}</td><td>${pickedStudent}</td><td>${actualGiver}</td><td>${result}</td><td>${guess.submitted_at ? formatDate(guess.submitted_at) : '-'}</td></tr>`;
+    return `<tr><td>${guess.student_no}번 ${esc(guess.student_name)}</td><td>${pickedStudent}</td><td>${actualGiver}</td><td>${result}</td><td>${guess.final_submitted_at ? formatDate(guess.final_submitted_at) : guess.updated_at ? `임시 ${formatDate(guess.updated_at)}` : '-'}</td></tr>`;
   }).join('')}</tbody></table>` : '<div class="empty">활동 학생이 없습니다.</div>';
   $('#assignment-list').innerHTML = data.assignments.length ? `<table><thead><tr><th>카드</th><th>뽑은 학생</th><th>마니또 대상</th><th>미션 현황</th><th>선택 시각</th></tr></thead><tbody>${data.assignments.map((item) => `<tr><td>${item.card_index}</td><td>${item.giver_no}번 ${esc(item.giver_name)}</td><td>${item.receiver_no}번 ${esc(item.receiver_name)}</td><td>${item.mission_count ? `${item.approved_count} / ${item.mission_count} 승인` : '미션 미추첨'}</td><td>${formatDate(item.chosen_at)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">아직 카드를 뽑은 학생이 없습니다.</div>';
   $('#proof-admin-list').innerHTML = data.proofs.length ? data.proofs.map((proof) => `<article class="review-item"><div class="review-head"><div><h3>${proof.student_no}번 ${esc(proof.student_name)} · ${esc(proof.mission_title)}</h3><p>${esc(proof.proof_text || '사진 인증')}</p></div><span class="mini-status ${esc(proof.status)}">${proofStatusName(proof.status)}</span></div>${proof.photoUrl ? `<img class="review-image" src="${proof.photoUrl}" alt="미션 인증 사진" loading="lazy">` : ''}<div class="review-actions"><button class="secondary-btn" data-proof-id="${proof.id}" data-proof-status="approved" type="button">승인</button><button class="danger-btn" data-proof-id="${proof.id}" data-proof-status="rejected" type="button">반려</button></div></article>`).join('') : '<div class="empty">제출된 인증이 없습니다.</div>';
