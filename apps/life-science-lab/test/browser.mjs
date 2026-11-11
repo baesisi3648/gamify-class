@@ -64,11 +64,11 @@ try {
   await page.locator('[data-action=save-draft]').click();
   await expect(page.locator('#save-status')).toContainText('임시저장 완료');
   await page.reload();await expect(page.locator('#answer')).toContainText('카탈레이스');
-  for(let i=1;i<8;i++){
+  for(let i=1;i<9;i++){
     await page.locator('[data-step="'+i+'"]').click();
     await page.locator('#answer').fill('테스트용 탐구 '+i+' — 자료 미확인인 수치는 작성하지 않았습니다.');
   }
-  await page.locator('[data-step="8"]').click();await page.locator('[data-action=add-reference]').click();
+  await page.locator('[data-step="9"]').click();await page.locator('[data-action=add-reference]').click();
   await page.locator('[data-key=title]').fill('카탈레이스 참고 자료');
   await page.locator('[data-key=author]').fill('테스트 기관');
   await page.locator('[data-key=source]').fill('https://example.org/catalase');
@@ -168,5 +168,5 @@ try {
   await page.screenshot({path:'.qa/login-mobile.png',fullPage:true});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1);
   expect(overflow).toBe(false);expect(errors).toEqual([]);
-  console.log('PASS: QR download, paste blocking, login, 9 steps, save/reload, submission lock, revision/resubmit, approval, publication, anonymity, unpublish, CSV/XLS/XLSX import, dynamic assessment, mobile overflow, no JS errors');
+  console.log('PASS: QR download, paste blocking, login, 10 steps, save/reload, submission lock, revision/resubmit, approval, publication, anonymity, unpublish, CSV/XLS/XLSX import, dynamic assessment, mobile overflow, no JS errors');
 } finally { await browser.close(); }

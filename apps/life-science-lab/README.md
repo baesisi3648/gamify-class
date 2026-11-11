@@ -18,7 +18,7 @@
 
 실제 학생 데이터는 아직 등록하지 않았습니다. 독립 Cloudflare Worker로 운영 화면을 배포했고,
 관리자 해시·세션 비밀키와 전용 Apps Script 버전 2를 연결했습니다.
-Google 최초 실행 승인이 완료되어 운영 교사 로그인, 탐구 9개 항목 읽기,
+Google 최초 실행 승인이 완료되어 운영 교사 로그인, 탐구 10개 항목 읽기,
 학생·보고서·전시 관리 API가 정상 응답하는 것을 확인했습니다.
 학생 명단을 등록한 후 수업을 시작할 수 있습니다.
 
@@ -43,7 +43,7 @@ Pages Function 어댑터도 함께 보관하여 필요한 경우 같은 출처 �
 | 파일 | 역할 |
 | --- | --- |
 | index.html, styles.css, app.js | 4개 공간과 반응형 UI |
-| seed.js | 첫 효소 탐구의 9개 항목 |
+| seed.js | 첫 효소 탐구의 10개 항목 |
 | autosave.js | 순차 저장·버전·복구 상태 |
 | server/api.js, server/auth.js | 서버 권한·PBKDF2·HttpOnly 쿠키·출처 검사 |
 | server/repository.js | 저장소 접근 계층. 향후 DB 교체 시 이 어댑터를 교체 |

@@ -58,10 +58,11 @@ test('설정 편집은 기존 보고서 항목을 바꾸지 않고 새 탐구 �
   const f=fixture(),r=f.run('report.open',{assessmentId:'enzyme-structure'},f.student);
   const a=f.run('assessments.list').assessments[0];
   f.run('assessment.save',{...a,fields:[{id:'new_question',title:'새 질문',required:true,type:'text'}]});
-  assert.equal(f.db.all('Reports')[0].fields.length,9);
+  assert.equal(f.db.all('Reports')[0].fields.length,10);
   const newReport=f.run('report.open',{assessmentId:a.id},f.other);
   assert.equal(newReport.fields.length,1);
-  assert.equal(r.fields[0].id,'selection');
+  assert.equal(r.fields[0].id,'topic');
+  assert.equal(r.fields[1].id,'selection');
 });
 test('운영 기간과 학생 비활성/접속 코드 변경을 서버에서 검사',()=>{
   const f=fixture(),a=f.run('assessments.list').assessments[0];

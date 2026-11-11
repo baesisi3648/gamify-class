@@ -87,7 +87,7 @@ test('최초 수동 실행과 서버 초기화는 동일한 비공개 연결키�
   const req=g.request('bootstrap',{},{});
   g.props.delete('LAB_WEBHOOK_SECRET');g.props.delete('LAB_SPREADSHEET_ID');
   const result=g.ctx.doPost(req);
-  assert.equal(result.ok,true);assert.equal(result.result.assessments[0].fields.length,9);
+  assert.equal(result.ok,true);assert.equal(result.result.assessments[0].fields.length,10);
   assert.equal(g.props.get('LAB_WEBHOOK_SECRET'),secret);
 });
 test('한글 조회 탭 갱신은 원본·PIN 해시를 보존하고 수식 주입 차단',()=>{

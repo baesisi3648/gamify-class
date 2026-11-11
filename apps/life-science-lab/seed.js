@@ -5,6 +5,7 @@ globalThis.LAB_SEED = {
   description: '관심 있는 효소를 선정하고 생물학적 기능과 단백질 구조, 특성 및 활용 가능성을 탐구합니다.',
   guide: '자료에서 근거를 찾고, 자신의 말로 설명해 보세요. 확인되지 않은 최적 온도나 pH는 추측하지 말고 ‘자료 미확인’으로 기록합니다. RISS, DBpia, KOCW, RCSB PDB 등을 활용하고 출처를 남겨 주세요.',
   fields: [
+    { id: 'topic', title: '탐구 주제', guide: '어떤 효소를 어떤 관점에서 탐구할지 한 문장으로 작성해 주세요. 예: 카탈레이스의 구조와 과산화수소 분해 기능의 관계', required: true, type: 'text' },
     { id: 'selection', title: '효소 선정', guide: '효소의 이름과 기본 정보를 소개해 주세요.', required: true, type: 'text' },
     { id: 'motivation', title: '효소 선정 이유', guide: '선택한 동기, 관심을 갖게 된 계기, 탐구 전 궁금했던 점은 무엇인가요?', required: true, type: 'text' },
     { id: 'mechanism', title: '생물학적 기능과 기전', guide: '기질 → 생성물, 촉매하는 화학 반응, 생명체 내 역할을 설명해 주세요.', required: true, type: 'text' },

@@ -12,7 +12,7 @@ test('그룹 생성은 전체 관리자만, 공개 목록에 암호나 학생 �
   assert.match(g.title,/2027학년도 1학기/);
   const listed=f.run('groups.list',{},{});assert.equal(listed.groups.length,2);assert.ok(!JSON.stringify(listed).includes(hash));
   assert.equal(f.run('students.list',{},teacher).students.length,0);
-  assert.equal(f.run('bootstrap',{groupId:g.id},{}).assessments[0].fields.length,9);
+  assert.equal(f.run('bootstrap',{groupId:g.id},{}).assessments[0].fields.length,10);
   assert.equal(f.run('students.list').students.length,2);
 });
 test('다른 그룹 ID·학번·보고서·탐구·전시본 접근 및 덮어쓰기 차단',()=>{
