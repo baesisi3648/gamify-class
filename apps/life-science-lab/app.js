@@ -249,9 +249,8 @@ async function editor(id) {
   }
   main.innerHTML = '<div class="page-heading"><span class="eyebrow">RESEARCH NOTE / ' + report.fields.length + ' STEPS</span><h1>' + esc(report.title) + '</h1><div class="actions">' + tag(report.status) + '<a class="hint" href="#lab">← 나의 연구실</a></div></div>' +
     (report.review?.feedback ? '<div class="notice"><strong>선생님 피드백</strong><p class="prose">' + esc(report.review.feedback) + '</p></div>' : '') +
-    '<div class="savebar"><span id="save-status" role="status" aria-live="polite">서버 기록 불러오기 완료 · ' + date(report.updatedAt) + '</span><div class="actions"><button class="small" data-action="retry-save">지금 저장</button><button class="small ghost" data-action="backup">복구본 다운로드</button><button class="small" data-action="reload-report">최신본 불러오기</button></div></div>' +
+    '<div class="savebar"><span id="save-status" role="status" aria-live="polite">서버 기록 불러오기 완료 · ' + date(report.updatedAt) + '</span><div class="actions">' + (writable ? '<button class="small primary" data-action="save-draft">임시저장</button>' : '') + '<button class="small ghost" data-action="backup">복구본 다운로드</button><button class="small" data-action="reload-report">최신본 불러오기</button></div></div>' +
     '<div class="workspace"><aside><p id="progress-label" class="hint"></p><progress id="progress" max="100" value="0" aria-label="작성 진행률"></progress><nav id="steps" class="step-nav" aria-label="보고서 단계"></nav><div class="hint" style="margin-top:22px">자료 찾기<br>RISS · DBpia · KOCW<br>RCSB Protein Data Bank<br><br>확인되지 않은 수치는<br>‘자료 미확인’으로 기록하세요.</div></aside><section class="editor"><div id="editor-field"></div><div class="editor-meta"><span id="char-count"></span><span>최대 6,000자 / 항목</span></div><div class="actions"><button data-action="prev">← 이전</button><button data-action="next">다음 →</button><button class="primary" data-action="preview-report">전체 미리보기 · 제출</button></div></section></div>';
-  if (!writable) $('[data-action="retry-save"]').disabled = true;
   renderStep();
 }
 const complete = (f, content) => f.type === 'references' ? (content[f.id] || []).some((r) => r.title && r.author && r.source) : !!String(content[f.id] || '').trim();
@@ -530,7 +529,19 @@ document.addEventListener('click', async (e) => {
         if(r.content[k].length>=20)throw new Error('참고 자료는 최대 20개입니다.');
         r.content[k].push({title:'',author:'',source:''});changed();renderReferences();break;
       }
-      case 'retry-save':if(state.saver)await state.saver.flush();break;
+      case 'save-draft':
+        if(state.saver){
+          b.disabled=true;
+          try {
+            if(await state.saver.flush()){
+              const message='임시저장 완료 · ' + date(state.saver.report.updatedAt || new Date().toISOString());
+              $('#save-status').dataset.state='saved';
+              $('#save-status').textContent=message;
+              toast('임시저장했습니다. 나중에 다시 로그인해 이어서 작성할 수 있습니다.');
+            } else toast('서버에 임시저장하지 못했습니다. 저장 상태를 확인하고 다시 눌러 주세요.');
+          } finally { b.disabled=false; }
+        }
+        break;
       case 'reload-report':if(confirm('이 기기의 미저장 내용은 복구본으로 보관하고 서버 최신본을 불러올까요?')){state.saver.stop();state.saver=null;await route();}break;
       case 'backup':{
         let stored=null;try{stored=JSON.parse(localStorage.getItem(backupKey(state.saver.report.id))||'null');}catch{}

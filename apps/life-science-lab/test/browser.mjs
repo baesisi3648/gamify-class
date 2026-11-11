@@ -54,8 +54,8 @@ try {
   const pasted=await page.locator('#answer').evaluate((el)=>el.dispatchEvent(new InputEvent('beforeinput',{bubbles:true,cancelable:true,inputType:'insertFromPaste',data:'붙여넣기 시도'})));
   expect(pasted).toBe(false);await expect(page.locator('#toast')).toContainText('직접 작성');
   await page.locator('#answer').fill('카탈레이스: 과산화수소를 분해하는 효소. <script>alert("xss")</script>');
-  await page.locator('[data-action=retry-save]').click();
-  await expect(page.locator('#save-status')).toContainText('서버에 저장 완료');
+  await page.locator('[data-action=save-draft]').click();
+  await expect(page.locator('#save-status')).toContainText('임시저장 완료');
   await page.reload();await expect(page.locator('#answer')).toContainText('카탈레이스');
   for(let i=1;i<8;i++){
     await page.locator('[data-step="'+i+'"]').click();
@@ -65,7 +65,7 @@ try {
   await page.locator('[data-key=title]').fill('카탈레이스 참고 자료');
   await page.locator('[data-key=author]').fill('테스트 기관');
   await page.locator('[data-key=source]').fill('https://example.org/catalase');
-  await page.locator('[data-action=retry-save]').click();await expect(page.locator('#save-status')).toContainText('서버에 저장 완료');
+  await page.locator('[data-action=save-draft]').click();await expect(page.locator('#save-status')).toContainText('임시저장 완료');
   await page.screenshot({path:'.qa/editor-desktop.png',fullPage:true});
   await page.locator('[data-action=preview-report]').click();
   await expect(page.locator('#printable-report')).toContainText('가상연구자1');
