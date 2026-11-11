@@ -106,6 +106,7 @@ test('한글 조회 탭 갱신은 원본·PIN 해시를 보존하고 수식 주�
   assert.ok(!JSON.stringify(g.tabs.get('학생 명단').data).includes('a'.repeat(32)));
   assert.equal(g.tabs.get('제출 현황').data[3][5],'미참여');
   assert.equal(g.ctx.doPost(g.request('sheets.refresh',{}, {role:'teacher'})).status,403);
+  assert.equal(g.tabs.get('제출 현황').data[2][8],'GPT 복사용 전체 보고서');
 });
 test('조회 탭이 없어도 성공한 명단 저장을 실패로 보고하지 않음',()=>{
   const g=gas();
