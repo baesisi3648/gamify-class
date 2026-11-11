@@ -546,7 +546,7 @@ document.addEventListener('click', async (e) => {
         try {
           await loadScript('./vendor/html2pdf.bundle.min.js',()=>typeof globalThis.html2pdf==='function');
           await document.fonts.ready;
-          await html2pdf().set({margin:0,filename:reportFileName(state.previewReport,state.previewReport.student || state.user),image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from($('#printable-report')).save();
+          await html2pdf().set({margin:0,filename:reportFileName(state.previewReport,state.previewReport.student || state.user),image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from($('#printable-report')).save();
         } finally { b.disabled=false; }
         break;
       }
