@@ -32,6 +32,13 @@ try {
   await page.screenshot({path:'.qa/activities-desktop.png',fullPage:true});
   await page.locator('[data-open]').first().click();
   await expect(page.locator('.login-qr-canvas')).toBeVisible();
+  await page.locator('[data-action=zoom-qr]').click();
+  await expect(page.locator('.login-qr-large')).toBeVisible();
+  const smallQr = await page.locator('.login-qr-canvas').boundingBox();
+  const largeQr = await page.locator('.login-qr-large').boundingBox();
+  if (largeQr.width <= smallQr.width * 1.5) throw new Error('QR코드 확대 크기가 충분하지 않습니다.');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#modal')).not.toBeVisible();
   await expect(page.locator('[data-action=copy-qr]')).toBeVisible();
   await expect(page.locator('[data-action=copy-login-url]')).toBeVisible();
   const qrDownload=page.waitForEvent('download');
@@ -154,6 +161,10 @@ try {
   await page.setViewportSize({width:390,height:844});await page.locator('[data-nav=activities]').click();
   await page.screenshot({path:'.qa/activities-mobile.png',fullPage:true});
   await page.locator('[data-nav=lab]').click();await expect(page.locator('.login-qr-canvas')).toBeVisible();
+  await page.locator('[data-action=zoom-qr]').click();
+  const mobileQr = await page.locator('.login-qr-large').boundingBox();
+  if (mobileQr.width <= 200 || mobileQr.x < 0 || mobileQr.x + mobileQr.width > 390) throw new Error('모바일에서 확대 QR코드가 화면 밖으로 벗어납니다.');
+  await page.locator('#close-modal').click();
   await page.screenshot({path:'.qa/login-mobile.png',fullPage:true});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1);
   expect(overflow).toBe(false);expect(errors).toEqual([]);

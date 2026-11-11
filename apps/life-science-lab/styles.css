@@ -151,8 +151,14 @@ main { max-width: 1392px; margin: auto; padding: 40px 36px 80px; min-height: 70v
 .login-qr-panel { margin-top: 32px; padding-top: 26px; border-top: 1px solid #ffffff24; }
 .login-qr-panel h2 { margin: 8px 0; color: white; font-size: 19px; }
 .login-qr-panel > div:first-child > p:last-child { margin-bottom: 16px; font-size: 12px; line-height: 1.65; }
-.login-qr-image { width: max-content; padding: 8px; background: white; border-radius: 4px; box-shadow: 0 10px 28px #020a1666; }
+.login-qr-image { width: max-content; display: block; padding: 8px; border: 0; background: white; border-radius: 4px; box-shadow: 0 10px 28px #020a1666; cursor: zoom-in; }
+.login-qr-image:hover { background: white; border: 0; }
+.login-qr-image:focus-visible { outline: 3px solid #8cb5ff; outline-offset: 3px; }
 .login-qr-canvas { display: block; width: 154px; height: 154px; image-rendering: pixelated; }
+.login-qr-zoom-hint { display: block; margin-top: 6px; color: #536782; font-size: 11px; line-height: 1.3; }
+.qr-zoom { text-align: center; }
+.login-qr-large { display: block; width: min(100%, 420px); height: auto; margin: 0 auto; image-rendering: pixelated; }
+.qr-zoom p { margin: 15px 0 0; color: var(--muted); font-size: 14px; }
 .login-share-url { display: block; max-width: 100%; margin: 12px 0; color: #c9d9ee; font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
 .login-qr-actions { display: flex; flex-wrap: wrap; gap: 7px; }
 .login-qr-actions button { padding: 9px 10px; border-color: #587092; background: #132947; color: #f5f8fc; font-size: 11px; }

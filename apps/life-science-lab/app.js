@@ -59,7 +59,9 @@ async function renderLoginQr() {
   const generator = (await qrModuleRequest).default;
   if (!holder.isConnected) return;
   const url = studentAccessUrl(), canvas = makeQrCanvas(url, generator);
-  holder.replaceChildren(canvas); holder.dataset.url = url;
+  const hint = document.createElement('span');
+  hint.className = 'login-qr-zoom-hint'; hint.textContent = '눌러서 크게 보기';
+  holder.replaceChildren(canvas, hint); holder.dataset.url = url; holder.disabled = false;
   $('#login-share-url').textContent = url;
 }
 function qrBlob() {
@@ -68,7 +70,7 @@ function qrBlob() {
   return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('QR 이미지를 만들지 못했습니다.')), 'image/png'));
 }
 function loginSharePanel() {
-  return '<section class="login-qr-panel" aria-labelledby="login-qr-title"><div><p class="eyebrow">MOBILE ACCESS</p><h2 id="login-qr-title">휴대전화로 바로 접속</h2><p>카메라로 QR코드를 스캔하면 현재 연구 그룹의 학생 로그인 화면이 열립니다.</p></div><div id="login-qr-image" class="login-qr-image" aria-live="polite"></div><code id="login-share-url" class="login-share-url"></code><div class="login-qr-actions"><button type="button" data-action="copy-qr">QR 복사</button><button type="button" data-action="download-qr">PNG 다운로드</button><button type="button" data-action="copy-login-url">주소 복사</button></div></section>';
+  return '<section class="login-qr-panel" aria-labelledby="login-qr-title"><div><p class="eyebrow">MOBILE ACCESS</p><h2 id="login-qr-title">휴대전화로 바로 접속</h2><p>카메라로 QR코드를 스캔하면 현재 연구 그룹의 학생 로그인 화면이 열립니다.</p></div><button type="button" id="login-qr-image" class="login-qr-image" data-action="zoom-qr" aria-label="학생 접속 QR코드 크게 보기" disabled>QR코드 생성 중…</button><code id="login-share-url" class="login-share-url"></code><div class="login-qr-actions"><button type="button" data-action="copy-qr">QR 복사</button><button type="button" data-action="download-qr">PNG 다운로드</button><button type="button" data-action="copy-login-url">주소 복사</button></div></section>';
 }
 const scriptRequests = new Map();
 function loadScript(src, ready) {
@@ -511,6 +513,12 @@ document.addEventListener('click', async (e) => {
       }
       case 'copy-login-url':
         await copyText(studentAccessUrl());toast('학생 접속 주소를 복사했습니다.');break;
+      case 'zoom-qr':{
+        const canvas=$('.login-qr-canvas');
+        if(!canvas)throw new Error('QR코드를 먼저 다시 열어 주세요.');
+        dialog('학생 접속 QR코드','<div class="qr-zoom"><img class="login-qr-large" src="'+canvas.toDataURL('image/png')+'" alt="현재 연구 그룹 학생 접속 QR코드"><p>휴대전화 카메라로 QR코드를 스캔하세요.</p></div>');
+        break;
+      }
       case 'copy-qr':{
         if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') throw new Error('이 브라우저는 QR 이미지 복사를 지원하지 않습니다. PNG 다운로드를 이용해 주세요.');
         const blob=await qrBlob();await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);toast('QR 이미지를 복사했습니다.');break;
