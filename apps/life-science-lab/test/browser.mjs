@@ -59,6 +59,11 @@ try {
   await page.locator('[data-nav=activities]').click();await page.locator('[data-open]').first().click();
   await expect(page.locator('#answer')).toBeVisible();
   await expect(page.locator('#answer')).toHaveAttribute('placeholder','위 안내 조건에 맞게 직접 작성하세요. 복사·붙여넣기는 사용할 수 없습니다.');
+  await expect(page.locator('#report-photo-file')).toBeVisible();
+  await page.locator('#report-photo-file').setInputFiles({name:'효소-사진.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64')});
+  await page.locator('[data-action=upload-report-photo]').click();
+  await expect(page.locator('.report-photo-preview img')).toBeVisible();
+  await expect(page.locator('#toast')).toContainText('Google Sheets에는 전송되지 않습니다');
   const pasted=await page.locator('#answer').evaluate((el)=>el.dispatchEvent(new InputEvent('beforeinput',{bubbles:true,cancelable:true,inputType:'insertFromPaste',data:'붙여넣기 시도'})));
   expect(pasted).toBe(false);await expect(page.locator('#toast')).toContainText('직접 작성');
   await page.locator('#answer').fill('카탈레이스: 과산화수소를 분해하는 효소. <script>alert("xss")</script>');
@@ -78,6 +83,7 @@ try {
   await page.locator('[data-action=preview-report]').click();
   await expect(page.locator('#printable-report')).toContainText('가상연구자1');
   await expect(page.locator('#printable-report')).toContainText('카탈레이스');
+  await expect(page.locator('#printable-report .report-photo img')).toBeVisible();
   await page.setViewportSize({width:390,height:844});
   const previewBox=await page.locator('.report-preview-viewport').boundingBox();
   const mobileReportBox=await page.locator('#printable-report').boundingBox();
@@ -102,6 +108,7 @@ try {
   await expect(page.locator('#identity [data-action=logout]')).toBeVisible({timeout:30000});await page.locator('[data-nav=teacher]').click();
   await expect(page.locator('[data-review]').first()).toBeVisible();
   await page.locator('[data-review]').first().click();
+  await expect(page.locator('#printable-report .report-photo img')).toBeVisible();
   await page.locator('[name=feedback]').fill('기능의 근거를 보완해 주세요.');
   await page.locator('button[value=revision]').click();
   await expect(page.locator('#report-table')).toContainText('보완 요청');

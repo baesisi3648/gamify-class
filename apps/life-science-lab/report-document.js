@@ -6,7 +6,7 @@ export function reportFileName(report, student) {
   return cleanFileName(`${report.title}_${student?.grade || ''}-${student?.classNo || ''}-${student?.number || ''}_${student?.name || '보고서'}`) + '.pdf';
 }
 
-export function reportDocumentHTML(report, student = {}, group = {}) {
+export function reportDocumentHTML(report, student = {}, group = {}, options = {}) {
   const answer = (field) => {
     const value = report.content?.[field.id];
     if (field.type === 'references') {
@@ -22,5 +22,6 @@ export function reportDocumentHTML(report, student = {}, group = {}) {
     '<table class="report-identity"><tbody><tr><th>학교</th><td>' + escapeHTML(group.school || '—') + '</td><th>학번</th><td>' + escapeHTML(identity) + '</td></tr><tr><th>이름</th><td>' + escapeHTML(student.name || '—') + '</td><th>작성일</th><td>' + escapeHTML(koreanDate(report.submittedAt || report.updatedAt || report.createdAt)) + '</td></tr></tbody></table>' +
     '<div class="report-intro"><strong>탐구 주제</strong><span>' + escapeHTML(report.title) + '</span><strong>진행 상태</strong><span>' + escapeHTML(({draft:'작성 중',revision:'보완 중',submitted:'제출 완료',approved:'교사 승인',rejected:'반려'})[report.status] || report.status || '작성 중') + '</span></div>' +
     (report.fields || []).map((field, index) => '<section class="report-part"><h2><span>' + String(index + 1).padStart(2,'0') + '</span>' + escapeHTML(field.title) + '</h2>' + answer(field) + '</section>').join('') +
+    (options.photoUrl ? '<figure class="report-photo"><figcaption>효소 관련 사진 <span>선택 첨부</span></figcaption><img src="' + escapeHTML(options.photoUrl) + '" alt="학생이 선택하여 첨부한 효소 관련 사진"></figure>' : '') +
     '<footer class="report-document-foot">생명과학 탐구 연구소 · ' + escapeHTML(group.title || '탐구 보고서') + '</footer></article>';
 }

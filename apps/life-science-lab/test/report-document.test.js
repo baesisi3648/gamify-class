@@ -18,3 +18,10 @@ test('report document includes identity, answers and references without executin
   assert.doesNotMatch(html,/<script>/);
   assert.equal(reportFileName(report,{grade:2,classNo:3,number:9,name:'가상 학생'}),'효소 탐구_2-3-9_가상 학생.pdf');
 });
+
+test('optional enzyme photo is rendered only when a site image URL is supplied',()=>{
+  const report={id:'r-photo',title:'효소 탐구',status:'draft',fields:[],content:{},createdAt:'2026-11-12T00:00:00Z'};
+  assert.doesNotMatch(reportDocumentHTML(report),/report-photo/);
+  const html=reportDocumentHTML(report,{name:'가상 학생'},{},{photoUrl:'blob:https://lab.test/photo'});
+  assert.match(html,/효소 관련 사진/);assert.match(html,/blob:https:\/\/lab\.test\/photo/);
+});

@@ -4,7 +4,7 @@ import { reportDocumentHTML, reportFileName } from './report-document.js';
 const $ = (s) => document.querySelector(s);
 const main = $('#main'), clone = (v) => structuredClone(v);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-const state = { user:null, groups:[],groupId:new URL(location.href).searchParams.get('group') || 'legacy', assessments:[], assessmentsGroup:null, assessmentError:'', assessmentRequest:null, groupsReady:false, restoringSession:true, works:[], reports:[], configured:false, saver:null, step:0, adminTab:'reports', students:[], publications:[] };
+const state = { user:null, groups:[],groupId:new URL(location.href).searchParams.get('group') || 'legacy', assessments:[], assessmentsGroup:null, assessmentError:'', assessmentRequest:null, groupsReady:false, restoringSession:true, works:[], reports:[], configured:false, saver:null, step:0, adminTab:'reports', students:[], publications:[], reportPhotos:new Map() };
 const statuses = { draft:'작성 중', submitted:'검토 대기', approved:'승인됨', revision:'보완 요청', rejected:'반려', open:'운영 중', closed:'마감', hidden:'비공개' };
 const date = (v) => v ? new Date(v).toLocaleString('ko-KR', { timeZone:'Asia/Seoul', dateStyle:'short', timeStyle:'short' }) : '별도 안내';
 const tag = (s) => '<span class="tag">' + esc(statuses[s] || s) + '</span>';
@@ -259,8 +259,11 @@ async function editor(id) {
   main.innerHTML = '<div class="page-heading"><span class="eyebrow">RESEARCH NOTE / ' + report.fields.length + ' STEPS</span><h1>' + esc(report.title) + '</h1><div class="actions">' + tag(report.status) + '<a class="hint" href="#lab">← 나의 연구실</a></div></div>' +
     (report.review?.feedback ? '<div class="notice"><strong>선생님 피드백</strong><p class="prose">' + esc(report.review.feedback) + '</p></div>' : '') +
     '<div class="savebar"><span id="save-status" role="status" aria-live="polite">서버 기록 불러오기 완료 · ' + date(report.updatedAt) + '</span><div class="actions">' + (writable ? '<button class="small primary" data-action="save-draft">임시저장</button>' : '') + '<button class="small ghost" data-action="backup">복구본 다운로드</button><button class="small" data-action="reload-report">최신본 불러오기</button></div></div>' +
+    '<section id="report-photo-panel" class="report-photo-panel" aria-labelledby="report-photo-title"></section>' +
     '<div class="workspace"><aside><p id="progress-label" class="hint"></p><progress id="progress" max="100" value="0" aria-label="작성 진행률"></progress><nav id="steps" class="step-nav" aria-label="보고서 단계"></nav><div class="hint" style="margin-top:22px">자료 찾기<br>RISS · DBpia · KOCW<br>RCSB Protein Data Bank<br><br>확인되지 않은 수치는<br>‘자료 미확인’으로 기록하세요.</div></aside><section class="editor"><div id="editor-field"></div><div class="editor-meta"><span id="char-count"></span><span>최대 6,000자 / 항목</span></div><div class="actions"><button data-action="prev">← 이전</button><button data-action="next">다음 →</button><button class="primary" data-action="preview-report">전체 미리보기 · 제출</button></div></section></div>';
   renderStep();
+  renderReportPhotoPanel(report, writable);
+  ensureReportPhoto(report.id).then(() => renderReportPhotoPanel(report, writable)).catch((error) => { renderReportPhotoPanel(report, writable, error.message); });
 }
 const complete = (f, content) => f.type === 'references' ? (content[f.id] || []).some((r) => r.title && r.author && r.source) : !!String(content[f.id] || '').trim();
 function progress() {
@@ -300,8 +303,34 @@ document.addEventListener('beforeinput', (e) => {
   if (['insertFromPaste','insertFromDrop'].includes(e.inputType)) blockAnswerTransfer(e);
 });
 function reportHTML(r) {
-  return reportDocumentHTML(r, r.student || state.user, state.user?.group || state.groups.find((g) => g.id === state.groupId));
+  return reportDocumentHTML(r, r.student || state.user, state.user?.group || state.groups.find((g) => g.id === state.groupId), { photoUrl:state.reportPhotos.get(r.id)?.url || '' });
 }
+function releaseReportPhoto(reportId) {
+  const old=state.reportPhotos.get(reportId);
+  if(old?.url)URL.revokeObjectURL(old.url);
+  state.reportPhotos.delete(reportId);
+}
+async function ensureReportPhoto(reportId, force=false) {
+  if(!force && state.reportPhotos.has(reportId))return state.reportPhotos.get(reportId);
+  releaseReportPhoto(reportId);
+  const response=await fetch('/api/lab/report-image/'+encodeURIComponent(reportId),{cache:'no-store'});
+  if(response.status===404){const value={url:'',exists:false};state.reportPhotos.set(reportId,value);return value;}
+  if(!response.ok){let data={};try{data=await response.json();}catch{}throw new Error(data.error || '사진을 불러오지 못했습니다.');}
+  const blob=await response.blob(),value={url:URL.createObjectURL(blob),exists:true,size:blob.size,type:blob.type};
+  state.reportPhotos.set(reportId,value);return value;
+}
+function renderReportPhotoPanel(report, writable, error='') {
+  const panel=$('#report-photo-panel');if(!panel)return;
+  const photo=state.reportPhotos.get(report.id);
+  panel.innerHTML='<div class="report-photo-copy"><p class="eyebrow">OPTIONAL IMAGE</p><h2 id="report-photo-title">효소 관련 사진 <small>선택</small></h2><p>탐구와 관련된 사진이 있다면 1장을 덧붙일 수 있습니다. 사진은 Google Sheets나 공개 아카이브로 전송되지 않고, 로그인한 학생 본인과 담당 교사만 이 사이트에서 볼 수 있습니다.</p></div>'+
+    '<div class="report-photo-preview">'+(photo?.url?'<img src="'+esc(photo.url)+'" alt="현재 등록된 효소 관련 사진">':'<span>'+(error?esc(error):(photo?'등록된 사진이 없습니다.':'사진 확인 중…'))+'</span>')+'</div>'+
+    (writable?'<div class="report-photo-controls"><label>사진 고르기<input id="report-photo-file" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="actions"><button type="button" data-action="upload-report-photo" class="primary">'+(photo?.url?'사진 교체':'사진 등록')+'</button>'+(photo?.url?'<button type="button" data-action="delete-report-photo" class="ghost">사진 삭제</button>':'')+'</div><p id="report-photo-file-state" class="hint">JPG · PNG · WebP / 최대 5MB / 선택 사항</p></div>':'<p class="hint">제출된 보고서의 사진은 수정할 수 없습니다.</p>');
+}
+document.addEventListener('change',(event)=>{
+  if(event.target.id!=='report-photo-file')return;
+  const file=event.target.files?.[0],status=$('#report-photo-file-state');
+  if(status)status.textContent=file ? file.name+' · '+(file.size/1024/1024).toFixed(1)+'MB' : 'JPG · PNG · WebP / 최대 5MB / 선택 사항';
+});
 function reportActions(r) {
   state.previewReport = r;
   return '<div class="report-toolbar actions"><button type="button" data-action="toggle-report-fullscreen" aria-pressed="false">전체화면으로 보기</button><button type="button" data-action="download-report-pdf" class="primary">PDF 다운로드</button><button type="button" data-action="print-report">인쇄</button><span class="hint">화면에 맞춰 표시되며 손가락으로 확대할 수 있습니다.</span></div>';
@@ -434,8 +463,9 @@ function renderReportTable() {
     reports.filter((r) => !status || r.status === status).map((r) => '<tr><td>' + r.student.grade + '-' + r.student.classNo + '-' + r.student.number + ' ' + esc(r.student.name) + '</td><td>' + esc(r.title) + '</td><td>' + tag(r.status) + '</td><td>' + date(r.submittedAt) + '</td><td><button data-review="' + r.id + '">보고서 보기</button>' + (r.status === 'approved' ? ' <button data-generate="' + r.id + '">전시본 만들기</button>' : '') + '</td></tr>').join('') + '</tbody></table>' +
     (pending.length ? '<p class="hint">아직 시작하지 않음: ' + pending.map((s) => esc(s.classNo+'반 '+s.number+'번 '+s.name)).join(', ') + '</p>' : '');
 }
-function review(id) {
+async function review(id) {
   const r = state.reports.find((v) => v.id === id);
+  try { await ensureReportPhoto(id); } catch (error) { toast(error.message); }
   dialog('보고서 검토 · ' + r.student.name, reportPreviewHTML(r) + (r.review ? '<div class="notice">최근 검토: ' + esc(r.review.feedback) + '</div>' : '') +
     (r.status === 'submitted' ? '<form id="review-form" class="stack"><label>학생에게 보낼 피드백<textarea name="feedback" maxlength="4000" rows="4"></textarea></label><div class="actions"><button name="status" value="approved" class="primary">보고서 승인</button><button name="status" value="revision">보완 요청</button><button name="status" value="rejected" class="danger">반려</button></div><p class="hint">승인은 전시 공개가 아닙니다. 전시본을 확인한 후 별도로 공개하세요.</p></form>' : ''));
   if ($('#review-form')) $('#review-form').onsubmit = async (e) => {
@@ -508,7 +538,7 @@ document.addEventListener('click', async (e) => {
     if(b.dataset.deleteRef!==undefined){const r=state.saver.report;r.content[r.fields[state.step].id].splice(Number(b.dataset.deleteRef),1);changed();renderReferences();return;}
     if(b.dataset.enterGroup){await switchGroup(b.dataset.enterGroup);location.hash='teacher';await admin();return;}
     if(b.dataset.tab){state.adminTab=b.dataset.tab;await admin();return;}
-    if(b.dataset.review){review(b.dataset.review);return;}
+    if(b.dataset.review){b.disabled=true;try{await review(b.dataset.review);}finally{b.disabled=false;}return;}
     if(b.dataset.editAssessment){assessmentForm(b.dataset.editAssessment);return;}
     if(b.dataset.deleteField!==undefined){state.editAssessment.fields.splice(Number(b.dataset.deleteField),1);renderFields();return;}
     if(b.dataset.moveField!==undefined){const i=Number(b.dataset.moveField),j=i+Number(b.dataset.direction),fs=state.editAssessment.fields;if(j>=0&&j<fs.length)[fs[i],fs[j]]=[fs[j],fs[i]];renderFields();return;}
@@ -546,7 +576,7 @@ document.addEventListener('click', async (e) => {
       }
       case 'logout':
         if(state.saver && !(await state.saver.flush()) && !confirm('미저장 내용은 이 기기에 복구본으로 남습니다. 로그아웃할까요?'))return;
-        b.disabled=true;state.saver?.stop();state.saver=null;await api('logout');state.user=null;state.reports=[];state.students=[];await route();identity();break;
+        b.disabled=true;state.saver?.stop();state.saver=null;for(const id of [...state.reportPhotos.keys()])releaseReportPhoto(id);await api('logout');state.user=null;state.reports=[];state.students=[];await route();identity();break;
       case 'prev':state.step--;renderStep();break;
       case 'next':state.step++;renderStep();break;
       case 'add-reference':{
@@ -574,8 +604,26 @@ document.addEventListener('click', async (e) => {
       }
       case 'preview-report':{
         const r=state.saver.report;
+        try{await ensureReportPhoto(r.id);}catch(error){toast(error.message);}
         dialog('전체 보고서 미리보기',reportPreviewHTML(r)+(['draft','revision'].includes(r.status)?'<div class="notice">필수 항목과 출처를 확인하세요. 제출 후에는 교사가 보완을 요청해야 수정할 수 있습니다.</div><button class="primary" data-action="submit-report">최종 제출</button>':''));
         break;
+      }
+      case 'upload-report-photo':{
+        const report=state.saver?.report,file=$('#report-photo-file')?.files?.[0];
+        if(!report||!file)throw new Error('등록할 사진을 먼저 골라 주세요.');
+        if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('JPG, PNG, WebP 사진만 등록할 수 있습니다.');
+        if(file.size>5*1024*1024)throw new Error('사진은 5MB 이하로 등록해 주세요.');
+        b.disabled=true;
+        const response=await fetch('/api/lab/report-image/'+encodeURIComponent(report.id),{method:'PUT',headers:{'Content-Type':file.type},body:file});
+        if(!response.ok){let data={};try{data=await response.json();}catch{}throw new Error(data.error || '사진을 등록하지 못했습니다.');}
+        await ensureReportPhoto(report.id,true);renderReportPhotoPanel(report,true);toast('사진을 등록했습니다. Google Sheets에는 전송되지 않습니다.');break;
+      }
+      case 'delete-report-photo':{
+        const report=state.saver?.report;if(!report)return;
+        if(!confirm('보고서에서 이 사진을 삭제할까요?'))return;
+        b.disabled=true;const response=await fetch('/api/lab/report-image/'+encodeURIComponent(report.id),{method:'DELETE'});
+        if(!response.ok){let data={};try{data=await response.json();}catch{}throw new Error(data.error || '사진을 삭제하지 못했습니다.');}
+        releaseReportPhoto(report.id);state.reportPhotos.set(report.id,{url:'',exists:false});renderReportPhotoPanel(report,true);toast('사진을 삭제했습니다.');break;
       }
       case 'toggle-report-fullscreen':{
         const expanded=$('#modal').classList.toggle('report-fullscreen');
@@ -591,6 +639,7 @@ document.addEventListener('click', async (e) => {
           if(report)report.style.transform='none';
           await loadScript('./vendor/html2pdf.bundle.min.js',()=>typeof globalThis.html2pdf==='function');
           await document.fonts.ready;
+          await Promise.all([...report.querySelectorAll('img')].map((img)=>img.complete?Promise.resolve():img.decode().catch(()=>{})));
           await html2pdf().set({margin:0,filename:reportFileName(state.previewReport,state.previewReport.student || state.user),image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from($('#printable-report')).save();
         } finally { if(report)report.style.transform=previewTransform;b.disabled=false;requestAnimationFrame(fitReportPreview); }
         break;

@@ -198,6 +198,18 @@ input[type=checkbox] { width: auto; accent-color: var(--blue); }
 .savebar { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin: 24px 0; flex-wrap: wrap; font-size: 12px; }
 .savebar [data-state=error] { color: var(--red); }
 progress { width: 100%; height: 5px; accent-color: var(--blue); }
+.report-photo-panel { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(220px,.7fr); gap: 22px; align-items: center; margin: 0 0 28px; padding: 24px; background: #f7f9fc; border: 1px solid var(--line); border-left: 3px solid #5482be; }
+.report-photo-copy h2 { margin: 5px 0 10px; font-size: 20px; }
+.report-photo-copy h2 small { font-size: 11px; color: var(--blue); }
+.report-photo-copy p:last-child { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.75; }
+.report-photo-preview { min-height: 150px; display: grid; place-items: center; overflow: hidden; border: 1px dashed #a9b9ce; background: #fff; color: var(--muted); font-size: 12px; text-align: center; }
+.report-photo-preview img { display: block; width: 100%; max-height: 240px; object-fit: contain; }
+.report-photo-controls { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px 18px; align-items: end; padding-top: 18px; border-top: 1px solid var(--line); }
+.report-photo-controls .hint { grid-column: 1 / -1; margin: 0; }
+.report-photo { margin: 0 0 8mm; padding: 5mm; border: 1px solid #d9e2ef; break-inside: avoid; page-break-inside: avoid; }
+.report-photo figcaption { margin-bottom: 4mm; color: #173e82; font-size: 12pt; font-weight: 750; }
+.report-photo figcaption span { color: #78879a; font-size: 9pt; font-weight: 500; }
+.report-photo img { display: block; width: 100%; max-height: 105mm; object-fit: contain; background: #f7f9fc; }
 .reference-row { padding: 20px; background: #f3f6fb; border: 1px solid var(--line); border-radius: 3px; display: grid; gap: 12px; margin-bottom: 15px; }
 .editor .reference-row input { font-size: 15px; }
 .preview-section { margin: 28px 0; padding-bottom: 18px; border-bottom: 1px solid var(--line); page-break-inside: avoid; }
@@ -321,6 +333,10 @@ footer > a { color: var(--green); font-size: 11px; font-weight: 650; letter-spac
   .savebar { position: sticky; top: 0; z-index: 8; margin: 10px -18px 18px; padding: 12px 18px; background: #f7f9fcf2; border-block: 1px solid var(--line); backdrop-filter: blur(8px); }
   .savebar .actions { width: 100%; }
   .savebar .actions button { flex: 1 1 100px; }
+  .report-photo-panel { grid-template-columns: 1fr; padding: 18px; }
+  .report-photo-controls { grid-column: 1; grid-template-columns: 1fr; }
+  .report-photo-controls .hint { grid-column: 1; }
+  .report-photo-controls .actions button { flex: 1 1 120px; }
   .editor { padding: 23px 20px 12px; overflow: visible; }
   .editor textarea { font-size: 16px; padding: 15px; min-height: max(320px, 45vh); }
   .editor > .actions { position: sticky; bottom: 0; z-index: 7; margin: 22px -20px 0; padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); background: #fffefa; border-top: 1px solid var(--line); box-shadow: 0 -8px 22px #14223812; }
