@@ -5,7 +5,7 @@ import { syncToSheets, migrateFromSheets } from './sheets-sync.js';
 // D1 is the source of truth when the LAB_DB binding exists; otherwise the old Sheets path.
 export const repositoryFor = (env) => (env.LAB_DB ? d1Repository(env) : sheetsRepository(env));
 const STUDENT = new Set(['myReports','report.open','report.save','report.submit']);
-const ADMIN = new Set(['groups.create','groups.update','students.list','students.import','student.update','assessments.list','assessment.save','reports.list','report.delete','review','publications.list','publication.generate','publication.save','publication.publish','publication.hide']);
+const ADMIN = new Set(['groups.create','groups.update','students.list','students.import','student.update','assessments.list','assessment.save','reports.list','report.delete','report.trash.list','report.restore','review','publications.list','publication.generate','publication.save','publication.publish','publication.hide']);
 const PUBLIC = new Set(['groups.list','bootstrap','archive']);
 ADMIN.add('sheets.refresh');
 ADMIN.add('migrate.fromSheets');
@@ -117,15 +117,11 @@ export async function handle(request, env, injectedRepository) {
       }
       delete payload.password;
     }
-    if (action === 'report.delete') {
-      if (!env.LAB_DB || injectedRepository) return json({ error: '보고서 삭제는 D1 저장소에서만 사용할 수 있습니다.' }, 409);
-      const result = await repo.deleteReport(payload, user);
-      if (env.REPORT_IMAGES) {
-        const key = 'report-images/' + await hmac(env.LAB_SESSION_SECRET, String(user.groupId || 'legacy') + ':' + payload.id);
-        try { await env.REPORT_IMAGES.delete(key); }
-        catch (error) { console.warn('report image cleanup failed', error); }
-      }
-      return json({ result });
+    if (['report.delete','report.trash.list','report.restore'].includes(action)) {
+      if (!env.LAB_DB || injectedRepository) return json({ error: '보고서 휴지통은 D1 저장소에서만 사용할 수 있습니다.' }, 409);
+      if (action === 'report.delete') return json({ result: await repo.deleteReport(payload, user) });
+      if (action === 'report.restore') return json({ result: await repo.restoreReport(payload, user) });
+      return json({ result: await repo.trashedReports(user) });
     }
     if (env.LAB_DB && !injectedRepository && (action === 'sheets.refresh' || action === 'migrate.fromSheets')) {
       if (!user.owner) return json({ error: '전체 관리자만 실행할 수 있습니다.' }, 403);

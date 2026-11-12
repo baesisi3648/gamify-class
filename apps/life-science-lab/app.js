@@ -403,9 +403,10 @@ async function work(id) {
 async function admin() {
   if (state.user?.role !== 'teacher') return login('teacher');
   main.innerHTML = '<div class="page-heading"><span class="eyebrow">TEACHER STUDIO</span><h1>탐구의 다음 단계를 함께.</h1><p class="muted">명단부터 피드백, 최종 전시까지 한곳에서 관리하세요.</p></div><div class="admin-tabs">' +
-    [['reports','보고서 검토'],['students','학생 명단'],['assessments','탐구 활동 설정'],['publications','전시 관리'],['groups','그룹 관리']].map(([id,title]) => '<button data-tab="' + id + '" class="' + (id === state.adminTab ? 'active' : '') + '">' + title + '</button>').join('') +
+    [['reports','보고서 검토'],['trash','휴지통'],['students','학생 명단'],['assessments','탐구 활동 설정'],['publications','전시 관리'],['groups','그룹 관리']].map(([id,title]) => '<button data-tab="' + id + '" class="' + (id === state.adminTab ? 'active' : '') + '">' + title + '</button>').join('') +
     (state.user.owner?'<button data-action="refresh-sheets">한글 시트 새로고침</button>':'')+'<button data-action="refresh-admin" class="ghost">↻ 새로고침</button></div><div id="admin-content"><p class="loading">불러오는 중…</p></div>';
   if (state.adminTab === 'groups') await groups();
+  else if (state.adminTab === 'trash') await trashReports();
   else if (state.adminTab === 'students') await students();
   else if (state.adminTab === 'assessments') await assessments();
   else if (state.adminTab === 'publications') await publications();
@@ -482,6 +483,13 @@ async function reports() {
   $('#report-course').onchange=renderReportTable;
   $('#report-assessment').onchange = renderReportTable; $('#report-status').onchange = renderReportTable; renderReportTable();
 }
+async function trashReports() {
+  const { reports: items } = await api('report.trash.list');
+  $('#admin-content').innerHTML = '<section class="panel"><h2>보고서 휴지통</h2><p class="hint">휴지통의 보고서는 학생 화면과 구글 시트에서 보이지 않습니다. 복원하면 답변·검토 기록·전시본·사진이 함께 돌아옵니다.</p>' +
+    (items.length ? '<div class="table-wrap"><table><thead><tr><th>학생</th><th>탐구</th><th>이전 상태</th><th>삭제일</th><th>관리</th></tr></thead><tbody>' +
+      items.map((item) => '<tr><td>' + esc(item.student?.name || '학생 정보 없음') + '</td><td>' + esc(item.title) + '</td><td>' + tag(item.status) + '</td><td>' + date(item.deletedAt) + '</td><td><button data-restore-report="' + esc(item.id) + '">복원</button></td></tr>').join('') +
+      '</tbody></table></div>' : '<p class="empty">휴지통이 비어 있습니다.</p>') + '</section>';
+}
 function renderReportTable() {
   const aid = $('#report-assessment').value, status = $('#report-status').value;
   const course=$('#report-course').value;
@@ -490,7 +498,7 @@ function renderReportTable() {
   const pending = a ? state.students.filter((s) => s.active && s.year === a.year && (!course || (s.courseClasses || []).includes(course)) && !reports.some((r) => r.studentId === s.id)) : [];
   $('#report-summary').innerHTML = '<div class="stats" style="margin-bottom:20px"><div><strong>' + reports.length + '</strong><small>작성 보고서</small></div><div><strong>' + reports.filter((r) => r.status==='submitted').length + '</strong><small>검토 대기</small></div>' + (a ? '<div><strong>' + pending.length + '</strong><small>미참여</small></div>' : '') + '</div>';
   $('#report-table').innerHTML = '<table><thead><tr><th>학생</th><th>탐구</th><th>상태</th><th>제출일</th><th>관리</th></tr></thead><tbody>' +
-    reports.filter((r) => !status || r.status === status).map((r) => '<tr><td>' + r.student.grade + '-' + r.student.classNo + '-' + r.student.number + ' ' + esc(r.student.name) + '</td><td>' + esc(r.title) + '</td><td>' + tag(r.status) + '</td><td>' + date(r.submittedAt) + '</td><td><button data-review="' + r.id + '">보고서 보기</button>' + (r.status === 'approved' ? ' <button data-generate="' + r.id + '">전시본 만들기</button>' : '') + ' <button class="danger" data-delete-report="' + r.id + '">삭제</button></td></tr>').join('') + '</tbody></table>' +
+    reports.filter((r) => !status || r.status === status).map((r) => '<tr><td>' + r.student.grade + '-' + r.student.classNo + '-' + r.student.number + ' ' + esc(r.student.name) + '</td><td>' + esc(r.title) + '</td><td>' + tag(r.status) + '</td><td>' + date(r.submittedAt) + '</td><td><button data-review="' + r.id + '">보고서 보기</button>' + (r.status === 'approved' ? ' <button data-generate="' + r.id + '">전시본 만들기</button>' : '') + ' <button class="danger" data-delete-report="' + r.id + '">휴지통으로</button></td></tr>').join('') + '</tbody></table>' +
     (pending.length ? '<p class="hint">아직 시작하지 않음: ' + pending.map((s) => esc(s.classNo+'반 '+s.number+'번 '+s.name)).join(', ') + '</p>' : '');
 }
 async function review(id) {
@@ -572,9 +580,16 @@ document.addEventListener('click', async (e) => {
     if(b.dataset.deleteReport){
       const r=state.reports.find((v)=>v.id===b.dataset.deleteReport);
       if(!r)throw new Error('보고서를 다시 불러와 주세요.');
-      if(!confirm(r.student.name+' 학생의 「'+r.title+'」 보고서를 완전히 삭제할까요? 검토 기록·전시본·사진도 함께 삭제됩니다. 학생이 다시 열면 빈 보고서로 시작합니다.'))return;
+      if(!confirm(r.student.name+' 학생의 「'+r.title+'」 보고서를 휴지통으로 옮길까요? 학생이 다시 열면 빈 보고서로 시작하고, 기존 답변·검토·전시·사진은 복원할 수 있습니다.'))return;
       b.disabled=true;
-      try{await api('report.delete',{id:r.id,version:r.version});toast('보고서를 삭제했습니다.');await reports();}
+      try{await api('report.delete',{id:r.id,version:r.version});toast('휴지통으로 옮겼습니다.');await reports();}
+      finally{b.disabled=false;}
+      return;
+    }
+    if(b.dataset.restoreReport){
+      if(!confirm('이 보고서를 복원할까요? 학생의 기존 답변과 검토 기록도 함께 돌아옵니다.'))return;
+      b.disabled=true;
+      try{await api('report.restore',{id:b.dataset.restoreReport});toast('보고서를 복원했습니다.');await trashReports();}
       finally{b.disabled=false;}
       return;
     }

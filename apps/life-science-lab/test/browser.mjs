@@ -11,10 +11,13 @@ const healthGate=new Promise((resolve)=>{releaseHealth=resolve;});
 let releaseGroups;
 const groupsGate=new Promise((resolve)=>{releaseGroups=resolve;});
 let archiveRequests=0;
+let demoTrash=[{id:'demo-trash',deletedAt:'2026-11-12T10:00:00.000Z',title:'예전 보고서',status:'rejected',student:{name:'가상연구자1'}}];
 const vendorRequests=[];
 await page.route('**/api/lab/health',async(route)=>{await healthGate;await route.continue();});
 await page.route('**/api/lab/rpc',async(route)=>{
   const action=JSON.parse(route.request().postData()||'{}').action;
+  if(action==='report.trash.list')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({result:{reports:demoTrash}})});
+  if(action==='report.restore'){demoTrash=[];return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({result:{ok:true}})});}
   if(action==='groups.list')await groupsGate;
   if(action==='archive')archiveRequests++;
   await route.continue();
@@ -110,6 +113,11 @@ try {
   await page.locator('[data-action=logout]').click();await expect(page.locator('#identity a[href="#lab"]')).toBeVisible();await page.locator('[data-nav=teacher]').click();
   await expect(page.locator('#login-form h2')).toContainText('교사 로그인');await page.locator('[name=password]').fill('teacher-demo-2026');await page.locator('#login-form').evaluate((form)=>form.requestSubmit());
   await expect(page.locator('#identity [data-action=logout]')).toBeVisible({timeout:30000});await page.locator('[data-nav=teacher]').click();
+  await page.locator('[data-tab=trash]').click();
+  await expect(page.locator('#admin-content')).toContainText('예전 보고서');
+  await page.locator('[data-restore-report="demo-trash"]').click();
+  await expect(page.locator('#admin-content')).toContainText('휴지통이 비어 있습니다');
+  await page.locator('[data-tab=reports]').click();
   await expect(page.locator('[data-review]').first()).toBeVisible();
   await page.locator('[data-review]').first().click();
   await expect(page.locator('#printable-report .report-photo img')).toBeVisible();
@@ -191,5 +199,5 @@ try {
   await page.screenshot({path:'.qa/login-mobile.png',fullPage:true});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1);
   expect(overflow).toBe(false);expect(errors).toEqual([]);
-  console.log('PASS: QR download, paste blocking, login, 10 steps, save/reload, submission lock, rejected/resubmit, teacher delete button, approval, publication, anonymity, unpublish, CSV/XLS/XLSX import, dynamic assessment, mobile overflow, no JS errors');
+  console.log('PASS: QR download, paste blocking, login, 10 steps, save/reload, submission lock, rejected/resubmit, teacher trash and restore UI, approval, publication, anonymity, unpublish, CSV/XLS/XLSX import, dynamic assessment, mobile overflow, no JS errors');
 } finally { await browser.close(); }

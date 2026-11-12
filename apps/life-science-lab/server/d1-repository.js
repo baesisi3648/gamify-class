@@ -192,12 +192,62 @@ export function d1Repository(env) {
       if (groupId !== 'legacy' && !actor.owner) statements.push(db.prepare("SELECT CASE WHEN EXISTS (SELECT 1 FROM Settings WHERE id = ? AND json_extract(data, '$.value.authVersion') = ?) THEN 1 ELSE json('write-conflict') END")
         .bind('group:' + groupId, actor.groupVersion));
       statements.push(
+        db.prepare(`INSERT INTO ReportTrash (id, grp, studentId, assessmentId, deletedAt, data)
+          SELECT id, grp, studentId, assessmentId, ?, json_object(
+            'report', json(Reports.data), 'student', json(?),
+            'reviews', (SELECT json_group_array(json(data)) FROM Reviews WHERE grp = ? AND reportId = ?),
+            'publications', (SELECT json_group_array(json(data)) FROM Publications WHERE grp = ? AND reportId = ?),
+            'versions', (SELECT json_group_array(json(data)) FROM PublicationVersions WHERE grp = ? AND publicationId IN
+              (SELECT id FROM Publications WHERE reportId = ? AND grp = ?))
+          ) FROM Reports WHERE id = ? AND grp = ? AND data = ?`)
+          .bind(new Date().toISOString(), JSON.stringify(report.student || { id: report.studentId }), groupId, report.id, groupId, report.id,
+            groupId, report.id, groupId, report.id, groupId, current.data),
         db.prepare('DELETE FROM PublicationVersions WHERE grp = ? AND publicationId IN (SELECT id FROM Publications WHERE reportId = ? AND grp = ?)').bind(groupId, report.id, groupId),
         db.prepare('DELETE FROM Publications WHERE reportId = ? AND grp = ?').bind(report.id, groupId),
         db.prepare('DELETE FROM Reviews WHERE reportId = ? AND grp = ?').bind(report.id, groupId),
         db.prepare('DELETE FROM Reports WHERE id = ? AND grp = ? AND data = ?').bind(report.id, groupId, current.data),
         db.prepare(BUMP_REV)
       );
+      try { await db.batch(statements); }
+      catch (error) { if (isWriteConflict(error)) throw conflictError(); throw error; }
+      return { ok: true };
+    },
+    async trashedReports(actor) {
+      if (actor?.role !== 'teacher') throw Object.assign(new Error('교사 권한이 필요합니다.'), { status: 403 });
+      await this.execute('students.list', {}, actor);
+      const groupId = String(actor.groupId || 'legacy');
+      const rows = (await db.prepare('SELECT id, deletedAt, data FROM ReportTrash WHERE grp = ? ORDER BY deletedAt DESC').bind(groupId).all()).results;
+      return { reports: rows.map((row) => {
+        const bundle = JSON.parse(row.data);
+        return { id: row.id, deletedAt: row.deletedAt, title: bundle.report.title,
+          status: bundle.report.status, student: bundle.student };
+      }) };
+    },
+    async restoreReport(payload, actor) {
+      if (actor?.role !== 'teacher') throw Object.assign(new Error('교사 권한이 필요합니다.'), { status: 403 });
+      await this.execute('students.list', {}, actor);
+      const groupId = String(actor.groupId || 'legacy');
+      const row = await db.prepare('SELECT data FROM ReportTrash WHERE id = ? AND grp = ?').bind(String(payload.id || ''), groupId).first();
+      if (!row) throw Object.assign(new Error('이 그룹의 휴지통에서 보고서를 찾을 수 없습니다.'), { status: 404 });
+      const bundle = JSON.parse(row.data), report = bundle.report;
+      const active = await db.prepare('SELECT id FROM Reports WHERE studentId = ? AND assessmentId = ?').bind(report.studentId, report.assessmentId).first();
+      if (active) throw Object.assign(new Error('학생이 이미 새 보고서를 시작했습니다. 새 보고서를 먼저 휴지통으로 옮긴 뒤 복원해 주세요.'), { status: 409 });
+      const statements = [db.prepare("SELECT CASE WHEN EXISTS (SELECT 1 FROM ReportTrash WHERE id = ? AND grp = ? AND data = ?) THEN 1 ELSE json('write-conflict') END")
+        .bind(report.id, groupId, row.data),
+        db.prepare("SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM Reports WHERE studentId = ? AND assessmentId = ?) THEN 1 ELSE json('write-conflict') END")
+          .bind(report.studentId, report.assessmentId)];
+      if (groupId !== 'legacy' && !actor.owner) statements.push(db.prepare("SELECT CASE WHEN EXISTS (SELECT 1 FROM Settings WHERE id = ? AND json_extract(data, '$.value.authVersion') = ?) THEN 1 ELSE json('write-conflict') END")
+        .bind('group:' + groupId, actor.groupVersion));
+      const insert = (table, item) => {
+        const def = TABLES[table], cols = { grp: grpOf(item), ...def.cols(item), data: JSON.stringify(item) };
+        const names = [...def.key, ...Object.keys(cols)];
+        return db.prepare(`INSERT INTO ${table} (${names.join(',')}) VALUES (${names.map(() => '?').join(',')})`)
+          .bind(...def.key.map((c) => String(item[c])), ...Object.values(cols));
+      };
+      statements.push(insert('Reports', report));
+      for (const [table, items] of [['Reviews', bundle.reviews], ['Publications', bundle.publications], ['PublicationVersions', bundle.versions]])
+        for (const item of items || []) statements.push(insert(table, item));
+      statements.push(db.prepare('DELETE FROM ReportTrash WHERE id = ? AND grp = ? AND data = ?').bind(report.id, groupId, row.data), db.prepare(BUMP_REV));
       try { await db.batch(statements); }
       catch (error) { if (isWriteConflict(error)) throw conflictError(); throw error; }
       return { ok: true };

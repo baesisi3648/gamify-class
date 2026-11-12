@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 export function d1Shim() {
   const db = new DatabaseSync(':memory:');
   db.exec(readFileSync(new URL('../migrations/0001_init.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0002_report_trash.sql', import.meta.url), 'utf8'));
   const stats = { batches: 0, statements: 0, queries: [] };
   const statement = (sql, args = []) => ({
     sql, args,

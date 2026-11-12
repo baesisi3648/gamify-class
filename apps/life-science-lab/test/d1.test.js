@@ -50,7 +50,7 @@ test('D1: 빈 DB에서 효소 탐구가 자동 준비되고 전체 수행평가 
   assert.equal(rows, 1);
 });
 
-test('D1: 교사는 보고서와 연결된 검토·전시·사진을 삭제하고 학생은 빈 보고서를 다시 연다', async () => {
+test('D1: 보고서 휴지통은 연결 기록과 사진을 보존하고 새 보고서와 충돌하지 않을 때 복원한다', async () => {
   const { call, teacher, db, env } = await setup();
   const deletedImages = [];
   env.REPORT_IMAGES = { delete: async (key) => deletedImages.push(key) };
@@ -69,10 +69,20 @@ test('D1: 교사는 보고서와 연결된 검토·전시·사진을 삭제하�
   for (const table of ['Reports','Reviews','Publications','PublicationVersions']) assert.equal(db.raw.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get().c, 0);
   assert.equal((await call('archive')).body.result.works.length, 0);
   assert.equal((await call('myReports', {}, student)).body.result.reports.length, 0);
-  assert.equal(deletedImages.length, 1);
+  assert.equal(deletedImages.length, 0);
+  assert.equal((await call('report.trash.list', {}, student)).status, 403);
+  const trash = await call('report.trash.list', {}, teacher);
+  assert.equal(trash.status, 200); assert.equal(trash.body.result.reports[0].id, report.id);
   const reopened = (await call('report.open', { assessmentId: 'enzyme-structure' }, student)).body.result;
   assert.notEqual(reopened.id, report.id);
   assert.deepEqual(reopened.content, {});
+  assert.equal((await call('report.restore', { id: report.id }, teacher)).status, 409);
+  assert.equal((await call('report.delete', { id: reopened.id, version: reopened.version }, teacher)).status, 200);
+  assert.equal((await call('report.restore', { id: report.id }, teacher)).status, 200);
+  assert.equal((await call('myReports', {}, student)).body.result.reports[0].id, report.id);
+  assert.equal((await call('archive')).body.result.works.length, 1);
+  for (const table of ['Reports','Reviews','Publications','PublicationVersions']) assert.equal(db.raw.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get().c, 1);
+  assert.equal((await call('report.trash.list', {}, teacher)).body.result.reports[0].id, reopened.id);
 });
 
 test('D1: 학생 요청은 자기 행만 읽고, 저장은 배치 1번', async () => {
@@ -137,6 +147,21 @@ test('D1: 그룹 격리와 사진 권한(report.meta)', async () => {
   assert.equal((await img(gt)).status, 404);
   assert.match((await (await img(gt)).json()).error, /보고서/);
   assert.match((await (await img(s)).json()).error, /사진/);
+});
+
+test('D1: 다른 연구 그룹의 교사는 휴지통 보고서를 보거나 복원할 수 없다', async () => {
+  const { call, teacher } = await setup();
+  const created = await call('groups.create', { year: 2026, semester: '2', subject: '생명', school: '가상', password: 'group-pass-1' }, teacher);
+  const groupId = created.body.result.id;
+  const groupTeacher = (await call('login', { role: 'teacher', groupId, password: 'group-pass-1' })).cookie;
+  await call('students.import', { students: roster(1, 2) }, groupTeacher);
+  const student = (await call('login', { ...who(1, 2), groupId, password: '1234' })).cookie;
+  const assessment = (await call('assessments.list', {}, groupTeacher)).body.result.assessments[0];
+  const report = (await call('report.open', { assessmentId: assessment.id }, student)).body.result;
+  assert.equal((await call('report.delete', { id: report.id, version: report.version }, groupTeacher)).status, 200);
+  assert.equal((await call('report.trash.list', {}, teacher)).body.result.reports.length, 0);
+  assert.equal((await call('report.restore', { id: report.id }, teacher)).status, 404);
+  assert.equal((await call('report.restore', { id: report.id }, groupTeacher)).status, 200);
 });
 
 test('D1 → 시트 복사: 리비전이 바뀔 때만, 카운터 제외, 실패 시 재시도', async () => {
