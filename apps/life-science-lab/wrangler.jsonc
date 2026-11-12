@@ -20,7 +20,7 @@
   // then paste the printed database_id below and run migrations (see HANDOFF doc).
   // Removing this block switches the app back to Google Sheets storage.
   "d1_databases": [
-    { "binding": "LAB_DB", "database_name": "life-science-lab", "database_id": "REPLACE_WITH_DATABASE_ID", "migrations_dir": "migrations" }
+    { "binding": "LAB_DB", "database_name": "life-science-lab", "database_id": "90f66ce6-96cf-4f16-96bb-72392ca34b4e", "migrations_dir": "migrations" }
   ],
   // Every 5 minutes: copy D1 changes to the teachers' Google Sheet (skipped when nothing changed).
   "triggers": { "crons": ["*/5 * * * *"] },
