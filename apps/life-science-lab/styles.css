@@ -205,6 +205,8 @@ progress { width: 100%; height: 5px; accent-color: var(--blue); }
 .prose { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.85; }
 .preview-section .prose { color: #425168; font-size: 15px; }
 .report-toolbar { justify-content: flex-end; margin-bottom: 18px; }
+.report-preview-viewport { width: 100%; overflow: hidden; position: relative; background: #e9eef6; touch-action: pan-x pan-y pinch-zoom; }
+.report-preview-viewport .report-document { margin: 0; transform-origin: top left; }
 .report-document { width: 210mm; max-width: none; margin: 0 auto; padding: 18mm; background: #fff; color: #142238; box-shadow: 0 8px 32px #1422381a; font-size: 12pt; line-height: 1.65; }
 .report-document-head { border-bottom: 3px solid #173e82; padding-bottom: 12mm; margin-bottom: 8mm; }
 .report-kicker { color: #245bb0; font-size: 10pt; font-weight: 750; letter-spacing: .12em; margin: 0 0 5mm; }
@@ -252,6 +254,8 @@ td .button, td button { padding: 7px 10px; font-size: 12px; }
 .infographic.compact .infographic-body { grid-template-columns: 1fr; }
 .infographic.compact header h1 { font-size: 25px; }
 dialog { width: min(940px, 94vw); max-height: 90vh; border: 1px solid var(--line); border-radius: 5px; padding: 30px; color: var(--ink); }
+dialog.report-fullscreen { width: 100dvw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 22px; border: 0; border-radius: 0; }
+dialog.report-fullscreen .dialog-head { position: sticky; top: -22px; z-index: 5; margin: -22px -22px 20px; padding: 18px 22px; background: #fff; }
 dialog::backdrop { background: #0b1c3677; }
 .dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 15px; border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 24px; }
 .dialog-head h2 { font-size: 22px; margin: 0; }
@@ -321,6 +325,14 @@ footer > a { color: var(--green); font-size: 11px; font-weight: 650; letter-spac
   .editor textarea { font-size: 16px; padding: 15px; min-height: max(320px, 45vh); }
   .editor > .actions { position: sticky; bottom: 0; z-index: 7; margin: 22px -20px 0; padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); background: #fffefa; border-top: 1px solid var(--line); box-shadow: 0 -8px 22px #14223812; }
   .editor .actions > button { min-height: 46px; padding: 12px 10px; font-size: 12px; flex: 1 1 90px; }
+  dialog { width: calc(100vw - 16px); padding: 16px 12px; }
+  .dialog-head { margin-bottom: 14px; }
+  .dialog-head h2 { font-size: 18px; }
+  .report-toolbar { justify-content: stretch; gap: 8px; }
+  .report-toolbar button { flex: 1 1 120px; min-height: 44px; }
+  .report-toolbar .hint { flex-basis: 100%; text-align: center; }
+  dialog.report-fullscreen { padding: 14px 8px; }
+  dialog.report-fullscreen .dialog-head { top: -14px; margin: -14px -8px 14px; padding: 14px 12px; }
   .stats { gap: 24px; }
   .stats strong { font-size: 28px; }
   .panel { padding: 18px; }
@@ -351,7 +363,7 @@ footer > a { color: var(--green); font-size: 11px; font-weight: 650; letter-spac
   body.printing-report > :not(#modal) { display: none !important; }
   body.printing-report #modal { display: block !important; width: 210mm; max-width: none; max-height: none; overflow: visible; margin: 0; padding: 0; border: 0; box-shadow: none; }
   body.printing-report #modal .dialog-head, body.printing-report #modal-body > :not(#printable-report) { display: none !important; }
-  body.printing-report .report-document { width: 210mm; max-width: none; margin: 0; box-shadow: none; }
+  body.printing-report .report-document { width: 210mm; max-width: none; margin: 0; box-shadow: none; transform: none !important; }
   .utility-bar, .topbar, footer, .connection, .actions, .admin-tabs, .dialog-head button, #toast { display: none !important; }
   main { padding: 0; max-width: none; }
   dialog { position: static; width: 100%; max-height: none; border: 0; }

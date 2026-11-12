@@ -58,6 +58,7 @@ try {
   await expect(page.locator('h1')).toContainText('가상연구자1');
   await page.locator('[data-nav=activities]').click();await page.locator('[data-open]').first().click();
   await expect(page.locator('#answer')).toBeVisible();
+  await expect(page.locator('#answer')).toHaveAttribute('placeholder','위 안내 조건에 맞게 직접 작성하세요. 복사·붙여넣기는 사용할 수 없습니다.');
   const pasted=await page.locator('#answer').evaluate((el)=>el.dispatchEvent(new InputEvent('beforeinput',{bubbles:true,cancelable:true,inputType:'insertFromPaste',data:'붙여넣기 시도'})));
   expect(pasted).toBe(false);await expect(page.locator('#toast')).toContainText('직접 작성');
   await page.locator('#answer').fill('카탈레이스: 과산화수소를 분해하는 효소. <script>alert("xss")</script>');
@@ -77,6 +78,16 @@ try {
   await page.locator('[data-action=preview-report]').click();
   await expect(page.locator('#printable-report')).toContainText('가상연구자1');
   await expect(page.locator('#printable-report')).toContainText('카탈레이스');
+  await page.setViewportSize({width:390,height:844});
+  const previewBox=await page.locator('.report-preview-viewport').boundingBox();
+  const mobileReportBox=await page.locator('#printable-report').boundingBox();
+  if(mobileReportBox.x<previewBox.x-1 || mobileReportBox.x+mobileReportBox.width>previewBox.x+previewBox.width+1)throw new Error('모바일 보고서 미리보기가 화면 너비에 맞지 않습니다.');
+  await page.locator('[data-action=toggle-report-fullscreen]').click();
+  await expect(page.locator('#modal')).toHaveClass(/report-fullscreen/);
+  await expect(page.locator('[data-action=toggle-report-fullscreen]')).toContainText('전체화면 닫기');
+  await page.screenshot({path:'.qa/report-preview-mobile.png',fullPage:true});
+  await page.locator('[data-action=toggle-report-fullscreen]').click();
+  await page.setViewportSize({width:1440,height:1000});
   await page.screenshot({path:'.qa/report-preview-desktop.png',fullPage:true});
   const reportDownload=page.waitForEvent('download');
   await page.locator('[data-action=download-report-pdf]').click();

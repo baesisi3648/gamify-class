@@ -18,8 +18,15 @@ async function api(action, payload = {}) {
   return data.result;
 }
 function errorBox(message) { return '<div class="notice error">' + esc(message) + '</div>'; }
-function dialog(title, body) { $('#modal-title').textContent = title; $('#modal-body').innerHTML = body; if (!$('#modal').open) $('#modal').showModal(); }
+function dialog(title, body) {
+  $('#modal').classList.remove('report-fullscreen');
+  $('#modal-title').textContent = title; $('#modal-body').innerHTML = body;
+  if (!$('#modal').open) $('#modal').showModal();
+  requestAnimationFrame(fitReportPreview);
+}
+function resetReportDialog() { $('#modal').classList.remove('report-fullscreen'); }
 $('#close-modal').onclick = () => $('#modal').close();
+$('#modal').addEventListener('close', resetReportDialog);
 function download(name, data, type = 'application/json') {
   const url = URL.createObjectURL(new Blob([data], { type })), a = document.createElement('a');
   a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -267,7 +274,7 @@ function renderStep() {
   progress();
   $('#editor-field').innerHTML = '<span class="eyebrow">STEP ' + String(state.step+1).padStart(2,'0') + ' / ' + r.fields.length + '</span><h2>' + esc(f.title) + (f.required ? ' <small style="font-size:12px">필수</small>' : '') + '</h2><p class="editor-guide">' + esc(f.guide) + '</p>' +
     (f.type === 'references' ? '<div id="references"></div>' + (!locked ? '<button data-action="add-reference">+ 참고 자료 추가</button>' : '') :
-      '<label><span class="hint">탐구 내용</span><textarea id="answer" data-student-answer maxlength="6000" ' + (locked ? 'readonly' : '') + ' placeholder="찾은 근거를 바탕으로 나의 생각을 직접 적어 보세요. 복사·붙여넣기는 사용할 수 없습니다.">' + esc(r.content[f.id] || '') + '</textarea></label>');
+      '<label><span class="hint">탐구 내용</span><textarea id="answer" data-student-answer maxlength="6000" ' + (locked ? 'readonly' : '') + ' placeholder="위 안내 조건에 맞게 직접 작성하세요. 복사·붙여넣기는 사용할 수 없습니다.">' + esc(r.content[f.id] || '') + '</textarea></label>');
   if (f.type === 'references') renderReferences(); else $('#answer').oninput = () => { r.content[f.id] = $('#answer').value; changed(); };
   $('[data-action="prev"]').disabled = state.step === 0;
   $('[data-action="next"]').disabled = state.step === r.fields.length - 1;
@@ -297,8 +304,18 @@ function reportHTML(r) {
 }
 function reportActions(r) {
   state.previewReport = r;
-  return '<div class="report-toolbar actions"><button type="button" data-action="download-report-pdf" class="primary">PDF 다운로드</button><button type="button" data-action="print-report">인쇄</button><span class="hint">A4 보고서로 출력됩니다.</span></div>';
+  return '<div class="report-toolbar actions"><button type="button" data-action="toggle-report-fullscreen" aria-pressed="false">전체화면으로 보기</button><button type="button" data-action="download-report-pdf" class="primary">PDF 다운로드</button><button type="button" data-action="print-report">인쇄</button><span class="hint">화면에 맞춰 표시되며 손가락으로 확대할 수 있습니다.</span></div>';
 }
+function reportPreviewHTML(r) { return reportActions(r) + '<div class="report-preview-viewport">' + reportHTML(r) + '</div>'; }
+function fitReportPreview() {
+  const viewport=$('.report-preview-viewport'),report=$('#printable-report');
+  if(!viewport||!report)return;
+  report.style.transform='none';
+  const scale=Math.min(1,viewport.clientWidth/report.offsetWidth);
+  report.style.transform='scale('+scale+')';
+  viewport.style.height=Math.ceil(report.offsetHeight*scale)+'px';
+}
+window.addEventListener('resize',()=>requestAnimationFrame(fitReportPreview));
 async function archive() {
   main.innerHTML = '<div class="page-heading"><span class="eyebrow">RESEARCH ARCHIVE</span><h1>탐구 아카이브</h1><p class="loading">공개된 탐구를 불러오는 중입니다…</p></div>';
   if (state.configured) { try { state.works = (await api('archive')).works; } catch (e) { toast(e.message); } }
@@ -419,7 +436,7 @@ function renderReportTable() {
 }
 function review(id) {
   const r = state.reports.find((v) => v.id === id);
-  dialog('보고서 검토 · ' + r.student.name, reportActions(r) + reportHTML(r) + (r.review ? '<div class="notice">최근 검토: ' + esc(r.review.feedback) + '</div>' : '') +
+  dialog('보고서 검토 · ' + r.student.name, reportPreviewHTML(r) + (r.review ? '<div class="notice">최근 검토: ' + esc(r.review.feedback) + '</div>' : '') +
     (r.status === 'submitted' ? '<form id="review-form" class="stack"><label>학생에게 보낼 피드백<textarea name="feedback" maxlength="4000" rows="4"></textarea></label><div class="actions"><button name="status" value="approved" class="primary">보고서 승인</button><button name="status" value="revision">보완 요청</button><button name="status" value="rejected" class="danger">반려</button></div><p class="hint">승인은 전시 공개가 아닙니다. 전시본을 확인한 후 별도로 공개하세요.</p></form>' : ''));
   if ($('#review-form')) $('#review-form').onsubmit = async (e) => {
     e.preventDefault(); const button = e.submitter; button.disabled = true;
@@ -557,16 +574,25 @@ document.addEventListener('click', async (e) => {
       }
       case 'preview-report':{
         const r=state.saver.report;
-        dialog('전체 보고서 미리보기',reportActions(r)+reportHTML(r)+(['draft','revision'].includes(r.status)?'<div class="notice">필수 항목과 출처를 확인하세요. 제출 후에는 교사가 보완을 요청해야 수정할 수 있습니다.</div><button class="primary" data-action="submit-report">최종 제출</button>':''));
+        dialog('전체 보고서 미리보기',reportPreviewHTML(r)+(['draft','revision'].includes(r.status)?'<div class="notice">필수 항목과 출처를 확인하세요. 제출 후에는 교사가 보완을 요청해야 수정할 수 있습니다.</div><button class="primary" data-action="submit-report">최종 제출</button>':''));
+        break;
+      }
+      case 'toggle-report-fullscreen':{
+        const expanded=$('#modal').classList.toggle('report-fullscreen');
+        b.setAttribute('aria-pressed',String(expanded));
+        b.textContent=expanded?'전체화면 닫기':'전체화면으로 보기';
+        requestAnimationFrame(fitReportPreview);
         break;
       }
       case 'download-report-pdf':{
         b.disabled=true;
+        const report=$('#printable-report'),previewTransform=report?.style.transform||'';
         try {
+          if(report)report.style.transform='none';
           await loadScript('./vendor/html2pdf.bundle.min.js',()=>typeof globalThis.html2pdf==='function');
           await document.fonts.ready;
           await html2pdf().set({margin:0,filename:reportFileName(state.previewReport,state.previewReport.student || state.user),image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from($('#printable-report')).save();
-        } finally { b.disabled=false; }
+        } finally { if(report)report.style.transform=previewTransform;b.disabled=false;requestAnimationFrame(fitReportPreview); }
         break;
       }
       case 'print-report':{
