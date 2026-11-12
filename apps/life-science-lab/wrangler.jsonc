@@ -10,11 +10,20 @@
   },
   // Login rate limits without touching Google Sheets. A school shares one public IP,
   // so the IP limit fits several classes logging in within the same minute.
-  // If deploy rejects this block, delete it: the code falls back to Sheets counters.
+  // If deploy rejects this block, delete it: the code falls back to counters in storage (D1).
   "ratelimits": [
     { "name": "LOGIN_IP_LIMITER", "namespace_id": "47101", "simple": { "limit": 300, "period": 60 } },
     { "name": "LOGIN_ID_LIMITER", "namespace_id": "47102", "simple": { "limit": 10, "period": 60 } }
   ],
+  // D1 = source of truth (students, reports). Create with:
+  //   npx wrangler d1 create life-science-lab
+  // then paste the printed database_id below and run migrations (see HANDOFF doc).
+  // Removing this block switches the app back to Google Sheets storage.
+  "d1_databases": [
+    { "binding": "LAB_DB", "database_name": "life-science-lab", "database_id": "REPLACE_WITH_DATABASE_ID", "migrations_dir": "migrations" }
+  ],
+  // Every 5 minutes: copy D1 changes to the teachers' Google Sheet (skipped when nothing changed).
+  "triggers": { "crons": ["*/5 * * * *"] },
   "r2_buckets": [
     {
       "binding": "REPORT_IMAGES",

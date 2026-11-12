@@ -1,9 +1,14 @@
 import { passwordHash, verifyPassword, signSession, readSession, hmac, validStudentSecret } from './auth.js';
 import { sheetsRepository } from './repository.js';
+import { d1Repository } from './d1-repository.js';
+import { syncToSheets, migrateFromSheets } from './sheets-sync.js';
+// D1 is the source of truth when the LAB_DB binding exists; otherwise the old Sheets path.
+export const repositoryFor = (env) => (env.LAB_DB ? d1Repository(env) : sheetsRepository(env));
 const STUDENT = new Set(['myReports','report.open','report.save','report.submit']);
 const ADMIN = new Set(['groups.create','groups.update','students.list','students.import','student.update','assessments.list','assessment.save','reports.list','review','publications.list','publication.generate','publication.save','publication.publish','publication.hide']);
 const PUBLIC = new Set(['groups.list','bootstrap','archive']);
 ADMIN.add('sheets.refresh');
+ADMIN.add('migrate.fromSheets');
 const json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data), {
   status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers }
 });
@@ -11,7 +16,7 @@ export async function handle(request, env, injectedRepository) {
   try {
     const url = new URL(request.url);
     if (request.method === 'GET' && url.pathname.endsWith('/health')) {
-      return json({ configured: !!(env.LAB_SHEETS_URL && env.LAB_SHEETS_SECRET && env.LAB_SESSION_SECRET && env.LAB_ADMIN_HASH) });
+      return json({ configured: !!(env.LAB_SESSION_SECRET && env.LAB_ADMIN_HASH && (env.LAB_DB || (env.LAB_SHEETS_URL && env.LAB_SHEETS_SECRET))), storage: env.LAB_DB ? 'd1' : 'sheets' });
     }
     if (request.method !== 'POST') return json({ error: 'POST 요청이 필요합니다.' }, 405);
     if (request.headers.get('Origin') !== url.origin) return json({ error: '허용되지 않은 요청 출처입니다.' }, 403);
@@ -19,7 +24,7 @@ export async function handle(request, env, injectedRepository) {
     const raw = await request.text();
     if (raw.length > 120000) return json({ error: '요청이 너무 큽니다.' }, 413);
     const { action, payload = {} } = JSON.parse(raw);
-    const repo = injectedRepository || sheetsRepository(env);
+    const repo = injectedRepository || repositoryFor(env);
     if (PUBLIC.has(action)) return json({ result: await repo.execute(action, payload) });
     if (!env.LAB_SESSION_SECRET || !env.LAB_ADMIN_HASH) return json({ error: '교사 인증 설정을 준비 중입니다.' }, 503);
     const cookie = (token, age = 28800) => 'lab_session=' + token + '; HttpOnly; SameSite=Strict; Path=/api/lab; Max-Age=' + age + (url.protocol === 'https:' ? '; Secure' : '');
@@ -111,6 +116,12 @@ export async function handle(request, env, injectedRepository) {
         payload.passwordHash = await passwordHash(payload.password);
       }
       delete payload.password;
+    }
+    if (env.LAB_DB && !injectedRepository && (action === 'sheets.refresh' || action === 'migrate.fromSheets')) {
+      if (!user.owner) return json({ error: '전체 관리자만 실행할 수 있습니다.' }, 403);
+      if (action === 'migrate.fromSheets') return json({ result: await migrateFromSheets(env, { force: payload.force === true }) });
+      const synced = await syncToSheets(env, { force: true });
+      return json({ result: { ok: true, views: synced.views || null } });
     }
     return json({ result: await repo.execute(action, payload, user) });
   } catch (error) {

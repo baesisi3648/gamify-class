@@ -52,7 +52,8 @@ function doPost(e) {
   const lock = LockService.getScriptLock();
   try {
     const envelope = JSON.parse(e.postData.contents);
-    if (typeof envelope.body !== 'string' || envelope.body.length > 150000) throw new Error('Invalid request');
+    // Normal requests are small; only the signed D1 → Sheets copy (sync.replaceAll) may be large.
+    if (typeof envelope.body !== 'string' || envelope.body.length > 45000000) throw new Error('Invalid request');
     const props = PropertiesService.getScriptProperties();
     const bootstrap = typeof labBootstrapConfig_ === 'function' ? labBootstrapConfig_() : null;
     const secret = props.getProperty('LAB_WEBHOOK_SECRET') || bootstrap?.secret;
@@ -61,6 +62,7 @@ function doPost(e) {
     if (!constantEqual_(signature, envelope.signature)) return labJson_({ ok: false, status: 403, error: '잘못된 서버 서명' });
     const req = JSON.parse(envelope.body);
     if (Math.abs(Date.now() - req.timestamp) > 60000 || !/^[a-f0-9]{32}$/.test(req.nonce)) throw new Error('Expired request');
+    if (envelope.body.length > 150000 && req.action !== 'sync.replaceAll') throw new Error('Invalid request');
     // First deployment may inject a private initializer, never a public endpoint.
     // Initialization is allowed only after a valid server signature.
     if (!props.getProperty('LAB_WEBHOOK_SECRET') && bootstrap) {
@@ -85,6 +87,13 @@ function doPost(e) {
     if (!lock.tryLock(15000)) return labJson_({ ok: false, status: 503, error: '접속이 몰려 처리가 늦어지고 있습니다. 10초 뒤 다시 시도하세요.' });
     const sheet=SpreadsheetApp.openById(props.getProperty('LAB_SPREADSHEET_ID'));
     if(props.getProperty('LAB_SCHEMA_VERSION')!=='2'){labEnsureColumns_(sheet);props.setProperty('LAB_SCHEMA_VERSION','2');}
+    // Storage-level actions used after the move to D1 (server-signed, system only).
+    if (req.action === 'export.all' || req.action === 'sync.replaceAll') {
+      if (!req.actor || req.actor.role !== 'system') return labJson_({ ok: false, status: 403, error: '인증 경로 오류' });
+      const result = req.action === 'export.all' ? labExportAll_(sheet) : labReplaceAll_(sheet, req.payload && req.payload.tables, req.payload && req.payload.rev);
+      SpreadsheetApp.flush();
+      return labJson_({ ok: true, result });
+    }
     const db = labStore_(sheet);
     if (req.action === 'auth.login' && Array.isArray(req.payload && req.payload.rateKeys) && req.payload.rateKeys.length) {
       // Fallback rate counters (no Cloudflare limiter): commit them first so a later
@@ -163,6 +172,43 @@ function labPruneRateRows() {
     return expired.length;
   } finally { lock.releaseLock(); }
 }
+// D1 → Sheets: overwrite the 8 data tabs with the D1 copy, then rebuild the Korean view tabs.
+// Validates every table before touching any tab.
+function labReplaceAll_(sheet, tables, rev) {
+  if (!tables || typeof tables !== 'object') throw Object.assign(new Error('복사할 자료가 없습니다.'), { status: 400 });
+  // Never let an older D1 copy overwrite a newer one (overlapping cron/button runs).
+  const props = PropertiesService.getScriptProperties(), held = Number(props.getProperty('LAB_SYNCED_REV') || 0);
+  if (typeof rev === 'number' && rev < held) throw Object.assign(new Error('더 최신 사본이 이미 시트에 있습니다(rev ' + held + ').'), { status: 409 });
+  const prepared = {};
+  Object.keys(LAB_COLUMNS).forEach((name) => {
+    const rows = Array.isArray(tables[name]) ? tables[name] : [];
+    prepared[name] = rows.filter((r) => name !== 'Settings' || String(r.id).indexOf('rate:') !== 0)
+      .map((r) => LAB_COLUMNS[name].map((key) => {
+        const cell = JSON.stringify(r[key] ?? null);
+        // Lossless copy only: refuse (before touching any tab) rather than truncate.
+        if (cell.length > 49000) throw Object.assign(new Error(name + ' ' + r.id + ' 의 ' + key + ' 칸이 시트 한도를 넘습니다. 복사를 중단했습니다.'), { status: 400 });
+        return cell;
+      }));
+  });
+  Object.keys(prepared).forEach((name) => {
+    const tab = sheet.getSheetByName(name), width = LAB_COLUMNS[name].length, last = tab.getLastRow(), values = prepared[name];
+    if (values.length + 1 > tab.getMaxRows()) tab.insertRowsAfter(tab.getMaxRows(), values.length + 1 - tab.getMaxRows());
+    // Overwrite first, then clear only leftover rows, so a failure never leaves a tab empty.
+    if (values.length) tab.getRange(2, 1, values.length, width).setValues(values);
+    if (last > values.length + 1) tab.getRange(values.length + 2, 1, last - values.length - 1, width).clearContent();
+  });
+  if (typeof rev === 'number') props.setProperty('LAB_SYNCED_REV', String(rev));
+  let views = null, viewsError = '';
+  try { views = labRefreshViews_(sheet, labStore_(sheet)); } catch (error) { viewsError = String(error && error.message || error); }
+  return { views, viewsError, copied: Object.fromEntries(Object.keys(prepared).map((n) => [n, prepared[n].length])) };
+}
+// Sheets → D1 (one-time migration): every stored record, including retired fields.
+function labExportAll_(sheet) {
+  const store = labStore_(sheet), tables = {};
+  Object.keys(LAB_COLUMNS).forEach((name) => { tables[name] = store.raw(name); });
+  tables.Settings = tables.Settings.filter((r) => String(r.id).indexOf('rate:') !== 0);
+  return { tables };
+}
 function labJson_(value) { return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON); }
 function constantEqual_(a, b) {
   b = String(b || ''); let diff = a.length ^ b.length;
@@ -196,6 +242,7 @@ function labStore_(spreadsheet) {
     if (match) match.data = data; else collection.rows.push({ data, row });
   };
   return {
+    raw: (table) => load(table).rows.map((v) => v.data),
     all: (table) => load(table).rows.map((v) => v.data).filter((v) => table !== 'AssessmentFields' || !v.retired),
     put,
     flush: () => {

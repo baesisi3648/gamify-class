@@ -160,3 +160,29 @@ test('대체 카운터: 실패한 로그인 시도도 저장됨',()=>{
   const third=g.ctx.doPost(g.request('auth.login',p,{role:'system'}));
   assert.equal(third.status,429);
 });
+test('D1 이전용: export.all 은 전체 기록(카운터 제외), sync.replaceAll 은 탭을 D1 사본으로 교체',()=>{
+  const g=gas();
+  const s={year:2026,grade:2,classNo:1,number:1,name:'이전가상학생',passwordHash:'a'.repeat(32)+':'+ 'b'.repeat(64)};
+  g.ctx.doPost(g.request('students.import',{students:[s]}));
+  g.ctx.doPost(g.request('auth.rate',{key:'k',limit:5},{role:'system'}));
+  assert.equal(g.ctx.doPost(g.request('export.all',{},{role:'teacher',owner:true})).status,403);
+  const ex=g.ctx.doPost(g.request('export.all',{},{role:'system'}));
+  assert.equal(ex.ok,true);assert.equal(ex.result.tables.Students[0].name,'이전가상학생');
+  assert.ok(ex.result.tables.AssessmentFields.length>=10);assert.ok(!ex.result.tables.Settings.some((r)=>r.id.startsWith('rate:')));
+  const tables={...ex.result.tables,Students:[{...ex.result.tables.Students[0],name:'바뀐이름'}],Reports:[]};
+  const big='효'.repeat(20000);
+  tables.Reports=[{id:'r1',studentId:ex.result.tables.Students[0].id,assessmentId:'enzyme-structure',title:'t',fields:[],content:{a:big},status:'draft',version:1,createdAt:'',updatedAt:'',submittedAt:'',groupId:'legacy'}];
+  const rep=g.ctx.doPost(g.request('sync.replaceAll',{tables},{role:'system'}));
+  assert.equal(rep.ok,true);assert.equal(rep.result.copied.Students,1);assert.equal(rep.result.copied.Settings,0);
+  assert.match(g.tabs.get('Students').data[1][5],/바뀐이름/);
+  assert.equal(g.tabs.get('Reports').data.length,2);
+  assert.ok(!g.tabs.get('Settings').data.slice(1).some((r)=>String(r[0]).includes('rate:')));
+});
+test('sync.replaceAll: 시트 한도를 넘는 칸이 있으면 어떤 탭도 건드리지 않고 거부',()=>{
+  const g=gas();
+  const before=JSON.stringify(g.tabs.get('Assessments').data);
+  const tables={Assessments:[{id:'x',title:'"'.repeat(30000),groupId:'legacy'}]};
+  const r=g.ctx.doPost(g.request('sync.replaceAll',{tables},{role:'system'}));
+  assert.equal(r.ok,false);assert.equal(r.status,400);
+  assert.equal(JSON.stringify(g.tabs.get('Assessments').data),before);
+});

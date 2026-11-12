@@ -1,7 +1,7 @@
 import { hmac, randomHex } from './auth.js';
 export function sheetsRepository(env) {
   return {
-    async execute(action, payload = {}, actor = {}) {
+    async execute(action, payload = {}, actor = {}, options = {}) {
       if (!env.LAB_SHEETS_URL || !env.LAB_SHEETS_SECRET) {
         throw Object.assign(new Error('연구소 저장소 연결을 준비 중입니다. 교사에게 문의하세요.'), { status: 503 });
       }
@@ -15,7 +15,7 @@ export function sheetsRepository(env) {
       const response = await fetch(url, {
         method: 'POST', headers: { 'Content-Type': 'application/json; charset=UTF-8' },
         body: envelope,
-        signal: AbortSignal.timeout(25000), redirect: 'follow'
+        signal: AbortSignal.timeout(options.timeout || 25000), redirect: 'follow'
       });
       let data;
       try { data = await response.json(); } catch { throw Object.assign(new Error('저장소 응답을 확인하지 못했습니다. 잠시 후 다시 시도하세요.'), { status: 502 }); }
