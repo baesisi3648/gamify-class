@@ -131,7 +131,7 @@ globalThis.LabDomain = (() => {
     }
     if (action === 'report.save' || action === 'report.submit') {
       const r = ownReport(db, actor, p.id);
-      if (!['draft', 'revision'].includes(r.status)) fail(409, '제출된 보고서는 보완 요청 후에만 수정할 수 있습니다.');
+      if (!['draft', 'revision', 'rejected'].includes(r.status)) fail(409, '제출된 보고서는 보완 요청 또는 반려 후에만 수정할 수 있습니다.');
       canWrite(assessment(db, r.assessmentId), now);
       if (Number(p.version) !== r.version) fail(409, '다른 창에서 내용이 변경되었습니다. 복구본을 내려받고 최신 보고서를 다시 불러오세요.');
       const submit = action === 'report.submit';

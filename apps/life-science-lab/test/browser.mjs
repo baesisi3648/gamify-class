@@ -5,6 +5,7 @@ const browser=await chromium.launch({channel:'msedge',headless:true});
 const errors=[],base='http://localhost:8791/apps/life-science-lab/';
 const context=await browser.newContext({viewport:{width:1440,height:1000}});
 const page=await context.newPage();
+const writeAnswer=async(value)=>{await page.locator('#answer').fill('');await page.locator('#answer').pressSequentially(value);};
 let releaseHealth;
 const healthGate=new Promise((resolve)=>{releaseHealth=resolve;});
 let releaseGroups;
@@ -66,13 +67,13 @@ try {
   await expect(page.locator('#toast')).toContainText('Google Sheets에는 전송되지 않습니다');
   const pasted=await page.locator('#answer').evaluate((el)=>el.dispatchEvent(new InputEvent('beforeinput',{bubbles:true,cancelable:true,inputType:'insertFromPaste',data:'붙여넣기 시도'})));
   expect(pasted).toBe(false);await expect(page.locator('#toast')).toContainText('직접 작성');
-  await page.locator('#answer').fill('카탈레이스: 과산화수소를 분해하는 효소. <script>alert("xss")</script>');
+  await writeAnswer('카탈레이스: 과산화수소를 분해하는 효소. <script>alert("xss")</script>');
   await page.locator('[data-action=save-draft]').click();
   await expect(page.locator('#save-status')).toContainText('임시저장 완료');
   await page.reload();await expect(page.locator('#answer')).toContainText('카탈레이스');
   for(let i=1;i<9;i++){
     await page.locator('[data-step="'+i+'"]').click();
-    await page.locator('#answer').fill('테스트용 탐구 '+i+' — 자료 미확인인 수치는 작성하지 않았습니다.');
+    await writeAnswer('테스트용 탐구 '+i+' — 자료 미확인인 수치는 작성하지 않았습니다.');
   }
   await page.locator('[data-step="9"]').click();await page.locator('[data-action=add-reference]').click();
   await page.locator('[data-key=title]').fill('카탈레이스 참고 자료');
@@ -109,9 +110,10 @@ try {
   await expect(page.locator('[data-review]').first()).toBeVisible();
   await page.locator('[data-review]').first().click();
   await expect(page.locator('#printable-report .report-photo img')).toBeVisible();
+  await expect(page.locator('[data-delete-report]').first()).toBeVisible();
   await page.locator('[name=feedback]').fill('기능의 근거를 보완해 주세요.');
-  await page.locator('button[value=revision]').click();
-  await expect(page.locator('#report-table')).toContainText('보완 요청');
+  await page.locator('button[value=rejected]').click();
+  await expect(page.locator('#report-table')).toContainText('반려');
   await page.locator('[data-action=logout]').click();await expect(page.locator('#identity a[href="#lab"]')).toBeVisible();await page.locator('[data-nav=lab]').click();
   for(const [key,value] of Object.entries({year:'2026',grade:'2',classNo:'1',number:'1',name:'가상연구자1',password:'student-demo-2026'}))await page.locator('[name='+key+']').fill(value);
   await page.locator('#login-form button[type=submit]').click();await page.locator('a[href="#write/enzyme-structure"]').click();
@@ -186,5 +188,5 @@ try {
   await page.screenshot({path:'.qa/login-mobile.png',fullPage:true});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1);
   expect(overflow).toBe(false);expect(errors).toEqual([]);
-  console.log('PASS: QR download, paste blocking, login, 10 steps, save/reload, submission lock, revision/resubmit, approval, publication, anonymity, unpublish, CSV/XLS/XLSX import, dynamic assessment, mobile overflow, no JS errors');
+  console.log('PASS: QR download, paste blocking, login, 10 steps, save/reload, submission lock, rejected/resubmit, teacher delete button, approval, publication, anonymity, unpublish, CSV/XLS/XLSX import, dynamic assessment, mobile overflow, no JS errors');
 } finally { await browser.close(); }

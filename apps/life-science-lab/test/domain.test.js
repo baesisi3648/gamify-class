@@ -32,6 +32,17 @@ test('필수 항목과 참고 자료 검사; 제출 후 잠금; 보완 후 재�
   const again=f.run('report.submit',{id:s.id,version:revised.version,content:completeContent()},f.student);
   assert.equal(again.status,'submitted');
 });
+test('반려된 보고서는 기존 내용을 유지한 채 수정하고 다시 제출할 수 있다',()=>{
+  const f=fixture(), submittedReport=submitted(f);
+  f.run('review',{id:submittedReport.id,version:submittedReport.version,status:'rejected',feedback:'다시 작성해 주세요.'});
+  const rejected=f.run('myReports',{},f.student).reports[0];
+  assert.equal(rejected.status,'rejected');
+  assert.equal(rejected.content.topic,completeContent().topic);
+  const content={...rejected.content,topic:'다시 쓴 탐구 주제'};
+  const saved=f.run('report.save',{id:rejected.id,version:rejected.version,content},f.student);
+  assert.equal(saved.content.topic,'다시 쓴 탐구 주제');
+  assert.equal(f.run('report.submit',{id:saved.id,version:saved.version,content},f.student).status,'submitted');
+});
 test('승인과 공개 분리; 익명 공개; 공개 수정본 보존; 공개 취소',()=>{
   const f=fixture(),r=submitted(f);
   fails(()=>f.run('publication.generate',{id:r.id}),409);

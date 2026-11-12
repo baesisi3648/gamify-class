@@ -233,7 +233,7 @@ async function lab() {
   main.innerHTML = '<div class="page-heading"><span class="eyebrow">MY LABORATORY</span><h1>나의 연구실</h1><p class="loading">보고서를 불러오는 중입니다…</p></div>';
   const data = await api('myReports'); state.reports = data.reports;
   main.innerHTML = '<div class="page-heading"><span class="eyebrow">MY LABORATORY</span><h1>' + esc(state.user.name) + '의 연구 노트</h1><p class="muted">어제의 질문에서 오늘의 발견으로. 저장한 곳부터 이어서 탐구하세요.</p></div><div class="grid">' +
-    (data.reports.length ? data.reports.map((r) => '<article class="card"><div class="card-body">' + tag(r.status) + '<h3 style="margin-top:20px">' + esc(r.title) + '</h3><p>최근 저장 ' + date(r.updatedAt) + '</p>' + (r.review?.feedback ? '<div class="notice">선생님 피드백<br>' + esc(r.review.feedback) + '</div>' : '') + '<a class="button primary" href="#write/' + esc(r.assessmentId) + '">' + (['draft','revision'].includes(r.status) ? '이어 쓰기' : '보고서 확인') + ' →</a></div></article>').join('') : '<div class="empty"><h3>첫 연구 노트를 펼쳐 보세요.</h3><p>탐구 활동에서 주제를 선택하면<br>여기에 연구 노트가 생깁니다.</p><a class="button primary" href="#activities">탐구 고르기 →</a></div>') + '</div>';
+    (data.reports.length ? data.reports.map((r) => '<article class="card"><div class="card-body">' + tag(r.status) + '<h3 style="margin-top:20px">' + esc(r.title) + '</h3><p>최근 저장 ' + date(r.updatedAt) + '</p>' + (r.review?.feedback ? '<div class="notice">선생님 피드백<br>' + esc(r.review.feedback) + '</div>' : '') + '<a class="button primary" href="#write/' + esc(r.assessmentId) + '">' + (['draft','revision','rejected'].includes(r.status) ? '이어 쓰기' : '보고서 확인') + ' →</a></div></article>').join('') : '<div class="empty"><h3>첫 연구 노트를 펼쳐 보세요.</h3><p>탐구 활동에서 주제를 선택하면<br>여기에 연구 노트가 생깁니다.</p><a class="button primary" href="#activities">탐구 고르기 →</a></div>') + '</div>';
 }
 function backupKey(id) { return 'life-lab:draft:' + state.user.id + ':' + id; }
 function backup(report) {
@@ -247,7 +247,7 @@ async function editor(id) {
   state.step = 0;
   state.saver = new ReportSaver(report, (r) => api('report.save', { id:r.id, version:r.version, content:r.content }),
     (status, message) => { if ($('#save-status')) { $('#save-status').dataset.state = status; $('#save-status').textContent = message; } }, backup);
-  const writable = ['draft','revision'].includes(report.status);
+  const writable = ['draft','revision','rejected'].includes(report.status);
   if (writable) {
     try {
       const raw = localStorage.getItem(backupKey(report.id)), saved = raw ? JSON.parse(raw) : null;
@@ -275,7 +275,7 @@ function progress() {
   $('#steps').innerHTML = r.fields.map((f,i) => '<button data-step="' + i + '" class="' + (i === state.step ? 'active' : '') + '" aria-current="' + (i === state.step ? 'step' : 'false') + '"><span class="step-index">' + (complete(f,r.content) ? '✓' : String(i+1).padStart(2,'0')) + '</span>' + esc(f.title) + '</button>').join('');
 }
 function renderStep() {
-  const r = state.saver.report, f = r.fields[state.step], locked = !['draft','revision'].includes(r.status);
+  const r = state.saver.report, f = r.fields[state.step], locked = !['draft','revision','rejected'].includes(r.status);
   progress();
   $('#editor-field').innerHTML = '<span class="eyebrow">STEP ' + String(state.step+1).padStart(2,'0') + ' / ' + r.fields.length + '</span><h2>' + esc(f.title) + (f.required ? ' <small style="font-size:12px">필수</small>' : '') + '</h2><p class="editor-guide">' + esc(f.guide) + '</p>' +
     (f.type === 'references' ? '<div id="references"></div>' + (!locked ? '<button data-action="add-reference">+ 참고 자료 추가</button>' : '') :
@@ -291,7 +291,7 @@ function chars() {
 }
 function changed() { state.saver.change(state.saver.report.content); progress(); chars(); }
 function renderReferences() {
-  const r = state.saver.report, f = r.fields[state.step], list = r.content[f.id] || [], locked = !['draft','revision'].includes(r.status);
+  const r = state.saver.report, f = r.fields[state.step], list = r.content[f.id] || [], locked = !['draft','revision','rejected'].includes(r.status);
   $('#references').innerHTML = list.map((v,i) => '<div class="reference-row"><strong>자료 ' + (i+1) + '</strong>' + [['title','자료 제목',300],['author','저자 또는 기관',200],['source','URL 또는 서지 정보',800]].map(([key,label,max]) => '<label>' + label + '<input data-ref="' + i + '" data-key="' + key + '" maxlength="' + max + '" value="' + esc(v[key]) + '" ' + (locked ? 'readonly' : '') + '></label>').join('') + (!locked ? '<button class="small ghost" data-delete-ref="' + i + '">자료 삭제</button>' : '') + '</div>').join('') || '<p class="hint">아래 버튼으로 참고 자료를 추가하세요.</p>';
   $('#references').oninput = (e) => { if (e.target.dataset.ref === undefined) return; r.content[f.id][Number(e.target.dataset.ref)][e.target.dataset.key] = e.target.value; changed(); };
 }
@@ -489,8 +489,8 @@ function renderReportTable() {
   const a = state.assessments.find((v) => v.id === aid);
   const pending = a ? state.students.filter((s) => s.active && s.year === a.year && (!course || (s.courseClasses || []).includes(course)) && !reports.some((r) => r.studentId === s.id)) : [];
   $('#report-summary').innerHTML = '<div class="stats" style="margin-bottom:20px"><div><strong>' + reports.length + '</strong><small>작성 보고서</small></div><div><strong>' + reports.filter((r) => r.status==='submitted').length + '</strong><small>검토 대기</small></div>' + (a ? '<div><strong>' + pending.length + '</strong><small>미참여</small></div>' : '') + '</div>';
-  $('#report-table').innerHTML = '<table><thead><tr><th>학생</th><th>탐구</th><th>상태</th><th>제출일</th><th>검토</th></tr></thead><tbody>' +
-    reports.filter((r) => !status || r.status === status).map((r) => '<tr><td>' + r.student.grade + '-' + r.student.classNo + '-' + r.student.number + ' ' + esc(r.student.name) + '</td><td>' + esc(r.title) + '</td><td>' + tag(r.status) + '</td><td>' + date(r.submittedAt) + '</td><td><button data-review="' + r.id + '">보고서 보기</button>' + (r.status === 'approved' ? ' <button data-generate="' + r.id + '">전시본 만들기</button>' : '') + '</td></tr>').join('') + '</tbody></table>' +
+  $('#report-table').innerHTML = '<table><thead><tr><th>학생</th><th>탐구</th><th>상태</th><th>제출일</th><th>관리</th></tr></thead><tbody>' +
+    reports.filter((r) => !status || r.status === status).map((r) => '<tr><td>' + r.student.grade + '-' + r.student.classNo + '-' + r.student.number + ' ' + esc(r.student.name) + '</td><td>' + esc(r.title) + '</td><td>' + tag(r.status) + '</td><td>' + date(r.submittedAt) + '</td><td><button data-review="' + r.id + '">보고서 보기</button>' + (r.status === 'approved' ? ' <button data-generate="' + r.id + '">전시본 만들기</button>' : '') + ' <button class="danger" data-delete-report="' + r.id + '">삭제</button></td></tr>').join('') + '</tbody></table>' +
     (pending.length ? '<p class="hint">아직 시작하지 않음: ' + pending.map((s) => esc(s.classNo+'반 '+s.number+'번 '+s.name)).join(', ') + '</p>' : '');
 }
 async function review(id) {
@@ -569,6 +569,15 @@ document.addEventListener('click', async (e) => {
     if(b.dataset.enterGroup){await switchGroup(b.dataset.enterGroup);location.hash='teacher';await admin();return;}
     if(b.dataset.tab){state.adminTab=b.dataset.tab;await admin();return;}
     if(b.dataset.review){b.disabled=true;try{await review(b.dataset.review);}finally{b.disabled=false;}return;}
+    if(b.dataset.deleteReport){
+      const r=state.reports.find((v)=>v.id===b.dataset.deleteReport);
+      if(!r)throw new Error('보고서를 다시 불러와 주세요.');
+      if(!confirm(r.student.name+' 학생의 「'+r.title+'」 보고서를 완전히 삭제할까요? 검토 기록·전시본·사진도 함께 삭제됩니다. 학생이 다시 열면 빈 보고서로 시작합니다.'))return;
+      b.disabled=true;
+      try{await api('report.delete',{id:r.id,version:r.version});toast('보고서를 삭제했습니다.');await reports();}
+      finally{b.disabled=false;}
+      return;
+    }
     if(b.dataset.editAssessment){assessmentForm(b.dataset.editAssessment);return;}
     if(b.dataset.deleteField!==undefined){state.editAssessment.fields.splice(Number(b.dataset.deleteField),1);renderFields();return;}
     if(b.dataset.moveField!==undefined){const i=Number(b.dataset.moveField),j=i+Number(b.dataset.direction),fs=state.editAssessment.fields;if(j>=0&&j<fs.length)[fs[i],fs[j]]=[fs[j],fs[i]];renderFields();return;}
@@ -635,7 +644,7 @@ document.addEventListener('click', async (e) => {
       case 'preview-report':{
         const r=state.saver.report;
         try{await ensureReportPhoto(r.id);}catch(error){toast(error.message);}
-        dialog('전체 보고서 미리보기',reportPreviewHTML(r)+(['draft','revision'].includes(r.status)?'<div class="notice">필수 항목과 출처를 확인하세요. 제출 후에는 교사가 보완을 요청해야 수정할 수 있습니다.</div><button class="primary" data-action="submit-report">최종 제출</button>':''));
+        dialog('전체 보고서 미리보기',reportPreviewHTML(r)+(['draft','revision','rejected'].includes(r.status)?'<div class="notice">필수 항목과 출처를 확인하세요. 제출 후에는 교사가 보완을 요청하거나 반려해야 수정할 수 있습니다.</div><button class="primary" data-action="submit-report">최종 제출</button>':''));
         break;
       }
       case 'upload-report-photo':{

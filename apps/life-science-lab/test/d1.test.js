@@ -50,6 +50,31 @@ test('D1: 빈 DB에서 효소 탐구가 자동 준비되고 전체 수행평가 
   assert.equal(rows, 1);
 });
 
+test('D1: 교사는 보고서와 연결된 검토·전시·사진을 삭제하고 학생은 빈 보고서를 다시 연다', async () => {
+  const { call, teacher, db, env } = await setup();
+  const deletedImages = [];
+  env.REPORT_IMAGES = { delete: async (key) => deletedImages.push(key) };
+  await call('students.import', { students: roster(1) }, teacher);
+  const student = (await call('login', { ...who(1), password: '1234' })).cookie;
+  const report = (await call('report.open', { assessmentId: 'enzyme-structure' }, student)).body.result;
+  const content = Object.fromEntries(report.fields.map((f) => [f.id, f.type === 'references' ? [{ title: '자료', author: '기관', source: 'https://example.org' }] : '탐구 내용']));
+  const submitted = (await call('report.submit', { id: report.id, version: report.version, content }, student)).body.result;
+  const approved = (await call('review', { id: report.id, version: submitted.version, status: 'approved' }, teacher));
+  assert.equal(approved.status, 200);
+  const publication = (await call('publication.generate', { id: report.id }, teacher)).body.result;
+  assert.equal((await call('publication.publish', { id: publication.id, version: publication.version, consent: true }, teacher)).status, 200);
+  assert.equal((await call('report.delete', { id: report.id, version: submitted.version + 1 }, student)).status, 403);
+  assert.equal((await call('report.delete', { id: report.id, version: submitted.version }, teacher)).status, 409);
+  assert.equal((await call('report.delete', { id: report.id, version: submitted.version + 1 }, teacher)).status, 200);
+  for (const table of ['Reports','Reviews','Publications','PublicationVersions']) assert.equal(db.raw.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get().c, 0);
+  assert.equal((await call('archive')).body.result.works.length, 0);
+  assert.equal((await call('myReports', {}, student)).body.result.reports.length, 0);
+  assert.equal(deletedImages.length, 1);
+  const reopened = (await call('report.open', { assessmentId: 'enzyme-structure' }, student)).body.result;
+  assert.notEqual(reopened.id, report.id);
+  assert.deepEqual(reopened.content, {});
+});
+
 test('D1: 학생 요청은 자기 행만 읽고, 저장은 배치 1번', async () => {
   const { call, teacher, db } = await setup();
   await call('students.import', { students: roster(3) }, teacher);

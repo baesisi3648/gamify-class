@@ -176,6 +176,31 @@ export function d1Repository(env) {
         else if (!allowedBeforeReady(action, payload, actor)) throw notReadyError();
       }
       return run(db, action, payload, actor);
+    },
+    async deleteReport(payload, actor) {
+      if (actor?.role !== 'teacher') throw Object.assign(new Error('교사 권한이 필요합니다.'), { status: 403 });
+      // Reuse the domain's group and session checks before touching any row.
+      const { reports } = await this.execute('reports.list', {}, actor);
+      const report = reports.find((r) => r.id === payload.id);
+      if (!report) throw Object.assign(new Error('이 그룹의 보고서를 찾을 수 없습니다.'), { status: 404 });
+      if (Number(payload.version) !== report.version) throw conflictError();
+      const groupId = String(actor.groupId || 'legacy');
+      const current = await db.prepare('SELECT data FROM Reports WHERE id = ? AND grp = ?').bind(report.id, groupId).first();
+      if (!current || JSON.parse(current.data).version !== report.version) throw conflictError();
+      const statements = [db.prepare("SELECT CASE WHEN EXISTS (SELECT 1 FROM Reports WHERE id = ? AND grp = ? AND data = ?) THEN 1 ELSE json('write-conflict') END")
+        .bind(report.id, groupId, current.data)];
+      if (groupId !== 'legacy' && !actor.owner) statements.push(db.prepare("SELECT CASE WHEN EXISTS (SELECT 1 FROM Settings WHERE id = ? AND json_extract(data, '$.value.authVersion') = ?) THEN 1 ELSE json('write-conflict') END")
+        .bind('group:' + groupId, actor.groupVersion));
+      statements.push(
+        db.prepare('DELETE FROM PublicationVersions WHERE grp = ? AND publicationId IN (SELECT id FROM Publications WHERE reportId = ? AND grp = ?)').bind(groupId, report.id, groupId),
+        db.prepare('DELETE FROM Publications WHERE reportId = ? AND grp = ?').bind(report.id, groupId),
+        db.prepare('DELETE FROM Reviews WHERE reportId = ? AND grp = ?').bind(report.id, groupId),
+        db.prepare('DELETE FROM Reports WHERE id = ? AND grp = ? AND data = ?').bind(report.id, groupId, current.data),
+        db.prepare(BUMP_REV)
+      );
+      try { await db.batch(statements); }
+      catch (error) { if (isWriteConflict(error)) throw conflictError(); throw error; }
+      return { ok: true };
     }
   };
 }

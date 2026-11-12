@@ -48,7 +48,7 @@ export async function handleReportImage(request, env, repo) {
 
     if (!['PUT','DELETE'].includes(request.method)) return json({ error:'지원하지 않는 사진 요청입니다.' }, 405);
     if (request.headers.get('Origin') !== url.origin) return json({ error:'허용되지 않은 요청 출처입니다.' }, 403);
-    if (user.role !== 'student' || !['draft','revision'].includes(report.status)) return json({ error:'작성 중이거나 보완 중인 본인 보고서 사진만 변경할 수 있습니다.' }, 403);
+    if (user.role !== 'student' || !['draft','revision','rejected'].includes(report.status)) return json({ error:'작성 중·보완 중·반려된 본인 보고서 사진만 변경할 수 있습니다.' }, 403);
 
     if (request.method === 'DELETE') {
       await env.REPORT_IMAGES.delete(key);
