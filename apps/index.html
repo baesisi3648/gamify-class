@@ -543,7 +543,7 @@ body {
 <script>
 /* ═══════════════════════════════════════════════════════════
    앱 데이터 — 새 게임/도구는 여기 항목 하나만 추가하면 됩니다.
-   category: "class" (학급 경영) | "classroom" (수업) | "zep" (ZEP) | "etc" (기타)
+   category: "game" (게임) | "lesson" (수업) | "edtech" (에듀테크 활용) | "class" (학급 경영) | "etc" (기타)
    status:   "available" | "building"
    links:    카드 안에 함께 노출할 보조 링크 (없으면 생략)
    ═══════════════════════════════════════════════════════════ */
@@ -552,7 +552,7 @@ var APPS = [
     id: "life-science-lab",
     title: "생명과학 탐구 연구소",
     description: "효소에서 생태계까지, 나의 탐구를 연구 노트로 기록하고 교사 승인 후 인포그래픽 전시로 공유합니다.",
-    category: "classroom",
+    category: "lesson",
     tags: ["RESEARCH", "NOTEBOOK", "ARCHIVE"],
     url: "https://life-science-lab.bsy0708.workers.dev/",
     thumbnail: "/assets/life-science-lab.svg",
@@ -564,7 +564,7 @@ var APPS = [
     id: "zep-map-studio",
     title: "ZEP 맵 공방",
     description: "이미지를 바닥·윗배경·충돌 영역으로 나누고, 맵과 오브젝트를 직접 그려 ZEP용 PNG로 만드는 무료 창작 도구입니다.",
-    category: "zep",
+    category: "edtech",
     tags: ["MAP EDITOR", "PIXEL ART", "LAYER"],
     url: "/apps/zep-studio/",
     thumbnail: "/assets/zep-studio-card.jpg",
@@ -588,7 +588,7 @@ var APPS = [
     id: "eco-quest",
     title: "생태월드",
     description: "우리 학교 주변의 생명을 발견하고 기록해, 아홉 반이 함께 지도와 생물도감을 완성하는 생태 탐사 프로젝트입니다.",
-    category: "etc",
+    category: "lesson",
     tags: ["FIELD STUDY", "MAP", "ARCHIVE"],
     url: "https://eco-quest.bsy0708.workers.dev",
     thumbnail: "/assets/eco-world-card.jpg",
@@ -600,7 +600,7 @@ var APPS = [
     id: "bio-marble",
     title: "생명 마블",
     description: "부루마블 규칙 그대로. 모둠이 말을 옮기고 멈춘 칸의 문제를 TV 화면에서 풉니다.",
-    category: "classroom",
+    category: "game",
     tags: ["QUIZ", "BOARD GAME", "GROUP"],
     url: "https://bio-marble.pages.dev",
     thumbnail: "/assets/life-marble-card.jpg",
@@ -615,7 +615,7 @@ var APPS = [
     id: "wild-derby",
     title: "애니멀 더비",
     description: "문제를 풀고 힌트를 모아 우승 동물을 예측하는 전략 퀴즈 게임. 힌트 중 한 라운드는 거짓이라 모둠이 서로 어긋나는 힌트를 가려내야 합니다. 문제만 넣으면 어떤 과목이든 됩니다.",
-    category: "classroom",
+    category: "game",
     tags: ["QUIZ", "STRATEGY", "DISCUSSION"],
     url: "https://wilde-derby.baesisi3648.workers.dev/teacher",
     thumbnail: "/assets/animal-derby-card.jpg",
@@ -631,11 +631,12 @@ var APPS = [
 
 /* 카테고리 — 여기에 항목을 추가하면 사이드바 메뉴가 늘어납니다. */
 var CATEGORIES = [
-  { id: "all",       en: "All",               ko: "전체",      desc: "교사가 직접 만든 수업 게임과 교실 도구입니다." },
-  { id: "class",     en: "Class Management",  ko: "학급 경영", desc: "학급 운영에 바로 사용할 수 있는 도구입니다." },
-  { id: "classroom", en: "Classroom",         ko: "수업",      desc: "수업에서 바로 활용할 수 있는 게임입니다." },
-  { id: "zep",       en: "ZEP Studio",        ko: "ZEP",       desc: "ZEP 스페이스에 사용할 맵과 오브젝트를 직접 만드는 창작 도구입니다." },
-  { id: "etc",       en: "Etc.",              ko: "기타",      desc: "타이머, 랜덤 도구 같은 교실용 웹 도구입니다." }
+  { id: "all",     en: "All",               ko: "전체",          desc: "교사가 직접 만든 수업 게임과 교실 도구입니다." },
+  { id: "game",    en: "Games",             ko: "게임",          desc: "학생들이 함께 참여하며 배우는 교실 게임입니다." },
+  { id: "lesson",  en: "Lessons",           ko: "수업",          desc: "탐구와 기록 중심의 수업 활동을 운영하는 도구입니다." },
+  { id: "edtech",  en: "EdTech",            ko: "에듀테크 활용", desc: "디지털 도구를 수업에 직접 제작하고 활용할 수 있습니다." },
+  { id: "class",   en: "Class Management",  ko: "학급 경영",     desc: "학급 운영과 공동체 활동에 바로 사용할 수 있는 도구입니다." },
+  { id: "etc",     en: "Etc.",              ko: "기타",          desc: "그 밖의 교실용 웹 도구를 모아 둡니다." }
 ];
 
 /* ─────────────────────────────────────────────────────────── */
