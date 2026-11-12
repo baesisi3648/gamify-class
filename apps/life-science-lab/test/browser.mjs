@@ -84,6 +84,9 @@ try {
   await page.locator('[data-action=preview-report]').click();
   await expect(page.locator('#printable-report')).toContainText('가상연구자1');
   await expect(page.locator('#printable-report')).toContainText('카탈레이스');
+  await expect(page.locator('#printable-report h1')).toContainText('카탈레이스: 과산화수소를 분해하는 효소');
+  await expect(page.locator('#printable-report .report-intro')).toHaveCount(0);
+  await expect(page.locator('#printable-report .report-part h2').first()).toContainText('효소 선정');
   await expect(page.locator('#printable-report .report-photo img')).toBeVisible();
   await page.setViewportSize({width:390,height:844});
   const previewBox=await page.locator('.report-preview-viewport').boundingBox();

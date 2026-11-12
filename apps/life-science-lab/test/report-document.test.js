@@ -25,3 +25,14 @@ test('optional enzyme photo is rendered only when a site image URL is supplied',
   const html=reportDocumentHTML(report,{name:'가상 학생'},{},{photoUrl:'blob:https://lab.test/photo'});
   assert.match(html,/효소 관련 사진/);assert.match(html,/blob:https:\/\/lab\.test\/photo/);
 });
+
+test('학생이 쓴 탐구 주제가 보고서 제목이 되고 중복 주제·진행 상태 상자는 빠진다',()=>{
+  const report={title:'효소의 구조와 기능 탐구',status:'rejected',fields:[{id:'topic',title:'탐구 주제',type:'text'},{id:'selection',title:'효소 선정',type:'text'}],content:{topic:'카탈레이스의 구조와 기능',selection:'카탈레이스'}};
+  const html=reportDocumentHTML(report);
+  assert.match(html,/<h1>카탈레이스의 구조와 기능<\/h1>/);
+  assert.doesNotMatch(html,/report-intro|진행 상태|<h2>.*탐구 주제/);
+  assert.match(html,/<span>01<\/span>효소 선정/);
+  assert.match(reportFileName(report,{name:'가상 학생'}),/^카탈레이스의 구조와 기능_/);
+  assert.match(reportDocumentHTML({...report,content:{topic:'<script>alert(1)<\/script>'}}),/&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.match(reportDocumentHTML({...report,content:{}}),/<h1>효소의 구조와 기능 탐구<\/h1>/);
+});

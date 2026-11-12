@@ -122,7 +122,19 @@ globalThis.LabDomain = (() => {
     if (action === 'report.open') {
       const s = learner(db, actor);
       const existing = db.all('Reports').find((r) => r.studentId === s.id && r.assessmentId === p.assessmentId);
-      if (existing) return { ...existing, review: latestReview(db, existing.id) };
+      if (existing) {
+        // Older reports kept their original field snapshot before "topic" was added.
+        // Give editable reports the new first field without changing any saved answer.
+        if (['draft','revision','rejected'].includes(existing.status) && !existing.fields.some((f) => f.id === 'topic')) {
+          const topic = assessment(db, existing.assessmentId).fields.find((f) => f.id === 'topic');
+          if (topic) {
+            const upgraded = { ...existing, fields: [topic, ...existing.fields], version: existing.version + 1, updatedAt: now };
+            db.put('Reports', upgraded);
+            return { ...upgraded, review: latestReview(db, existing.id) };
+          }
+        }
+        return { ...existing, review: latestReview(db, existing.id) };
+      }
       const a = assessment(db, p.assessmentId);
       canWrite(a, now);
       if (a.year !== s.year) fail(403, '학년도에 맞는 탐구를 선택해 주세요.');

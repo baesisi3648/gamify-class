@@ -222,14 +222,12 @@ progress { width: 100%; height: 5px; accent-color: var(--blue); }
 .report-document { width: 210mm; max-width: none; margin: 0 auto; padding: 18mm; background: #fff; color: #142238; box-shadow: 0 8px 32px #1422381a; font-size: 12pt; line-height: 1.65; }
 .report-document-head { border-bottom: 3px solid #173e82; padding-bottom: 12mm; margin-bottom: 8mm; }
 .report-kicker { color: #245bb0; font-size: 10pt; font-weight: 750; letter-spacing: .12em; margin: 0 0 5mm; }
-.report-document-head h1 { font-size: 24pt; line-height: 1.35; margin: 0 0 3mm; word-break: keep-all; }
+.report-document-head h1 { font-size: 24pt; line-height: 1.35; margin: 0 0 3mm; word-break: keep-all; overflow-wrap: anywhere; }
 .report-subtitle { font-size: 11pt; color: #536782; margin: 0; }
 .report-identity { width: 100%; table-layout: fixed; border: 1px solid #cbd5e1; margin-bottom: 9mm; }
 .report-identity th, .report-identity td { border: 1px solid #cbd5e1; padding: 3mm; font-size: 10pt; white-space: normal; vertical-align: middle; }
 .report-identity th { width: 14%; background: #edf3fb; color: #243b59; }
 .report-identity td { width: 36%; }
-.report-intro { display: grid; grid-template-columns: 27mm 1fr; gap: 2mm 4mm; padding: 4mm; border: 1px solid #d9e2ef; background: #f7f9fc; font-size: 10pt; margin-bottom: 8mm; }
-.report-intro strong { color: #173e82; }
 .report-part { padding: 0 0 6mm; margin: 0 0 7mm; border-bottom: 1px solid #d9e2ef; break-inside: avoid; page-break-inside: avoid; }
 .report-part h2 { display: flex; gap: 4mm; align-items: baseline; font-size: 14pt; line-height: 1.4; margin: 0 0 4mm; }
 .report-part h2 span { font-size: 10pt; color: #245bb0; font-weight: 800; }

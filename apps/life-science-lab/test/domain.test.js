@@ -43,6 +43,17 @@ test('반려된 보고서는 기존 내용을 유지한 채 수정하고 다시 
   assert.equal(saved.content.topic,'다시 쓴 탐구 주제');
   assert.equal(f.run('report.submit',{id:saved.id,version:saved.version,content},f.student).status,'submitted');
 });
+test('예전 보고서를 다시 열면 탐구 주제 입력칸만 앞에 추가하고 기존 답변을 보존한다',()=>{
+  const f=fixture(), old=f.run('report.open',{assessmentId:'enzyme-structure'},f.student);
+  f.db.put('Reports',{...old,fields:old.fields.filter((field)=>field.id!=='topic'),content:{selection:'기존 카탈레이스 답변'},status:'rejected',version:3});
+  const opened=f.run('report.open',{assessmentId:'enzyme-structure'},f.student);
+  assert.equal(opened.fields[0].id,'topic');
+  assert.equal(opened.content.selection,'기존 카탈레이스 답변');
+  assert.equal(opened.version,4);
+  assert.equal(f.run('report.open',{assessmentId:'enzyme-structure'},f.student).version,4);
+  f.db.put('Reports',{...opened,fields:opened.fields.filter((field)=>field.id!=='topic'),status:'submitted'});
+  assert.equal(f.run('report.open',{assessmentId:'enzyme-structure'},f.student).fields[0].id,'selection');
+});
 test('승인과 공개 분리; 익명 공개; 공개 수정본 보존; 공개 취소',()=>{
   const f=fixture(),r=submitted(f);
   fails(()=>f.run('publication.generate',{id:r.id}),409);
