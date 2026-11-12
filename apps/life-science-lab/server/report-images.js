@@ -15,12 +15,8 @@ function validSignature(type, bytes) {
 }
 
 async function authorizedReport(repo, user, reportId) {
-  const data = user.role === 'student'
-    ? await repo.execute('myReports', {}, user)
-    : await repo.execute('reports.list', {}, user);
-  const report = data.reports.find((item) => item.id === reportId);
-  if (!report) throw Object.assign(new Error('보고서를 찾을 수 없습니다.'), { status:404 });
-  return report;
+  // Single-report ownership check instead of loading the whole report list.
+  return repo.execute('report.meta', { id:reportId }, user);
 }
 
 export async function handleReportImage(request, env, repo) {

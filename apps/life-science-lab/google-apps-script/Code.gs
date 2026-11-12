@@ -68,13 +68,30 @@ function doPost(e) {
       props.setProperty('LAB_SPREADSHEET_ID', bootstrap.spreadsheetId);
       setupLifeScienceLab();
     }
-    if (!lock.tryLock(20000)) return labJson_({ ok: false, status: 503, error: '저장 요청이 많습니다. 잠시 후 재시도하세요.' });
     const cache = CacheService.getScriptCache();
     if (cache.get(req.nonce)) throw new Error('Replayed request');
     cache.put(req.nonce, '1', 120);
+    // Read-only actions skip the global script lock so 30 students logging in or
+    // opening pages at once are not serialized behind each other and behind saves.
+    // Writes (saves, claims, rate counters, imports) still take the lock.
+    if (labIsReadOnly_(req) && props.getProperty('LAB_SCHEMA_VERSION')==='2') {
+      const cacheKey = labPublicCacheKey_(cache, req);
+      const hit = cacheKey && cache.get(cacheKey);
+      if (hit) return labJson_({ ok: true, result: JSON.parse(hit) });
+      const result = LabDomain.execute(labStore_(SpreadsheetApp.openById(props.getProperty('LAB_SPREADSHEET_ID'))), req.action, req.payload, req.actor, labContext_());
+      if (cacheKey) labCachePut_(cache, cacheKey, JSON.stringify(result));
+      return labJson_({ ok: true, result });
+    }
+    if (!lock.tryLock(15000)) return labJson_({ ok: false, status: 503, error: '접속이 몰려 처리가 늦어지고 있습니다. 10초 뒤 다시 시도하세요.' });
     const sheet=SpreadsheetApp.openById(props.getProperty('LAB_SPREADSHEET_ID'));
     if(props.getProperty('LAB_SCHEMA_VERSION')!=='2'){labEnsureColumns_(sheet);props.setProperty('LAB_SCHEMA_VERSION','2');}
     const db = labStore_(sheet);
+    if (req.action === 'auth.login' && Array.isArray(req.payload && req.payload.rateKeys) && req.payload.rateKeys.length) {
+      // Fallback rate counters (no Cloudflare limiter): commit them first so a later
+      // login failure (401/409) can't discard the attempt count.
+      req.payload.rateKeys.slice(0, 4).forEach((r) => { LabDomain.execute(db, 'auth.rate', r, req.actor, labContext_()); db.flush(); SpreadsheetApp.flush(); });
+      req.payload.rateKeys = [];
+    }
     const result = LabDomain.execute(db, req.action, req.payload, req.actor, labContext_());
     db.flush();
     if(req.action==='sheets.refresh') result.views=labRefreshViews_(sheet,db);
@@ -84,10 +101,67 @@ function doPost(e) {
       try{result.views=labRefreshViews_(sheet,db);}catch(error){result.sheetWarning='명단은 저장됐습니다. 한글 시트 새로고침을 실행하세요.';}
     }
     SpreadsheetApp.flush();
+    // Bump after the sheet is flushed, so a lock-free read can't cache pre-write data under the new generation.
+    if (LAB_PUBLIC_WRITES.indexOf(req.action) >= 0) labBumpPublicCache_(cache);
     return labJson_({ ok: true, result });
   } catch (error) {
     return labJson_({ ok: false, status: error.status || 500, error: error.status ? error.message : '저장소 설정 또는 처리 오류입니다. 교사에게 문의하세요.' });
   } finally { if (lock.hasLock()) lock.releaseLock(); }
+}
+// Actions that never write. auth.login is read-only unless it carries rate counters
+// (fallback when the Worker has no Cloudflare rate limiter) or a first-PIN claim.
+const LAB_READ_ACTIONS = ['bootstrap','archive','groups.list','me','myReports','report.meta','students.list','assessments.list','reports.list','publications.list','auth.group','auth.lookup'];
+function labIsReadOnly_(req) {
+  if (req.action === 'auth.login') return !(req.payload && (req.payload.claimHash || (Array.isArray(req.payload.rateKeys) && req.payload.rateKeys.length)));
+  return LAB_READ_ACTIONS.indexOf(req.action) >= 0;
+}
+// Public, identical-for-everyone responses are cached for 60s. Writes that change
+// them bump the generation, so teachers' edits show up on the next request.
+// Student autosaves do not bump it (they never change these public responses).
+const LAB_PUBLIC_WRITES = ['assessment.save','groups.create','groups.update','publication.publish','publication.hide'];
+const LAB_PUBLIC_CACHE = ['bootstrap','archive','groups.list'];
+function labPublicCacheKey_(cache, req) {
+  if (LAB_PUBLIC_CACHE.indexOf(req.action) < 0) return null;
+  const gen = cache.get('lab:pubgen') || '0';
+  return 'lab:pub:' + gen + ':' + req.action + ':' + String((req.payload && req.payload.groupId) || 'legacy').slice(0, 80);
+}
+function labBumpPublicCache_(cache) { cache.put('lab:pubgen', String(Date.now()) + Math.random().toString(36).slice(2, 6), 21600); }
+function labUtf8Bytes_(text) {
+  let n = 0;
+  for (let i = 0; i < text.length; i++) { const c = text.charCodeAt(i); n += c < 0x80 ? 1 : c < 0x800 ? 2 : (c >= 0xd800 && c < 0xdc00) ? (i++, 4) : 3; }
+  return n;
+}
+// CacheService limit is 100KB per value. Caching is an optimization: never fail the read.
+function labCachePut_(cache, key, text) {
+  if (labUtf8Bytes_(text) > 90000) return;
+  try { cache.put(key, text, 60); } catch (error) {}
+}
+/* Run once manually from the Apps Script editor (or after heavy use) to delete expired
+   login rate-limit rows that accumulate in Settings. Students, reports, groups untouched. */
+function labPruneRateRows() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const sheet = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty('LAB_SPREADSHEET_ID'));
+    const tab = sheet.getSheetByName('Settings'), width = LAB_COLUMNS.Settings.length, last = tab.getLastRow();
+    if (last < 2) return 0;
+    const rows = tab.getRange(2, 1, last - 1, width).getValues(), now = new Date().toISOString();
+    const expired = [];
+    rows.forEach((r, i) => {
+      const id = r[0] === '' ? '' : JSON.parse(String(r[0])), exp = r[2] === '' ? null : JSON.parse(String(r[2]));
+      if (String(id).indexOf('rate:') === 0 && (!exp || exp <= now)) expired.push(i + 2);
+    });
+    // Delete only expired rate rows, bottom-up in contiguous blocks. Group settings and
+    // other rows are never cleared, so lock-free readers never see them missing.
+    for (let i = expired.length - 1; i >= 0;) {
+      let start = expired[i], count = 1;
+      while (i - count >= 0 && expired[i - count] === start - 1) { start--; count++; }
+      tab.deleteRows(start, count);
+      i -= count;
+    }
+    SpreadsheetApp.flush();
+    return expired.length;
+  } finally { lock.releaseLock(); }
 }
 function labJson_(value) { return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON); }
 function constantEqual_(a, b) {

@@ -22,12 +22,12 @@ async function request(method,id,user,body,contentType='image/png',origin='https
 test('선택 사진은 R2에만 저장되고 학생 본인과 교사가 조회한다',async()=>{
   const r2=bucket(),actions=[];
   const report={id:'report-one',studentId:'student-one',status:'draft'};
-  const repo={execute:async(action)=>{actions.push(action);return action==='myReports'?{reports:[report]}:{reports:[{...report,student:{id:'student-one'}}]};}};
+  const repo={execute:async(action,payload)=>{actions.push(action);assert.equal(payload.id,report.id);return report;}};
   const env={LAB_SESSION_SECRET:secret,REPORT_IMAGES:r2};
   const student={role:'student',id:'student-one',authVersion:1,groupId:'class-a'};
   const put=await handleReportImage(await request('PUT',report.id,student,png),env,repo);
   assert.equal(put.status,200);assert.equal(r2.objects.size,1);
-  assert.deepEqual(actions,['myReports']);
+  assert.deepEqual(actions,['report.meta']);
   assert.equal(actions.includes('report.save'),false);
   const get=await handleReportImage(await request('GET',report.id,student),env,repo);
   assert.equal(get.status,200);assert.equal(get.headers.get('Content-Type'),'image/png');
@@ -40,11 +40,11 @@ test('선택 사진은 R2에만 저장되고 학생 본인과 교사가 조회�
 test('사진 형식, 소유권, 작성 상태와 요청 출처를 검증한다',async()=>{
   const r2=bucket(),env={LAB_SESSION_SECRET:secret,REPORT_IMAGES:r2};
   const student={role:'student',id:'student-one',authVersion:1,groupId:'class-a'};
-  const repo={execute:async()=>({reports:[{id:'report-one',studentId:'student-one',status:'submitted'}]})};
+  const repo={execute:async()=>({id:'report-one',studentId:'student-one',status:'submitted'})};
   assert.equal((await handleReportImage(await request('PUT','report-one',student,png),env,repo)).status,403);
-  const draftRepo={execute:async()=>({reports:[{id:'report-one',studentId:'student-one',status:'draft'}]})};
+  const draftRepo={execute:async()=>({id:'report-one',studentId:'student-one',status:'draft'})};
   assert.equal((await handleReportImage(await request('PUT','report-one',student,png,'text/plain'),env,draftRepo)).status,415);
   assert.equal((await handleReportImage(await request('PUT','report-one',student,png,'image/png','https://attacker.test'),env,draftRepo)).status,403);
-  const missingRepo={execute:async()=>({reports:[]})};
+  const missingRepo={execute:async()=>{throw Object.assign(new Error('보고서를 찾을 수 없습니다.'),{status:404});}};
   assert.equal((await handleReportImage(await request('GET','report-one',student),env,missingRepo)).status,404);
 });

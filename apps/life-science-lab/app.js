@@ -202,7 +202,8 @@ function login(role) {
     '<div><label for="login-password">' + (teacher ? '관리자 비밀번호' : '개인 접속 코드') + '</label><div class="password-field"><input id="login-password" name="password" type="password" minlength="' + (teacher && state.groupId !== 'legacy' ? '7' : '8') + '" maxlength="128" autocomplete="current-password" required><button type="button" data-action="toggle-password" aria-controls="login-password" aria-label="비밀번호 표시" aria-pressed="false">보기</button></div></div><button type="submit" class="primary" ' + (!state.configured ? 'disabled' : '') + '>연구소 입장 →</button><div id="login-error" role="alert"></div><p class="hint">' + (state.configured ? '학생 명단과 보고서는 이 연구소 안에서만 관리됩니다.' : '교사의 저장소 연결이 완료되면 로그인할 수 있습니다.') + '</p><a href="#' + (teacher ? 'lab' : 'teacher') + '" class="hint">' + (teacher ? '학생으로 참여하기 →' : '교사 관리실 →') + '</a></form></section>';
   $('#login-form').onsubmit = async (e) => {
     e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true;
-    try { state.user = await api('login', { ...Object.fromEntries(new FormData(e.target)), role,setupPin:first }); state.pinSetup=false;identity(); await route(); }
+    try { state.user = await api('login', { ...Object.fromEntries(new FormData(e.target)), role,setupPin:first }); state.pinSetup=false;identity(); await route();
+      if (state.user?.pinCreated) toast('처음 접속을 환영합니다. 방금 입력한 숫자 4자리가 앞으로 쓸 PIN으로 등록되었습니다. 꼭 기억하세요.'); }
     catch (err) { $('#login-error').textContent = err.message; btn.disabled = false; }
   };
   $('#login-form h2').insertAdjacentHTML('afterend','<p class="notice">'+esc(state.groups.find((g) => g.id===state.groupId)?.title || '기존 연구실')+'</p>');
@@ -210,12 +211,13 @@ function login(role) {
     void renderLoginQr().catch(() => { if ($('#login-qr-image')) $('#login-qr-image').textContent='QR코드를 만들지 못했습니다. 새로고침해 주세요.'; });
     const input=$('#login-password');input.minLength=4;
     $('label[for="login-password"]').textContent=first?'처음 사용할 PIN (숫자 4자리)':'개인 PIN 또는 기존 접속 코드';
+    // First-time students just type the 4-digit PIN they want here; no separate registration button.
+    if(!first)input.closest('div').parentElement.insertAdjacentHTML('afterend','<p class="hint">처음 접속하는 학생은 앞으로 사용할 숫자 4자리를 입력하면 그 번호가 PIN으로 등록됩니다.</p>');
     if(first){input.maxLength=4;input.pattern='[0-9]{4}';input.inputMode='numeric';input.autocomplete='new-password';
       input.closest('div').parentElement.insertAdjacentHTML('afterend','<label>PIN 다시 입력<input name="pinConfirm" type="password" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="new-password" required></label><p class="hint">명단에 등록된 학생만 가능합니다. 교사 안내에 따라 본인 정보로 등록하세요. 첫 등록 후에는 같은 PIN으로 로그인합니다.</p>');
     }
     $('#login-form h2').textContent=first?'학생 PIN 처음 등록':'학생 로그인';
     $('#login-form button[type="submit"]').textContent=first?'PIN 등록하고 입장':'연구소 입장 →';
-    $('#login-error').insertAdjacentHTML('afterend','<button type="button" data-action="pin-mode">'+(first?'기존 PIN으로 로그인':'처음 접속: PIN 등록')+'</button>');
   }
 }
 function pinDialog(id) {
@@ -299,6 +301,34 @@ function blockAnswerTransfer(e) {
   toast('학생 탐구 내용은 복사하거나 붙여넣을 수 없습니다. 직접 작성해 주세요.');
 }
 for (const type of ['copy','cut','paste','drop','contextmenu']) document.addEventListener(type, blockAnswerTransfer);
+// Mobile keyboards' clipboard suggestions can insert text without a paste event.
+// Reject any single edit that adds more than 30 characters at once to a student answer.
+// - Cancelable inserts are stopped in beforeinput (keeps the undo history intact).
+// - Fallback: compare with the last accepted value; covers browsers/IMEs that skip beforeinput.
+// - Undo/redo and in-progress IME composition (Korean typing) are never blocked.
+const BULK_LIMIT = 30, answerAccepted = new WeakMap();
+const isAnswer = (el) => state.user?.role === 'student' && el.matches?.('[data-student-answer]') && !el.readOnly;
+const bulkToast = () => toast('한 번에 많은 글을 넣을 수 없습니다. 직접 입력해 주세요.');
+document.addEventListener('focusin', (e) => { if (e.target.matches?.('[data-student-answer]')) answerAccepted.set(e.target, e.target.value); });
+document.addEventListener('beforeinput', (e) => {
+  if (!isAnswer(e.target) || !e.cancelable || e.inputType.startsWith('history') || e.isComposing) return;
+  if ((e.data || '').length > BULK_LIMIT) { e.preventDefault(); bulkToast(); }
+}, true);
+function checkBulk(e) {
+  const el = e.target;
+  if (!isAnswer(el)) return;
+  if (!answerAccepted.has(el) || e.inputType?.startsWith('history')) { answerAccepted.set(el, el.value); return; }
+  if (e.type === 'input' && e.isComposing) return;
+  if (el.value.length - answerAccepted.get(el).length > BULK_LIMIT) {
+    // Restore, then let the normal oninput handler sync the saved model to the restored text.
+    el.value = answerAccepted.get(el); e.stopImmediatePropagation(); bulkToast();
+    el.dispatchEvent(new Event('input', { bubbles:true }));
+    return;
+  }
+  answerAccepted.set(el, el.value);
+}
+document.addEventListener('input', checkBulk, true);
+document.addEventListener('compositionend', checkBulk, true);
 document.addEventListener('beforeinput', (e) => {
   if (['insertFromPaste','insertFromDrop'].includes(e.inputType)) blockAnswerTransfer(e);
 });
@@ -543,7 +573,7 @@ document.addEventListener('click', async (e) => {
     if(b.dataset.deleteField!==undefined){state.editAssessment.fields.splice(Number(b.dataset.deleteField),1);renderFields();return;}
     if(b.dataset.moveField!==undefined){const i=Number(b.dataset.moveField),j=i+Number(b.dataset.direction),fs=state.editAssessment.fields;if(j>=0&&j<fs.length)[fs[i],fs[j]]=[fs[j],fs[i]];renderFields();return;}
     if(b.dataset.resetStudent){pinDialog(b.dataset.resetStudent);return;}
-    if(b.dataset.allowPin){if(!confirm('기존 PIN/접속 코드를 해제하고 학생이 새 PIN을 직접 등록하게 할까요? 보고서는 유지됩니다.'))return;b.disabled=true;await api('student.update',{id:b.dataset.allowPin,allowPinSetup:true});$('#modal').close();toast('처음 PIN 등록 화면에서 학생이 새 PIN을 정할 수 있습니다.');await students();return;}
+    if(b.dataset.allowPin){if(!confirm('기존 PIN/접속 코드를 해제하고 학생이 새 PIN을 직접 등록하게 할까요? 보고서는 유지됩니다.'))return;b.disabled=true;await api('student.update',{id:b.dataset.allowPin,allowPinSetup:true});$('#modal').close();toast('학생이 다음 로그인 때 입력하는 숫자 4자리가 새 PIN으로 등록됩니다.');await students();return;}
     if(b.dataset.toggleStudent){const s=state.students.find((s)=>s.id===b.dataset.toggleStudent);await api('student.update',{id:s.id,active:!s.active});await students();return;}
     if(b.dataset.generate){b.disabled=true;await api('publication.generate',{id:b.dataset.generate});state.adminTab='publications';await admin();return;}
     if(b.dataset.editPublication){editPublication(b.dataset.editPublication);return;}

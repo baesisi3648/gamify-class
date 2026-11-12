@@ -13,9 +13,9 @@ test('브라우저는 내부 인증 작업과 타 역할 작업을 호출할 수
   assert.equal((await handle(request('report.save'),env,repo)).status,401);
 });
 test('관리자 로그인 쿠키는 HttpOnly; 잘못된 암호 실패; 해시만 저장',async()=>{
-  const repo={execute:async(action)=>action==='me'?{role:'teacher'}:{ok:true}};
+  const calls=[];const repo={execute:async(action)=>{calls.push(action);return action==='auth.login'?{group:null,me:{role:'teacher'}}:{ok:true};}};
   const ok=await handle(request('login',{role:'teacher',password:'test-teacher-password'}),env,repo);
-  assert.equal(ok.status,200);assert.match(ok.headers.get('Set-Cookie'),/HttpOnly/);assert.match(ok.headers.get('Set-Cookie'),/Secure/);
+  assert.equal(ok.status,200);assert.deepEqual(calls,['auth.login']);assert.match(ok.headers.get('Set-Cookie'),/HttpOnly/);assert.match(ok.headers.get('Set-Cookie'),/Secure/);
   const bad=await handle(request('login',{role:'teacher',password:'wrong'}),env,repo);assert.equal(bad.status,401);
   let stored;
   const cookie='lab_session='+await signSession({role:'teacher'},env.LAB_SESSION_SECRET);

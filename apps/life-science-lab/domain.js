@@ -109,6 +109,12 @@ globalThis.LabDomain = (() => {
       if (actor.role === 'teacher') return { role: 'teacher', name: '교사 관리자' };
       return { role: 'student', ...publicStudent(learner(db, actor)) };
     }
+    if (action === 'report.meta') {
+      // Lightweight ownership check for report photos (system path only, not exposed via RPC).
+      const r = actor.role === 'student' ? ownReport(db, actor, p.id) : (teacher(actor), find(db, 'Reports', p.id));
+      if (!r) fail(404, '보고서를 찾을 수 없습니다.');
+      return { id: r.id, status: r.status, studentId: r.studentId };
+    }
     if (action === 'myReports') {
       const s = learner(db, actor);
       return { reports: db.all('Reports').filter((r) => r.studentId === s.id).map((r) => ({ ...r, review: latestReview(db, r.id) })) };
@@ -246,6 +252,28 @@ globalThis.LabDomain = (() => {
       return groupRecord(db,p.groupId || 'legacy');
     }
     if(action==='auth.rate') return executeScoped(db,action,p,actor,ctx);
+    if(action==='auth.login') {
+      // One storage round trip per login: optional rate counters, roster/group lookup,
+      // optional first-PIN claim, and the session view. The Worker still verifies the
+      // password and only returns `me` after verification succeeds.
+      if(actor.role!=='system') fail(403,'인증 경로 오류');
+      for(const r of (Array.isArray(p.rateKeys) ? p.rateKeys.slice(0,4) : [])) executeScoped(db,'auth.rate',r,actor,ctx);
+      const loginGroupId=String(p.groupId || 'legacy'), loginGroup=groupRecord(db,loginGroupId);
+      if(p.role==='teacher') {
+        if(!loginGroup) return {group:null,me:null};
+        const owner=loginGroupId==='legacy';
+        const me=execute(db,'me',{},{role:'teacher',groupId:loginGroupId,owner,groupVersion:loginGroup.authVersion},ctx);
+        return {group:owner ? null : {passwordHash:loginGroup.passwordHash || null,authVersion:loginGroup.authVersion},me};
+      }
+      let s=execute(db,'auth.lookup',p,actor,ctx);
+      if(p.claimHash) {
+        if(!s || s.passwordHash) fail(409,'명단 정보를 확인하세요. 이미 PIN/접속 코드가 있으면 기존 정보로 로그인하거나 선생님께 재설정을 요청하세요.');
+        s=execute(db,'auth.claim',{groupId:loginGroupId,id:s.id,authVersion:s.authVersion,passwordHash:p.claimHash},actor,ctx);
+      }
+      if(!s) return {student:null,me:null};
+      const me=execute(db,'me',{},{role:'student',groupId:loginGroupId,id:s.id,authVersion:s.authVersion},ctx);
+      return {student:{id:s.id,authVersion:s.authVersion,passwordHash:s.passwordHash || null},me};
+    }
     const groupId = actor.role && actor.role!=='system' ? (actor.groupId || 'legacy') : (p.groupId || 'legacy');
     const group=groupRecord(db,groupId);
     if(!group) fail(404,'그룹을 찾을 수 없습니다.');

@@ -11,7 +11,7 @@ function gas() {
     insertSheet:(name)=>{
       const data=[];
       const tab={
-        getLastRow:()=>data.length,getMaxRows:()=>1000,insertRowsAfter:()=>{},setFrozenRows:()=>{},setColumnWidths:()=>{},
+        getLastRow:()=>data.length,getMaxRows:()=>1000,deleteRows:(start,count)=>{data.splice(start-1,count);},insertRowsAfter:()=>{},setFrozenRows:()=>{},setColumnWidths:()=>{},
         getRange:(row,col,height,width)=>{
           const range={
             getValues:()=>Array.from({length:height},(_,i)=>Array.from({length:width},(_,j)=>data[row-1+i]?.[col-1+j]??'')),
@@ -23,12 +23,12 @@ function gas() {
       };tabs.set(name,tab);return tab;
     }
   };
-  let locked=false;
-  const lock={waitLock:()=>{locked=true;},tryLock:()=>{locked=true;return true;},hasLock:()=>locked,releaseLock:()=>{locked=false;}};
+  let locked=false;const lockStats={tries:0,cacheFails:false};
+  const lock={waitLock:()=>{locked=true;},tryLock:()=>{lockStats.tries++;locked=true;return true;},hasLock:()=>locked,releaseLock:()=>{locked=false;}};
   const ctx=vm.createContext({
     SpreadsheetApp:{getActiveSpreadsheet:()=>sheet,openById:(id)=>{assert.equal(id,'separate-test-sheet');return sheet;},flush:()=>{}},
     PropertiesService:{getScriptProperties:()=>({getProperty:(k)=>props.get(k),setProperty:(k,v)=>props.set(k,v)})},
-    LockService:{getScriptLock:()=>lock},CacheService:{getScriptCache:()=>({get:(k)=>nonces.get(k),put:(k,v)=>nonces.set(k,v)})},
+    LockService:{getScriptLock:()=>lock},CacheService:{getScriptCache:()=>({get:(k)=>nonces.get(k),put:(k,v)=>{if(k.startsWith('lab:pub:')&&lockStats.cacheFails)throw new Error('Argument too large');nonces.set(k,v);}})},
     Utilities:{Charset:{UTF_8:'UTF-8'},getUuid:randomUUID,formatDate:()=> '2026-11-09 10:00:00',computeHmacSha256Signature:(body,secret,charset)=>{assert.equal(charset,'UTF-8');return [...createHmac('sha256',secret).update(body,'utf8').digest()].map((v)=>v>127?v-256:v);}},
     ContentService:{MimeType:{JSON:'json'},createTextOutput:(body)=>({setMimeType:()=>JSON.parse(body)})}
   });
@@ -39,7 +39,7 @@ function gas() {
     const signature=createHmac('sha256',props.get('LAB_WEBHOOK_SECRET')).update(body).digest('hex');
     return {postData:{contents:JSON.stringify({body,signature})}};
   }
-  return {ctx,tabs,props,request};
+  return {ctx,tabs,props,request,lockStats};
 }
 test('Apps Script 실제 어댑터: 재초기화 보존, JSON 왕복, 수식 방지, 서명 및 재전송 차단',()=>{
   const g=gas();
@@ -112,4 +112,51 @@ test('조회 탭이 없어도 성공한 명단 저장을 실패로 보고하지 
   const g=gas();
   const response=g.ctx.doPost(g.request('students.import',{students:[{year:2026,grade:2,classNo:1,number:1,name:'가상학생'}]},{role:'teacher',owner:true}));
   assert.equal(response.ok,true);assert.match(response.result.sheetWarning,/명단은 저장/);assert.equal(g.tabs.get('Students').data.length,2);
+});
+
+test('읽기 요청은 전역 잠금 없이 처리, 쓰기는 잠금 유지',()=>{
+  const g=gas();
+  const s={year:2026,grade:2,classNo:1,number:1,name:'잠금가상학생',passwordHash:'a'.repeat(32)+':'+ 'b'.repeat(64)};
+  g.lockStats.tries=0;
+  assert.equal(g.ctx.doPost(g.request('students.import',{students:[s]})).ok,true);
+  assert.equal(g.lockStats.tries,1);
+  g.lockStats.tries=0;
+  const login=g.ctx.doPost(g.request('auth.login',{year:2026,grade:2,classNo:1,number:1,name:'잠금가상학생'},{role:'system'}));
+  assert.equal(login.ok,true);assert.equal(login.result.me.name,'잠금가상학생');
+  for(const a of ['bootstrap','groups.list','archive'])assert.equal(g.ctx.doPost(g.request(a,{},{})).ok,true);
+  assert.equal(g.lockStats.tries,0);
+  const rated=g.ctx.doPost(g.request('auth.login',{year:2026,grade:2,classNo:1,number:1,name:'잠금가상학생',rateKeys:[{key:'k',limit:5}]},{role:'system'}));
+  assert.equal(rated.ok,true);assert.equal(g.lockStats.tries,1);
+});
+test('공개 목록 캐시는 탐구 수정 시 즉시 갱신',()=>{
+  const g=gas();
+  const first=g.ctx.doPost(g.request('bootstrap',{},{})).result.assessments[0];
+  assert.equal(g.ctx.doPost(g.request('bootstrap',{},{})).result.assessments[0].title,first.title);
+  const edited={...first,title:'바뀐 제목',version:first.version};
+  assert.equal(g.ctx.doPost(g.request('assessment.save',edited,{role:'teacher',owner:true})).ok,true);
+  assert.equal(g.ctx.doPost(g.request('bootstrap',{},{})).result.assessments[0].title,'바뀐 제목');
+});
+test('만료된 로그인 카운터 행만 정리',()=>{
+  const g=gas();
+  g.ctx.doPost(g.request('auth.rate',{key:'old',limit:5},{role:'system'}));
+  g.ctx.doPost(g.request('groups.create',{year:2026,semester:'2',subject:'생명',school:'가상',passwordHash:'a'.repeat(32)+':'+ 'b'.repeat(64)},{role:'teacher',owner:true}));
+  const tab=g.tabs.get('Settings');
+  const row=tab.data.findIndex((r)=>String(r[0]).includes('rate:old'));
+  tab.data[row][2]=JSON.stringify('2000-01-01T00:00:00.000Z');
+  assert.equal(g.ctx.labPruneRateRows(),1);
+  assert.ok(!tab.data.some((r)=>String(r[0]).includes('rate:')));
+  assert.ok(tab.data.some((r)=>String(r[0]).includes('group:')));
+});
+
+test('캐시 저장이 실패해도 조회는 성공하고, 한글 대용량은 캐시하지 않음',()=>{
+  const g=gas();g.lockStats.cacheFails=true;
+  assert.equal(g.ctx.doPost(g.request('bootstrap',{},{})).ok,true);
+  assert.equal(g.ctx.labUtf8Bytes_('가'.repeat(10)),30);assert.equal(g.ctx.labUtf8Bytes_('a😀'),5);
+});
+test('대체 카운터: 실패한 로그인 시도도 저장됨',()=>{
+  const g=gas();
+  const p={year:2026,grade:2,classNo:1,number:5,name:'없는학생',rateKeys:[{key:'id-x',limit:2}]};
+  for(let i=0;i<2;i++)assert.equal(g.ctx.doPost(g.request('auth.login',{...p,claimHash:'a'.repeat(32)+':'+'b'.repeat(64)},{role:'system'})).ok,false);
+  const third=g.ctx.doPost(g.request('auth.login',p,{role:'system'}));
+  assert.equal(third.status,429);
 });

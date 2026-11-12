@@ -27,29 +27,53 @@ export async function handle(request, env, injectedRepository) {
     if (action === 'login') {
       const ip = request.headers.get('CF-Connecting-IP') || 'local';
       const groupId=String(payload.groupId || 'legacy');
-      const identity = groupId+':' + (payload.role === 'teacher' ? 'teacher' : [payload.year, payload.grade, payload.classNo, payload.number].join(':'));
-      await repo.execute('auth.rate', { key: await hmac(env.LAB_SESSION_SECRET, 'ip:' + ip), limit: 100 }, { role: 'system' });
-      await repo.execute('auth.rate', { key: await hmac(env.LAB_SESSION_SECRET, identity), limit: 10 }, { role: 'system' });
+      const teacherLogin = payload.role === 'teacher';
+      const identity = groupId+':' + (teacherLogin ? 'teacher' : [payload.year, payload.grade, payload.classNo, payload.number].join(':'));
       const password = String(payload.password || '').slice(0, 128);
-      let user;
-      if (payload.role === 'teacher') {
-        const group = groupId==='legacy' ? null : await repo.execute('auth.group',{groupId},{role:'system'});
-        const hash=groupId==='legacy' ? env.LAB_ADMIN_HASH : (group?.passwordHash || '0'.repeat(32)+':'+ '0'.repeat(64));
-        if (await verifyPassword(password, hash) && (groupId==='legacy' || group)) user = { role: 'teacher',groupId,owner:groupId==='legacy',groupVersion:group?.authVersion || 1 };
+      const setupPin = !teacherLogin && payload.setupPin===true;
+      // Legacy "register PIN" form (old cached pages) still works and still requires confirmation.
+      if(setupPin && (!/^\d{4}$/.test(password) || password!==payload.pinConfirm)) return json({error:'같은 숫자 4자리 PIN을 두 번 입력하세요.'},400);
+      // Rate limiting: prefer Cloudflare's rate limiter (no storage round trip). Without it,
+      // the counters ride along inside the single auth.login storage request.
+      // A whole school often shares one public IP, so the IP limit must fit a full class.
+      let rateKeys = [];
+      if (env.LOGIN_IP_LIMITER && env.LOGIN_ID_LIMITER) {
+        const ipKey = await hmac(env.LAB_SESSION_SECRET, 'ip:' + ip), idKey = await hmac(env.LAB_SESSION_SECRET, identity);
+        const [ipOk, idOk] = await Promise.all([env.LOGIN_IP_LIMITER.limit({ key: ipKey }), env.LOGIN_ID_LIMITER.limit({ key: idKey })]);
+        if (!ipOk.success || !idOk.success) return json({ error: '로그인 시도가 너무 많습니다. 1분 후 다시 시도하세요.' }, 429);
       } else {
-        let s = await repo.execute('auth.lookup', payload, { role: 'system' });
-        if(payload.setupPin===true) {
-          if(!/^\d{4}$/.test(password) || password!==payload.pinConfirm) return json({error:'같은 숫자 4자리 PIN을 두 번 입력하세요.'},400);
-          if(!s || s.passwordHash) return json({error:'명단 정보를 확인하세요. 이미 PIN/접속 코드가 있으면 기존 정보로 로그인하거나 선생님께 재설정을 요청하세요.'},409);
-          s=await repo.execute('auth.claim',{groupId,id:s.id,authVersion:s.authVersion,passwordHash:await passwordHash(password)},{role:'system'});
-          user={role:'student',groupId,id:s.id,authVersion:s.authVersion};
+        rateKeys = [
+          { key: await hmac(env.LAB_SESSION_SECRET, 'ip:' + ip), limit: 600 },
+          { key: await hmac(env.LAB_SESSION_SECRET, identity), limit: 10 }
+        ];
+      }
+      // Only whitelisted fields reach the system-privileged storage action.
+      // claimHash is never taken from the browser; the server derives it below.
+      const loginPayload = { groupId, role: teacherLogin ? 'teacher' : 'student', rateKeys };
+      if (!teacherLogin) for (const k of ['year','grade','classNo','number','name']) loginPayload[k] = payload[k];
+      let found = await repo.execute('auth.login', loginPayload, { role: 'system' });
+      let user, pinCreated = false;
+      if (teacherLogin) {
+        const hash=groupId==='legacy' ? env.LAB_ADMIN_HASH : (found?.group?.passwordHash || '0'.repeat(32)+':'+ '0'.repeat(64));
+        if (await verifyPassword(password, hash) && found?.me && (groupId==='legacy' || found.group)) user = { role: 'teacher',groupId,owner:groupId==='legacy',groupVersion:found.group?.authVersion || 1 };
+      } else {
+        let s = found?.student;
+        if (setupPin && (!s || s.passwordHash)) return json({error:'명단 정보를 확인하세요. 이미 PIN/접속 코드가 있으면 기존 정보로 로그인하거나 선생님께 재설정을 요청하세요.'},409);
+        if (s && !s.passwordHash) {
+          // First visit: the 4-digit number the student types becomes their PIN.
+          // (No separate "register PIN" screen.) A second storage call happens only here.
+          if (!/^\d{4}$/.test(password)) return json({ error:'처음 접속이면 앞으로 사용할 숫자 4자리 PIN을 입력하세요.' }, 400);
+          const claimPayload = { ...loginPayload, rateKeys: [], claimHash: await passwordHash(password) };
+          found = await repo.execute('auth.login', claimPayload, { role: 'system' });
+          s = found?.student;
+          if (s) { user = { role:'student', groupId, id:s.id, authVersion:s.authVersion }; pinCreated = true; }
         }
         // Constant-cost password derivation even when a roster entry doesn't exist.
         const stored = s?.passwordHash || '00000000000000000000000000000000:' + '0'.repeat(64);
         if (!user && await verifyPassword(password, stored) && s) user = { role: 'student', groupId, id: s.id, authVersion: s.authVersion };
       }
-      if (!user) return json({ error: '등록 정보 또는 접속 코드가 일치하지 않습니다.' }, 401);
-      return json({ result: await repo.execute('me', {}, user) }, 200, { 'Set-Cookie': cookie(await signSession(user, env.LAB_SESSION_SECRET)) });
+      if (!user || !found?.me) return json({ error: '등록 정보 또는 접속 코드가 일치하지 않습니다.' }, 401);
+      return json({ result: pinCreated ? { ...found.me, pinCreated: true } : found.me }, 200, { 'Set-Cookie': cookie(await signSession(user, env.LAB_SESSION_SECRET)) });
     }
     const user = await readSession(request, env.LAB_SESSION_SECRET);
     if (!user) return json({ error: '로그인해 주세요.' }, 401);
