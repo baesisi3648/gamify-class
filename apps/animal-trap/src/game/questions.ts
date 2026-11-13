@@ -17,8 +17,13 @@ export interface BankQuestion {
 
 export const LEVELS: readonly Level[] = ['쉬움', '보통', '어려움'];
 
-/** 덫 개수 n → 난이도. n=0 이면 문제 없음 */
-export const levelFor = (n: number): Level | null => (n <= 0 ? null : n <= 2 ? '쉬움' : n <= 4 ? '보통' : '어려움');
+/**
+ * 덫 개수 n → 난이도. n=0 이면 문제 없음.
+ * 사용자 확정(2026-11-13): 1개 쉬움 / 2개 보통 / 3개 이상 어려움.
+ * (기획서의 1~2/3~4/5+ 는 시뮬레이션에서 보통 2%·어려움 0% 라 3단계 문제은행이 쓰이지 않았다)
+ * 점수 공식(정답 n+2, 오답 −(n+1))은 그대로.
+ */
+export const levelFor = (n: number): Level | null => (n <= 0 ? null : n === 1 ? '쉬움' : n === 2 ? '보통' : '어려움');
 
 export function pickQuestion(bank: readonly BankQuestion[], level: Level, asked: readonly string[], rng: Rng): string {
   const pool = bank.filter((q) => q.level === level);

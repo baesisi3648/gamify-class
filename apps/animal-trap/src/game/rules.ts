@@ -98,7 +98,7 @@ export function resolve(committed: Committed, pending: Pending, correct: readonl
     t.visited = insertSorted(t.visited, l.to); // 모든 실제 착지는 방문 기록 (덫 칸 포함)
     if (l.kind === 'safe' && l.bonus) { t.score += l.bonus; events.push({ type: 'safe', team: l.team, cell: l.to, points: l.bonus }); }
     if (l.zoneBonus !== null) { t.score += l.bonus; t.opponentZones = insertSorted(t.opponentZones, l.zoneBonus); events.push({ type: 'zone', team: l.team, zone: l.zoneBonus, points: l.bonus }); }
-    if (l.questionId) {
+    if (l.questionId !== null) {
       t.asked = [...t.asked.filter((q) => q !== l.questionId), l.questionId];
       const n = l.snapshot.length, ok = correct[l.team] === true, timeout = correct[l.team] == null;
       const pts = ok ? correctPoints(n) : wrongPoints(n);
@@ -111,7 +111,7 @@ export function resolve(committed: Committed, pending: Pending, correct: readonl
 
   // 5. 덫 제거: 한 팀이라도 정답인 칸의 스냅샷 덫 집합을 한 번만
   for (const cell of removeCells) {
-    const ids = pending.landings.find((l) => l.to === cell && l.questionId && correct[l.team] === true)!.snapshot;
+    const ids = pending.landings.find((l) => l.to === cell && l.questionId !== null && correct[l.team] === true)!.snapshot;
     let count = 0;
     for (const trap of next.traps) if (ids.includes(trap.id) && trap.active) { trap.active = false; count++; }
     events.push({ type: 'trapsRemoved', cell, count });
@@ -119,7 +119,7 @@ export function resolve(committed: Committed, pending: Pending, correct: readonl
 
   // 6. 특수 효과: 오답 팀만, 스냅샷의 특수 덫 중 가장 강한 1개 (귀환 > 속박 > 혼란)
   for (const l of pending.landings) {
-    if (!l.questionId || correct[l.team] === true) continue;
+    if (l.questionId === null || correct[l.team] === true) continue;
     const specials = l.snapshot.map((id) => committed.traps.find((x) => x.id === id)!).filter((x) => x.type !== 'normal');
     if (!specials.length) continue;
     const strongest = specials.sort((a, b) => EFFECT_RANK[b.type as keyof typeof EFFECT_RANK] - EFFECT_RANK[a.type as keyof typeof EFFECT_RANK])[0].type as 'return' | 'bind' | 'confuse';

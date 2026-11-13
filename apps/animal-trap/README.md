@@ -12,25 +12,19 @@ npm ci
 npm test                 # 타입 검사 3벌 + 단위 테스트 (Node 24 이상)
 npm run build            # 화면 → dist/client
 npx wrangler d1 migrations apply animal-trap --local
-npx wrangler dev --var ADMIN_PASSWORD:<로컬용> --var SMOKE_ENABLED:1
-BASE=http://localhost:8787 ADMIN_PASSWORD=<로컬용> npm run smoke
+npx wrangler dev --var ADMIN_PASSWORD:<로컬용>
 ```
 
-## 처음 배포 (0단계)
+## 배포
 
 ```sh
-npx wrangler login                          # baesisi3648
-npx wrangler whoami
-npx wrangler d1 create animal-trap          # 출력된 database_id 를 wrangler.jsonc 에 넣고 커밋
-npx wrangler d1 migrations apply animal-trap --remote
-npx wrangler secret put ADMIN_PASSWORD      # 관리자 비밀번호 (판 생성·문제은행·점검)
-npx wrangler secret put SMOKE_ENABLED       # 값: 1  (점검하는 동안만)
-npm run deploy
-BASE=https://animal-trap.<서브도메인>.workers.dev ADMIN_PASSWORD=... npm run smoke
-npx wrangler secret delete SMOKE_ENABLED    # 점검이 끝나면 반드시 끈다
+npx wrangler login                      # baesisi3648
+npm run deploy                          # 테스트 → 빌드 → 배포
 ```
+D1 `animal-trap`(APAC)과 `ADMIN_PASSWORD` secret 은 2026-11-13 등록 완료.
+새 migration 이 생기면 `npx wrangler d1 migrations apply animal-trap --remote`.
 
-## 점검 통로를 지우는 시점
+## 기록
 
-`/api/_smoke`·`/ws/_smoke`와 `TrapRoom`의 점검 메서드·alarm은 **0단계 원격 확인용**이다.
-**2단계(상태 머신) 코드를 붙이기 전에 삭제**한다 — 게임과 점검이 alarm 하나를 같이 쓰면 안 된다.
+- 2026-11-13 0단계: 실제 계정에서 DO SQLite·alarm·WebSocket hibernation·D1 점검 통과
+  (`/api/_smoke` 점검 통로). 2단계 시작 때 점검 코드·`SMOKE_ENABLED` 를 모두 지웠다.

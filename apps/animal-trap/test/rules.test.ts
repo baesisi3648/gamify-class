@@ -82,8 +82,8 @@ test('n=0 일반 칸: 팀별 최초 방문만 +1 (확정 변경), 재방문 0, �
   assert.ok(game().teams[0].visited.includes(SPAWN_CELL[0]));
 });
 
-test('난이도: n=1·2 쉬움, 3·4 보통, 5 이상 어려움, 0 이면 문제 없음', () => {
-  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 9].map(levelFor), [null, '쉬움', '쉬움', '보통', '보통', '어려움', '어려움', '어려움']);
+test('난이도(확정 변경): n=1 쉬움, 2 보통, 3 이상 어려움, 0 이면 문제 없음', () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 9].map(levelFor), [null, '쉬움', '보통', '어려움', '어려움', '어려움', '어려움']);
 });
 
 test('특수 덫만 1개인 칸도 n=1 쉬움, 정답 +3·제거 / 오답 -2·유지·효과', () => {
@@ -100,11 +100,11 @@ test('특수 덫만 1개인 칸도 n=1 쉬움, 정답 +3·제거 / 오답 -2·�
   assert.deepEqual(no.committed.teams[0].bindRounds, [2, 3]);
 });
 
-test('일반 2 + 특수 2 = n=4 보통, 정답 +6 / 오답 -5, 정답이면 4개 모두 제거', () => {
+test('일반 2 + 특수 2 = n=4 어려움, 정답 +6 / 오답 -5, 정답이면 4개 모두 제거', () => {
   const at = cellOf(5, 6);
   const g = placeTeam(game([[1, at], [2, at], [3, at, 'confuse'], [0, at, 'return']]), 0, cellOf(5, 5));
   const p = land(g, only(0, at), pick);
-  assert.equal(p.landings[0].level, '보통');
+  assert.equal(p.landings[0].level, '어려움');
   const ok = resolve(g, p, [true]);
   assert.equal(ok.committed.teams[0].score, 6);
   assert.ok(ok.committed.traps.every((t) => !t.active));

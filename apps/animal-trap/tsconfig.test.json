@@ -22,5 +22,5 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["test/**/*.ts", "scripts/**/*.ts", "src/game/**/*.ts", "src/server/auth.ts"]
+  "include": ["test/**/*.ts", "scripts/**/*.ts", "src/game/**/*.ts", "src/server/auth.ts", "src/do/persist.ts"]
 }
