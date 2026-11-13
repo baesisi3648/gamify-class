@@ -16,9 +16,9 @@
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TrapRoom"] }],
 
   // 판 사이 공유 데이터: 문제은행·판 목록. 판 상태는 DO 에 있다.
-  // database_id 는 첫 배포 때 `npx wrangler d1 create animal-trap` 결과로 채운다.
+  // database_id: 2026-11-13 `npx wrangler d1 create animal-trap` (계정 baesisi3648, APAC).
   "d1_databases": [
-    { "binding": "DB", "database_name": "animal-trap", "database_id": "REPLACE_WITH_DATABASE_ID", "migrations_dir": "migrations" }
+    { "binding": "DB", "database_name": "animal-trap", "database_id": "c96e4cfd-376b-45a4-a753-71d821e6f802", "migrations_dir": "migrations" }
   ],
 
   "assets": {
