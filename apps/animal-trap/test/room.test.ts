@@ -9,7 +9,7 @@ import type { Level } from '../src/game/types.ts';
 
 const bank: BankQuestion[] = (['쉬움', '보통', '어려움'] as Level[]).flatMap((level) =>
   Array.from({ length: 12 }, (_, i) => ({ id: `${level}-${i}`, level, text: `${level} 문제 ${i}`, choices: ['가', '나', '다', '라'], answer: 1, explanation: '해설' })));
-const creds = { hostKey: 'H', tvKey: 'T', tvGen: 1, pins: Array(8).fill('0000'), pinGen: Array(8).fill(1), controlToken: Array(8).fill(null), controlGen: Array(8).fill(1) };
+const creds = { hostKey: 'H', tvKey: 'T', tvGen: 1, pins: Array(8).fill('0000'), pinGen: Array(8).fill(1), controlToken: Array(8).fill(null), controlGen: Array(8).fill(1), pinFails: Array.from({ length: 8 }, () => ({ count: 0, until: 0 })) };
 const T: Actor = { kind: 'teacher' };
 const team = (t: number): Actor => ({ kind: 'team', team: t });
 const SYS: Actor = { kind: 'system' };

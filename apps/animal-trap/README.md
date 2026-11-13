@@ -15,6 +15,15 @@ npx wrangler d1 migrations apply animal-trap --local
 npx wrangler dev --var ADMIN_PASSWORD:<로컬용>
 ```
 
+## 로컬 통합 점검 (교사 1·TV 1·팀 8 한 판)
+
+```sh
+npx wrangler d1 migrations apply animal-trap --local
+npx wrangler d1 execute animal-trap --local --file scripts/e2e-seed.sql   # 'E2E' 문제 세트
+npm run build && npx wrangler dev --var ADMIN_PASSWORD:<로컬용>
+BASE=http://localhost:8787 ADMIN_PASSWORD=<로컬용> node scripts/e2e.ts
+```
+
 ## 배포
 
 ```sh

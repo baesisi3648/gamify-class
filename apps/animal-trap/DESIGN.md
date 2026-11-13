@@ -178,7 +178,7 @@ RUNNING 라운드: MOVE_OPEN → LANDED → [QUESTION_OPEN] → RESOLVE → ROUN
 ### 5-6. 판 생성 검증
 - 선택한 세트에 **쉬움·보통·어려움 각 1문항 이상** 없으면 생성 거부. 각 12문항 미만이면 경고(15분 판 기준 팀 내 중복 가능).
 - 문항 고정 스냅샷 최대 300문항(넘으면 거부).
-- D1 판 목록 등록과 DO 생성은 'DO 먼저 생성 → D1 등록', 실패 시 같은 코드로 재시도 가능(코드 충돌은 재생성).
+- 판 생성 순서(3단계 Codex 검토로 변경): **D1 에 코드 예약(PK) → DO 생성(생성 ID 포함) → 실패 시 예약 삭제**. DO 생성 응답이 유실되면 같은 생성 ID 로 한 번 더 보내고(DO 는 같은 자격을 돌려줌), 그래도 불확실하면 판 존재를 확인해 없을 때만 예약을 지운다(`CREATE_UNCERTAIN`).
 
 ---
 
@@ -216,9 +216,10 @@ RUNNING 라운드: MOVE_OPEN → LANDED → [QUESTION_OPEN] → RESOLVE → ROUN
 |---|---|---|
 | `POST /api/game` | 관리자 | 판 생성 `{title, setName, durationMin, quizSec, moveSec, setupSec, autoNext}` → `{code, hostKey, tvKey, pins[8]}` |
 | `GET /ws/:code` | 첫 메시지 `hello` | 역할 인증 후 뷰 푸시 |
-| `POST /api/game/:code/teacher/{draw,setup,start,next,pause,resume,finish,reveal-traps,review,review-reveal,release-control,unlock-pin,reissue-pin,reissue-tv}` | 교사 열쇠 | 진행 |
-| `POST /api/game/:code/team/join` | PIN | 입장(조작권 획득 시 토큰) |
-| `POST /api/game/:code/team/{trap-move,trap-swap,trap-confirm,move,answer,recon}` | PIN + 토큰 | 팀 행동, 모두 `requestId` |
+| `POST /api/game/:code/view` | 역할별 헤더 | 현재 뷰 (`{role: teacher|tv|team, team}`) |
+| `POST /api/game/:code/teacher` | 교사 열쇠 | `{requestId, cmd}` — 진행(draw·startSetup·startGame·next·closePhase·pause·resume·finish·review·revealTraps·revealQuestion)과 자격 관리(releaseControl·unlockPin·reissuePin·reissueTv) |
+| `POST /api/game/:code/join` | PIN | 입장(조작권 획득 시 토큰) |
+| `POST /api/game/:code/team` | PIN + 토큰 | `{team, requestId, cmd}` — trapMove·trapSwap·trapConfirm·move·answer·recon |
 | `GET /api/game/:code/lobby` | 없음 | 판 제목·팀 접속 여부 |
 | `/api/admin/questions…`, `/api/admin/import`, `/api/admin/export` | 관리자 | 문제은행. JSON은 애니멀 더비와 호환 |
 

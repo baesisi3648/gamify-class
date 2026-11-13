@@ -34,6 +34,8 @@ export interface Creds {
   hostKey: string; tvKey: string; tvGen: number;
   pins: string[]; pinGen: number[];
   controlToken: (string | null)[]; controlGen: number[];
+  /** 팀별 새 입장 PIN 실패 횟수·잠금 해제 시각 (DESIGN §3) */
+  pinFails: { count: number; until: number }[];
 }
 
 export type CmdResult = { ok: true; data?: unknown } | { ok: false; error: string };
@@ -41,6 +43,8 @@ export type CmdResult = { ok: true; data?: unknown } | { ok: false; error: strin
 export interface RoomState {
   v: 1;
   code: string; title: string; setName: string; createdAt: number;
+  /** 판 생성 요청 식별자 — 응답이 유실돼 다시 보낸 생성 요청에 같은 자격을 돌려주기 위해 */
+  createId: string;
   config: RoomConfig;
   phase: RoomPhase;
   step: RoundStep | null;
@@ -109,12 +113,12 @@ export function validConfig(c: RoomConfig): boolean {
   return (Object.keys(CONFIG_RANGE) as (keyof typeof CONFIG_RANGE)[]).every((k) => Number.isInteger(c[k]) && c[k] >= CONFIG_RANGE[k][0] && c[k] <= CONFIG_RANGE[k][1]) && typeof c.autoNext === 'boolean';
 }
 
-export function createRoom(input: { code: string; title: string; setName: string; config: RoomConfig; seed: number; creds: Creds }, bank: readonly BankQuestion[], now: number): { state: RoomState; warnings: string[] } | { error: CreateError } {
+export function createRoom(input: { code: string; title: string; setName: string; config: RoomConfig; seed: number; creds: Creds; createId?: string }, bank: readonly BankQuestion[], now: number): { state: RoomState; warnings: string[] } | { error: CreateError } {
   if (!validConfig(input.config)) return { error: 'BAD_CONFIG' };
   const v = validateBank(bank);
   if (v.error) return { error: v.error };
   const state: RoomState = {
-    v: 1, code: input.code, title: input.title, setName: input.setName, createdAt: now, config: input.config,
+    v: 1, code: input.code, title: input.title, setName: input.setName, createdAt: now, createId: input.createId ?? '', config: input.config,
     phase: 'LOBBY', step: null, stateVersion: 1, rngState: input.seed >>> 0,
     zones: null, setupTraps: null, confirmed: Array(TEAMS).fill(false), committed: null, pending: null,
     moves: Array(TEAMS).fill(null), answers: Array(TEAMS).fill(null), clock: newClock(input.config.durationMs),
