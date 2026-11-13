@@ -93,6 +93,7 @@ const PUBLIC = ['code', 'title', 'phase', 'step', 'round', 'stateVersion', 'serv
   'config.durationMs', 'config.moveMs', 'config.quizMs', 'config.setupMs', 'config.autoNext',
   'teams[]', 'teams[].team', 'teams[].animal.code', 'teams[].animal.name', 'teams[].animal.emoji', 'teams[].zone', 'teams[].pos', 'teams[].score', 'teams[].rank', 'teams[].oasisRank',
   'teams[].status.setupConfirmed', 'teams[].status.moved', 'teams[].status.quiz', 'teams[].status.boundLeft', 'teams[].status.confusedLeft',
+  'teams[].summary', 'teams[].summary.correct', 'teams[].summary.wrong', 'teams[].summary.zones', 'teams[].summary.oasisRank',
   'events[]', 'events[].type', 'events[].team', 'events[].from', 'events[].to', 'events[].reason', 'events[].points', 'events[].zone', 'events[].correct', 'events[].timeout',
   'events[].cell', 'events[].count', 'events[].effect', 'events[].rank', 'oasisArrivals', 'endReason',
   'trapMap', 'trapMap[]', 'trapMap[].cell', 'trapMap[].owner', 'trapMap[].type', 'trapMap[].active',
@@ -321,7 +322,7 @@ test('공개 이벤트에 문제 난이도가 없다(6-1), 단계별 조건: 덫
     assert.ok(tv.events.every((e) => !('level' in e)));
     if (!(s.phase === 'FINISHED' || s.phase === 'REVIEW') || !s.review.trapsRevealed) assert.equal(tv.trapMap, null);
     if (s.phase !== 'REVIEW') assert.deepEqual(tv.reviewQuestions, []);
-    if (!(s.phase === 'FINISHED' || s.phase === 'REVIEW')) assert.equal(te.final, null);
+    if (!(s.phase === 'FINISHED' || s.phase === 'REVIEW')) { assert.equal(te.final, null); assert.ok(tv.teams.every((t) => t.summary === null), '진행 중에는 누적 요약 없음'); }
   }
 });
 

@@ -8,7 +8,7 @@
  * 비밀 정책 6-1: 숨은 원본(다른 팀 덫·시드·정답 키·다른 팀 문항·센서·정찰·자격)은 허용된 관찰자 외에는 보내지 않는다.
  * 공개 관측값(위치·이동·문제 풀이 여부·정오·점수 변동·특수효과·오아시스 도착)에서 가능한 추론은 허용(D12).
  */
-import type { Cell } from './board.ts';
+import { SPAWN_CELL, type Cell } from './board.ts';
 import { mainRemaining, phaseRemaining } from './clock.ts';
 import type { BankQuestion } from './questions.ts';
 import { rankTeams, teamSensor } from './rules.ts';
@@ -32,6 +32,8 @@ export interface PublicTeam {
   team: number; animal: { code: string; name: string; emoji: string };
   zone: number | null; pos: Cell | null; score: number; rank: number; oasisRank: number | null;
   status: { setupConfirmed: boolean; moved: boolean; quiz: 'none' | 'pending' | 'done'; boundLeft: number; confusedLeft: number };
+  /** 종료 후에만: 공개 사건(정오·상대 구역·오아시스)의 누적 요약 */
+  summary: null | { correct: number; wrong: number; zones: number; oasisRank: number | null };
 }
 export interface RevealedQuestion { id: string; level: Level; text: string; choices: string[]; answer: number; explanation: string }
 export interface FullTrap { cell: Cell; owner: number; type: TrapType; active: boolean }
@@ -92,7 +94,8 @@ const finished = (s: RoomState) => s.phase === 'FINISHED' || s.phase === 'REVIEW
 
 function publicView(s: RoomState, bank: readonly BankQuestion[], now: number): PublicView {
   const c = s.committed, R = displayRound(s);
-  const positions: (Cell | null)[] = c ? c.teams.map((t, i) => (s.pending ? s.pending.landings[i].to : t.pos)) : Array(8).fill(null);
+  // 시작 전에는 추첨된 출발 칸(공개 정보)에 서 있다
+  const positions: (Cell | null)[] = c ? c.teams.map((t, i) => (s.pending ? s.pending.landings[i].to : t.pos)) : s.zones ? s.zones.map((z) => SPAWN_CELL[z]) : Array(8).fill(null);
   const scores = c ? c.teams.map((t) => t.score) : Array(8).fill(0);
   const ranks = rankTeams(scores);
   const teams: PublicTeam[] = ANIMALS.map((animal, team) => {
@@ -107,7 +110,12 @@ function publicView(s: RoomState, bank: readonly BankQuestion[], now: number): P
         quiz: s.step === 'QUESTION_OPEN' && l && l.questionId !== null ? (s.answers[team] !== null ? 'done' : 'pending') : 'none',
         boundLeft: t ? t.bindRounds.filter((r) => r >= Math.max(R, (c?.round ?? 0) + 1)).length : 0,
         confusedLeft: t ? t.confuseRounds.filter((r) => r >= R).length : 0
-      }
+      },
+      summary: finished(s) && c && t ? {
+        correct: c.quizLog.filter((q) => q.team === team && q.correct).length,
+        wrong: c.quizLog.filter((q) => q.team === team && !q.correct).length,
+        zones: t.opponentZones.length, oasisRank: t.oasisRank
+      } : null
     };
   });
   return {

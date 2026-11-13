@@ -1,8 +1,29 @@
-/* 애니멀 트랩 공통 — 0단계 자리표시. 숲·초원 테마는 4~5단계에서 */
-:root { --bg: #f4f8ef; --ink: #1f3324; --muted: #5d7262; --leaf: #3f8a4c; --oasis: #2aa3a0; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', system-ui, sans-serif; }
-@media (prefers-color-scheme: dark) { :root { --bg: #102016; --ink: #e5f2e7; --muted: #9fb8a5; } }
+/* 애니멀 트랩 공통 — 밝은 숲·초원 판타지. 외부 자원 없음(글꼴도 자체 호스팅) */
+@font-face { font-family: Pretendard; src: url('/fonts/PretendardVariable.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+:root {
+  --bg: #eef6e4; --bg2: #f8fbf2; --card: #ffffff; --ink: #1d3322; --muted: #5b7262; --line: #d5e5c6;
+  --leaf: #2f7d3b; --leaf2: #4caf50; --sun: #f7c948; --oasis: #1aa6a4; --danger: #c62828; --ok: #2e7d32; --navy: #1b3a8a;
+  --radius: 16px; --shadow: 0 6px 20px rgba(30, 60, 30, .10);
+  font-family: Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', system-ui, sans-serif;
+  color: var(--ink); background: var(--bg); -webkit-text-size-adjust: 100%;
+}
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--ink); padding: 16px; }
-main { max-width: 520px; text-align: center; }
-h1 { font-size: 1.6rem; margin: 0 0 8px; }
-p { color: var(--muted); line-height: 1.6; }
+html, body { margin: 0; }
+body { min-height: 100dvh; background: radial-gradient(1200px 600px at 50% -200px, #ffffff 0%, var(--bg) 60%) fixed; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; border-radius: 12px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
+.btn { padding: 14px 18px; font-weight: 700; font-size: 1.05rem; background: var(--leaf); color: #fff; box-shadow: 0 3px 0 #1f5a28; }
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #1f5a28; }
+.btn.ghost { background: #fff; color: var(--leaf); box-shadow: inset 0 0 0 2px var(--leaf); }
+.btn.warn { background: var(--danger); box-shadow: 0 3px 0 #8e1b1b; }
+.card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; }
+.muted { color: var(--muted); }
+.banner { position: sticky; top: 0; z-index: 20; padding: 10px 16px; text-align: center; font-weight: 700; color: #fff; }
+.banner.off { background: var(--danger); }
+.banner.view { background: var(--navy); }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: min(92vw, 440px);
+  background: #22302a; color: #fff; padding: 12px 16px; border-radius: 12px; box-shadow: var(--shadow); z-index: 50; font-weight: 600; text-align: center; }
+.toast[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
