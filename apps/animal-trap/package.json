@@ -11,7 +11,8 @@
     "unit": "node --test test/*.test.ts",
     "test": "npm run typecheck && npm run unit",
     "smoke": "node scripts/smoke.ts",
-    "deploy": "npm run test && npm run build && wrangler deploy"
+    "deploy": "npm run test && npm run build && wrangler deploy",
+    "simulate": "node scripts/simulate.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260905.1",
