@@ -1,0 +1,8 @@
+/* 애니멀 트랩 공통 — 0단계 자리표시. 숲·초원 테마는 4~5단계에서 */
+:root { --bg: #f4f8ef; --ink: #1f3324; --muted: #5d7262; --leaf: #3f8a4c; --oasis: #2aa3a0; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', system-ui, sans-serif; }
+@media (prefers-color-scheme: dark) { :root { --bg: #102016; --ink: #e5f2e7; --muted: #9fb8a5; } }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--ink); padding: 16px; }
+main { max-width: 520px; text-align: center; }
+h1 { font-size: 1.6rem; margin: 0 0 8px; }
+p { color: var(--muted); line-height: 1.6; }

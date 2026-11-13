@@ -1,0 +1,26 @@
+{
+  // test/·scripts/ — Node 24 가 .ts 를 그대로 실행한다 (빌드 단계 없음).
+  // 테스트가 끌어오는 src 파일(src/game/*, src/server/auth.ts)에는 Workers 전용 API 가 없어야 한다.
+  // (src/do/TrapRoom.ts 만 Workers API 를 쓰고, 테스트는 그 파일을 부르지 않는다)
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    // Node 가 .ts 를 타입만 지우고 실행하므로, 지울 수 없는 문법(enum·namespace 등)을 금지
+    "erasableSyntaxOnly": true,
+
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["test/**/*.ts", "scripts/**/*.ts", "src/game/**/*.ts", "src/server/auth.ts"]
+}

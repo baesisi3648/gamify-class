@@ -1,0 +1,33 @@
+{
+  // 애니멀 트랩 — Cloudflare Worker + Durable Objects + D1 (DESIGN.md §2)
+  // 계정: baesisi3648 (애니멀 더비와 같은 계정, 별도 Worker). 애니멀 더비와 아무것도 공유하지 않는다.
+  //
+  // ⚠️ 판 코드 하나 = TrapRoom 인스턴스 하나 (idFromName(code)). 이 대응이 판 안의 모든
+  //    명령을 직렬화한다 (DESIGN §5). 깨면 중복 정산이 생긴다.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "animal-trap",
+  "main": "src/server/index.ts",
+  "compatibility_date": "2026-11-01",
+
+  "durable_objects": {
+    "bindings": [{ "name": "TRAP_ROOM", "class_name": "TrapRoom" }]
+  },
+  // SQLite 백엔드 DO (무료 플랜 지원). 한 번 배포한 태그는 바꾸지 않는다
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TrapRoom"] }],
+
+  // 판 사이 공유 데이터: 문제은행·판 목록. 판 상태는 DO 에 있다.
+  // database_id 는 첫 배포 때 `npx wrangler d1 create animal-trap` 결과로 채운다.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "animal-trap", "database_id": "REPLACE_WITH_DATABASE_ID", "migrations_dir": "migrations" }
+  ],
+
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none",
+    "run_worker_first": ["/api/*", "/ws/*"]
+  },
+
+  "observability": { "enabled": true }
+}
