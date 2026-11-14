@@ -232,7 +232,8 @@ function fakePorts(over: Partial<Ports> = {}) {
   const ports: Ports = { room: () => roomPort, gameExists: async (c) => games.has(c),
     reserveGame: async (g) => { if (games.has(g.code)) return false; games.add(g.code); calls.push('reserve:' + g.code); return true; },
     releaseGame: async (c) => { games.delete(c); calls.push('release:' + c); },
-    questions: async () => bank, adminPassword: 'admin', eq, now: () => 1, randomCode: () => 'ZZZZ22', randomId: () => 'cid-1', ...over };
+    questions: async () => bank, adminPassword: 'admin', eq, now: () => 1, randomCode: () => 'ZZZZ22', randomId: () => 'cid-1',
+    listSets: async () => [], listQuestions: async () => [], importRows: async (_s, _m, r) => r.length, deleteSet: async () => 0, deleteQuestion: async () => false, ...over };
   return { ports, calls, games };
 }
 const req = (method: string, path: string, headers: Record<string, string> = {}, body: unknown = undefined) => ({ method, path, headers, body });

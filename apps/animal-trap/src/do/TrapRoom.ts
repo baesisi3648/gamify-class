@@ -25,6 +25,8 @@ export interface Env {
   ASSETS: Fetcher;
   /** 비어 있으면 관리자 통로(판 생성·문제은행)는 전부 닫힌다 */
   ADMIN_PASSWORD?: string;
+  /** 관리자 비밀번호 시도 제한(Cloudflare Rate Limiting). 없으면 제한 없음 */
+  ADMIN_LIMITER?: { limit(o: { key: string }): Promise<{ success: boolean }> };
 }
 
 type Tag =

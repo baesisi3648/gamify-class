@@ -21,6 +21,11 @@
     { "binding": "DB", "database_name": "animal-trap", "database_id": "c96e4cfd-376b-45a4-a753-71d821e6f802", "migrations_dir": "migrations" }
   ],
 
+  // 관리자 비밀번호 시도 제한: IP당 1분 20회 (판 생성·문제은행 관리). 무료 플랜에서도 쓸 수 있다
+  "ratelimits": [
+    { "name": "ADMIN_LIMITER", "namespace_id": "58301", "simple": { "limit": 20, "period": 60 } }
+  ],
+
   "assets": {
     "directory": "./dist/client",
     "binding": "ASSETS",

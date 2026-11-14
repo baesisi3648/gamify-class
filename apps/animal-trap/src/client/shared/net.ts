@@ -6,7 +6,7 @@
  *   폴링하지 않는다 — 서버가 상태가 바뀔 때만 민다.
  * - 시계: 뷰에 실린 serverNow·남은 시간을 받은 순간 기준으로 줄여 표시(일시정지면 고정).
  */
-export type Envelope<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
+export type Envelope<T = unknown> = { ok: true; data: T } | { ok: false; error: string; message?: string };
 
 export async function call<T = unknown>(path: string, headers: Record<string, string>, body?: unknown, method = 'POST'): Promise<Envelope<T>> {
   try {
@@ -101,6 +101,8 @@ export const ERROR_TEXT: Record<string, string> = {
   ALREADY_ANSWERED: '이미 답을 냈어요.', NO_QUESTION: '풀 문제가 없어요.', BAD_CHOICE: '보기를 다시 골라 주세요.',
   NO_RECON: '정찰권이 없어요.', BAD_AREA: '정찰 구역은 보드 안 3×3이어야 해요.',
   BAD_CELL: '그 칸에는 덫을 놓을 수 없어요.', OCCUPIED_BY_YOU: '그 칸에는 이미 우리 덫이 있어요.', NOT_YOURS: '우리 팀 덫만 옮길 수 있어요.',
-  ALREADY_CONFIRMED: '이미 설치를 확정했어요.', BAD_REQUEST: '요청이 올바르지 않아요.'
+  ALREADY_CONFIRMED: '이미 설치를 확정했어요.', BAD_REQUEST: '요청이 올바르지 않아요.',
+  ADMIN_DENIED: '관리자 비밀번호가 맞지 않아요.', ADMIN_DISABLED: '서버에 관리자 비밀번호가 설정되지 않았어요.', ADMIN_RATE_LIMITED: '비밀번호를 너무 여러 번 시도했어요. 1분 뒤 다시 해 주세요.',
+  BAD_FILE: '파일 형식이 맞지 않아요.', TOO_LARGE: '보낸 내용이 너무 커요.', NOT_FOUND: '찾을 수 없어요.'
 };
 export const errText = (code: string) => ERROR_TEXT[code] ?? `문제가 생겼어요 (${code})`;

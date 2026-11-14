@@ -13,6 +13,7 @@
  *   POST /api/game/:code/join           PIN     { team } → 조작권 획득 시 토큰
  *   POST /api/game/:code/team           PIN+토큰 { team, requestId?, cmd }
  *   GET  /ws/:code                      소켓 업그레이드는 index.ts 가 DO 로 넘긴다(여기서는 코드 확인만)
+ *   /api/admin/*                         문제은행 관리 (admin.ts)
  *
  * ⚠️ 판 코드는 비밀이 아니다. 존재 확인(D1)을 통과한 코드만 DO 를 깨운다.
  * 판 생성은 D1 코드 예약 → DO 생성 → (실패 시 예약 취소) 순서.
@@ -20,9 +21,12 @@
 import type { RoomConfig } from '../game/room.ts';
 import { CONFIG_RANGE } from '../game/room.ts';
 import type { BankQuestion } from '../game/questions.ts';
+import { adminGate, adminRoute, type AdminPorts } from './admin.ts';
+import { cleanSetName, fitBank } from './bank.ts';
+import { BANK_MAX } from '../game/room.ts';
 
-export type Envelope = { ok: true; data: unknown } | { ok: false; error: string };
-export interface ApiRequest { method: string; path: string; headers: Record<string, string>; body: unknown }
+export type Envelope = { ok: true; data: unknown } | { ok: false; error: string; message?: string };
+export interface ApiRequest { method: string; path: string; headers: Record<string, string>; body: unknown; adminChecked?: boolean }
 export interface ApiResponse { status: number; body: Envelope }
 
 export type ViewRole = { role: 'teacher'; key: string } | { role: 'tv'; key: string } | { role: 'team'; team: number; pin: string; token: string };
@@ -36,7 +40,7 @@ export interface RoomPort {
   join(team: number, pin: string): Promise<Envelope>;
   team(team: number, pin: string, token: string, cmd: unknown, requestId: string | undefined): Promise<Envelope>;
 }
-export interface Ports {
+export interface Ports extends AdminPorts {
   room(code: string): RoomPort;
   gameExists(code: string): Promise<boolean>;
   /** 코드 예약(D1 PK). 이미 있으면 false — 코드 충돌을 원자적으로 막는다 */
@@ -44,9 +48,6 @@ export interface Ports {
   /** 예약 취소 (DO 생성 실패 시) */
   releaseGame(code: string): Promise<void>;
   questions(setName: string): Promise<BankQuestion[]>;
-  adminPassword: string | undefined;
-  eq(a: string, b: string): Promise<boolean>;
-  now(): number;
   randomCode(): string;
   /** 판 생성 요청 식별자(무작위) */
   randomId(): string;
@@ -57,7 +58,7 @@ export const CODE_RE = /^[A-HJ-NP-Z2-9]{6}$/;
 const STATUS: Record<string, number> = {
   NOT_FOUND: 404, NO_ROOM: 404, METHOD: 405, BAD_REQUEST: 400, BAD_CODE: 400, ADMIN_DISABLED: 403, ADMIN_DENIED: 401,
   BAD_KEY: 401, BAD_PIN: 401, PIN_LOCKED: 429, NOT_CONTROLLER: 403, FORBIDDEN: 403, BAD_TEAM: 400, EXISTS: 409, CODE_BUSY: 503,
-  CREATE_UNCERTAIN: 503, BAD_CONFIG: 400, BANK_EMPTY_LEVEL: 422, BANK_TOO_LARGE: 422, BANK_INVALID: 422, STALE: 409, BAD_PHASE: 409, PAUSED: 409
+  CREATE_UNCERTAIN: 503, ADMIN_RATE_LIMITED: 429, BAD_FILE: 400, BAD_CONFIG: 400, BANK_EMPTY_LEVEL: 422, BANK_TOO_LARGE: 422, BANK_INVALID: 422, STALE: 409, BAD_PHASE: 409, PAUSED: 409
 };
 const reply = (env: Envelope): ApiResponse => ({ status: env.ok ? 200 : STATUS[env.error] ?? 409, body: env });
 const err = (error: string) => reply({ ok: false, error });
@@ -78,14 +79,14 @@ function configFrom(b: Record<string, unknown>): RoomConfig | null {
 }
 
 async function createGame(req: ApiRequest, p: Ports): Promise<ApiResponse> {
-  if (!p.adminPassword) return err('ADMIN_DISABLED');
-  if (!(await p.eq(req.headers['x-admin-password'] ?? '', p.adminPassword))) return err('ADMIN_DENIED');
+  if (!req.adminChecked) { const denied = await adminGate(req.headers, p); if (denied) return reply(denied); }
   const b = obj(req.body);
   const title = str(b.title, 60) || '애니멀 트랩';
-  const setName = str(b.setName, 60);
+  const setName = cleanSetName(b.setName);
   const config = configFrom(b);
   if (!config) return err('BAD_CONFIG');
-  const bank = await p.questions(setName);
+  // 세트를 비우면 문제은행 전체 — 300문항이 넘으면 난이도 비율대로 무작위 300문항
+  const bank = fitBank(await p.questions(setName), BANK_MAX, Math.random);
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = p.randomCode();
     if (!CODE_RE.test(code)) continue;
@@ -110,6 +111,8 @@ async function createGame(req: ApiRequest, p: Ports): Promise<ApiResponse> {
 export async function route(req: ApiRequest, p: Ports): Promise<ApiResponse> {
   if (req.path === '/api/version') return reply({ ok: true, data: { app: 'animal-trap' } });
   if (req.path === '/api/game') return req.method === 'POST' ? createGame(req, p) : err('METHOD');
+  const admin = await adminRoute(req, p);
+  if (admin) return reply(admin);
 
   const m = req.path.match(/^\/api\/game\/([^/]+)\/(lobby|view|teacher|join|team)$/);
   if (!m) return err('NOT_FOUND');

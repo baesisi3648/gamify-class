@@ -41,12 +41,12 @@ function renderHome() {
   endSession();
   const games = savedGames();
   app.innerHTML = `
-    <div class="top"><h1>🌴 애니멀 트랩 · 교사</h1><a class="small" href="/" target="_blank" rel="noopener">학생 화면 열기 ↗</a></div>
+    <div class="top"><h1>🌴 애니멀 트랩 · 교사</h1><div class="row"><a class="small" href="/admin" style="text-decoration:none">📚 문제은행</a><a class="small" href="/" target="_blank" rel="noopener">학생 화면 열기 ↗</a></div></div>
     <div class="layout">
       <section class="card form" aria-labelledby="mk">
         <h2 id="mk">새 판 만들기</h2>
         <label>판 제목<input id="title" maxlength="60" placeholder="예: 2학년 3반 효소 단원"></label>
-        <label>문제 세트 이름 <span class="muted" style="font-weight:400">(비우면 문제은행 전체)</span><input id="setName" maxlength="60"></label>
+        <label>문제 세트 이름 <span class="muted" style="font-weight:400">(비우면 문제은행 전체)</span><input id="setName" maxlength="60" list="setNames" placeholder="비밀번호를 넣으면 세트 목록이 떠요"></label><datalist id="setNames"></datalist>
         <div class="grid2">
           <label>게임 시간(분)<input id="durationMin" type="number" min="1" max="60" value="15"></label>
           <label>이동 시간(초)<input id="moveSec" type="number" min="10" max="60" value="20"></label>
@@ -64,9 +64,20 @@ function renderHome() {
       </section>
     </div>`;
   $('#create').onclick = createGame;
+  ($('#admin') as HTMLInputElement).onchange = fillSetNames;
   app.querySelectorAll<HTMLButtonElement>('[data-code]').forEach((b) => (b.onclick = () => { const g = savedGames().find((x) => x.code === b.dataset.code); if (g) openGame(g); }));
   app.querySelectorAll<HTMLButtonElement>('[data-forget]').forEach((b) => (b.onclick = () => { forget(b.dataset.forget as string); renderHome(); }));
   const all = document.getElementById('forgetAll'); if (all) all.onclick = () => { if (confirm('이 브라우저에 저장된 판 기록을 모두 지울까요? (판 자체는 지워지지 않아요)')) { try { localStorage.removeItem(STORE); } catch { /* */ } renderHome(); } };
+}
+
+/** 비밀번호를 넣으면 세트 이름 목록을 채운다(틀려도 조용히 넘어감 — 판 만들기에서 다시 알려 준다) */
+async function fillSetNames() {
+  const pw = ($('#admin') as HTMLInputElement).value; if (!pw) return;
+  const mine = sessionNo;
+  const r = await call<{ sets: { name: string; total: number }[] }>('/api/admin/sets', { 'X-Admin-Password': pw }, undefined, 'GET');
+  if (mine !== sessionNo || !r.ok) return;
+  const dl = document.getElementById('setNames'); if (!dl) return;
+  dl.innerHTML = r.data.sets.map((s) => `<option value="${esc(s.name)}">${s.total}문항</option>`).join('');
 }
 
 async function createGame() {
