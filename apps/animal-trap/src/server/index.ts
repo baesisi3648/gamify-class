@@ -102,7 +102,8 @@ async function readJson(request: Request, max: number): Promise<unknown | 'TOO_L
   for (const p of parts) { all.set(p, at); at += p.byteLength; }
   try { return JSON.parse(new TextDecoder().decode(all)); } catch { return undefined; }
 }
-const BODY_MAX = 32 * 1024, ADMIN_BODY_MAX = 1024 * 1024; // 300문항×(500+4×150+1000자)×UTF-8 3바이트 ≈ 1.9MB 가 이론상 최대지만 실제 세트는 수백 KB
+// 관리 상한: 허용 길이를 꽉 채운 300문항(500+4×150+1000자, 한글 3바이트) 백업이 ≈1.95MB — 내보낸 파일은 언제나 다시 넣을 수 있어야 한다
+const BODY_MAX = 32 * 1024, ADMIN_BODY_MAX = 4 * 1024 * 1024;
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
 
@@ -124,7 +125,7 @@ export default {
       const admin = isAdminPath(url.pathname);
       if (admin) { const denied = await adminGate(headers, ports); if (denied) return json(denied.ok ? 200 : denied.error === 'ADMIN_RATE_LIMITED' ? 429 : denied.error === 'ADMIN_DENIED' ? 401 : 403, denied); }
       const body = request.method === 'GET' || request.method === 'HEAD' ? undefined : await readJson(request, admin ? ADMIN_BODY_MAX : BODY_MAX);
-      if (body === 'TOO_LARGE') return json(413, { ok: false, error: 'TOO_LARGE', message: admin ? '파일이 너무 커요 (1MB까지). 세트를 나눠서 넣어 주세요.' : undefined });
+      if (body === 'TOO_LARGE') return json(413, { ok: false, error: 'TOO_LARGE', message: admin ? '파일이 너무 커요 (4MB까지). 세트를 나눠서 넣어 주세요.' : undefined });
       const req: ApiRequest = { method: request.method, path: url.pathname, headers, body, adminChecked: admin || undefined };
       const res = await route(req, ports);
       return json(res.status, res.body);

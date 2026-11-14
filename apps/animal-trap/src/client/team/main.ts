@@ -130,7 +130,7 @@ function start(c: Creds) {
       render();
     },
     onStatus: (up) => { $('#banners').innerHTML = (up ? '' : '<div class="banner off" role="alert">연결이 끊겼어요. 다시 연결하는 중…</div>') + viewerBanner(); },
-    onClosedForGood: () => { forget(c.code); renderEntry('PIN이 바뀌었거나 입장 정보가 맞지 않아요. 선생님께 PIN을 다시 받아 주세요.'); }
+    onClosedForGood: (code) => { if (code === 4003) { $('#banners').innerHTML = '<div class="banner off" role="alert">이 판에 기기가 너무 많이 접속해 이 화면의 연결을 끊었어요. 새로 고치면 다시 연결돼요.</div>'; return; } forget(c.code); renderEntry('PIN이 바뀌었거나 입장 정보가 맞지 않아요. 선생님께 PIN을 다시 받아 주세요.'); }
   });
   const timer = window.setInterval(tickClock, 250);
   session = { close: () => { sock.close(); clearInterval(timer); canvas = null; } };

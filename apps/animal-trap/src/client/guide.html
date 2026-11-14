@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2f7d3b">
+  <title>애니멀 트랩 · 사용 안내</title>
+  <meta name="description" content="애니멀 트랩: 오아시스 쟁탈전 수업 진행 안내 — 준비, 판 만들기, 진행 순서, 규칙, 문제 파일 형식, 문제 해결">
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="./shared/base.css">
+  <style>
+    main { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; display: grid; gap: 16px; }
+    main > * { min-width: 0; }
+    p a, li a, dd a { color: var(--leaf); font-weight: 700; }
+    h1 { font-size: 1.7rem; margin: 0; letter-spacing: -.02em; }
+    h2 { font-size: 1.2rem; margin: 0 0 10px; }
+    h3 { font-size: 1rem; margin: 14px 0 6px; }
+    p, li { line-height: 1.65; }
+    ol, ul { margin: 0; padding-left: 1.3em; }
+    .lead { color: var(--muted); margin: 6px 0 0; }
+    .links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .links a { padding: 10px 14px; border-radius: 12px; background: var(--leaf); color: #fff; font-weight: 700; text-decoration: none; }
+    .links a.ghost { background: #fff; color: var(--leaf); box-shadow: inset 0 0 0 2px var(--leaf); }
+    table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+    th, td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    td.n { white-space: nowrap; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .plus { color: var(--ok); } .minus { color: var(--danger); }
+    pre { background: #1f2a24; color: #e8f3e0; padding: 14px; border-radius: 12px; overflow-x: auto; font-size: .82rem; line-height: 1.5; margin: 8px 0 0; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .tip { background: #fff8dc; border-radius: 12px; padding: 10px 14px; font-size: .93rem; }
+    dt { font-weight: 800; margin-top: 10px; } dd { margin: 2px 0 0; }
+    .toc { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .92rem; }
+    .toc a { color: var(--leaf); font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <header class="card">
+    <h1>🌴 애니멀 트랩 사용 안내</h1>
+    <p class="lead">8팀이 16×16 초원에서 서로 숨긴 덫을 피해 가운데 오아시스로 달리는 실시간 퀴즈 게임입니다. 덫을 밟으면 문제를 풀고, 맞히면 덫을 걷어 냅니다.</p>
+    <div class="links"><a href="/teacher">교사 화면</a><a class="ghost" href="/admin">문제은행</a><a class="ghost" href="/">학생 입장</a></div>
+    <nav class="toc" style="margin-top:14px" aria-label="목차"><a href="#prep">준비</a><a href="#bank">문제 넣기</a><a href="#make">판 만들기·입장</a><a href="#flow">진행 순서</a><a href="#rules">규칙</a><a href="#trouble">문제 생기면</a><a href="#format">문제 파일 형식</a></nav>
+  </header>
+
+  <section class="card" id="prep">
+    <h2>1. 준비물</h2>
+    <ul>
+      <li><b>교사 컴퓨터</b> 1대 — 교사 화면(진행 버튼, 팀 현황).</li>
+      <li><b>TV·프로젝터</b> — 교사 화면의 'TV 화면 열기'로 띄운 창. 보드·시계·점수만 보이고 덫은 보이지 않습니다.</li>
+      <li><b>팀마다 폰·태블릿 1대 이상</b>(8팀). 팀에서 <b>처음 들어온 기기가 조작</b>하고, 나머지 기기는 보기만 합니다.</li>
+      <li>수업 시간: 설명 5분 + 덫 설치 2분 + 게임 15분 + 복습 5~10분 정도(기본값 기준).</li>
+    </ul>
+  </section>
+
+  <section class="card" id="bank">
+    <h2>2. 수업 전: 문제 넣기</h2>
+    <ol>
+      <li><a href="/admin">문제은행</a>에서 관리자 비밀번호로 들어갑니다.</li>
+      <li>문제 파일(JSON)을 고르거나 붙여넣고 <b>미리보기</b> → <b>가져오기</b>. 애니멀 더비에서 내보낸 파일을 그대로 쓸 수 있고, '빈 양식 받기'로 양식을 받을 수 있습니다.</li>
+      <li>세트마다 <b>쉬움·보통·어려움이 각각 1문항 이상</b> 있어야 판을 만들 수 있습니다. 15분 판이면 <b>난이도별 12문항 이상</b>을 권합니다(적으면 같은 팀이 같은 문제를 다시 받을 수 있어요).</li>
+      <li>한 세트는 300문항까지. 고치기 전에는 '내보내기'로 파일을 받아 백업해 두세요.</li>
+    </ol>
+  </section>
+
+  <section class="card" id="make">
+    <h2>3. 판 만들기와 학생 입장</h2>
+    <ol>
+      <li><a href="/teacher">교사 화면</a>에서 판 제목·문제 세트(비우면 전체 문제은행)·시간을 정하고 관리자 비밀번호로 <b>판 만들기</b>.</li>
+      <li>판 코드(6글자)와 팀별 <b>QR·PIN 카드</b>가 나옵니다. '인쇄'로 팀에 나눠 주거나 TV에 보여 줍니다.</li>
+      <li>학생은 QR을 찍거나 <b>학생 입장</b> 주소에서 판 코드 → 팀 → PIN(4자리)을 넣습니다.</li>
+      <li>교사 화면 팀 표에서 8팀이 모두 접속했는지 확인합니다.</li>
+    </ol>
+    <p class="tip">교사 열쇠는 <b>판을 만든 브라우저에만</b> 저장됩니다. 그 브라우저의 '이어하기'로 다시 들어갈 수 있고, 다른 컴퓨터에서는 이어할 수 없어요. 공용 컴퓨터라면 수업 뒤 '판 기록 지우기'를 눌러 주세요.</p>
+  </section>
+
+  <section class="card" id="flow">
+    <h2>4. 진행 순서 (교사 버튼)</h2>
+    <ol>
+      <li><b>추첨</b> — 8팀의 출발 구역(가장자리 8곳)을 무작위로 정합니다.</li>
+      <li><b>덫 설치 시작</b> — 팀마다 덫 13개(일반 10·귀환 1·속박 1·혼란 1)가 자동으로 놓입니다. 정해진 시간(기본 2분) 안에 폰에서 덫을 옮기거나 두 덫 자리를 바꾸고 <b>확정</b>합니다. 전원 확정하거나 '지금 마감'을 누르면 끝납니다.</li>
+      <li><b>게임 시작</b> — 메인 시계(기본 15분)가 흐릅니다. 한 라운드는:
+        <ul>
+          <li><b>이동</b>(기본 20초): 주변 8칸 중 한 칸을 고르고 <b>‘이 칸으로 이동하기’</b>를 눌러야 제출됩니다. 고르기만 하고 누르지 않으면 제자리.</li>
+          <li><b>문제</b>(기본 45초): 덫 칸에 내린 팀만. 시간 안에 안 내면 오답.</li>
+          <li><b>결과</b>: 점수·덫 제거·특수 효과 표시 → 교사가 <b>다음 라운드</b>(또는 '5초 뒤 자동' 설정).</li>
+        </ul>
+      </li>
+      <li>메인 시계가 끝나는 순간 <b>이동 중이던 라운드는 취소</b>되고 바로 종료됩니다. 이미 <b>문제를 풀고 있던 라운드</b>는 문제 시간이 끝날 때까지 마저 풀고 점수를 반영한 뒤 종료됩니다. '종료' 버튼을 누르면 그 순간 마감 전 라운드는 취소됩니다.</li>
+      <li><b>복습</b> — 순위 발표, 덫 지도 공개, 사용된 문제의 정답·해설을 하나씩 TV에 띄웁니다.</li>
+    </ol>
+    <p class="tip">'일시정지'를 누르면 메인 시계와 단계 시계가 모두 멈춥니다. 학생 질문을 받거나 설명할 때 쓰세요.</p>
+  </section>
+
+  <section class="card" id="rules">
+    <h2>5. 규칙 요약 (학생 설명용)</h2>
+    <p>목표: 시간이 끝났을 때 <b>점수가 가장 높은 팀</b>이 우승. 오아시스에 먼저 닿을수록 큰 점수지만, 가는 길에 다른 팀의 덫이 숨어 있습니다.</p>
+    <table>
+      <tr><th>상황</th><th>점수</th></tr>
+      <tr><td>덫이 없는 새 칸에 처음 도착</td><td class="n plus">+1</td></tr>
+      <tr><td>다른 팀 출발 구역에 처음 도착</td><td class="n plus">+10</td></tr>
+      <tr><td>덫 칸에서 문제 정답 (덫 n개: 1개 쉬움·2개 보통·3개 이상 어려움)</td><td class="n plus">+(n+2)</td></tr>
+      <tr><td>덫 칸에서 오답·시간 초과</td><td class="n minus">−(n+1)</td></tr>
+      <tr><td>오아시스 도착 1위 / 2위 / 3위 이후 (같은 라운드 도착은 공동 순위)</td><td class="n plus">+30 / +20 / +15</td></tr>
+    </table>
+    <h3>덫과 특수 효과</h3>
+    <ul>
+      <li>문제를 <b>맞히면</b> 그 칸의 덫이 모두 사라집니다. 같은 칸에 여러 팀 덫이 겹쳐 있을 수 있어요.</li>
+      <li><b>틀리면</b> 그 칸 특수 덫 중 가장 강한 하나가 발동: <b>귀환</b>(출발 칸으로) &gt; <b>속박</b>(다음 2라운드 이동 불가) &gt; <b>혼란</b>(다음 2라운드 센서 끔).</li>
+      <li><b>센서</b>: 폰에 지금 칸 주변 8칸의 덫 개수가 보입니다(우리 팀 덫 포함). 숫자를 보고 길을 고르세요.</li>
+      <li><b>정찰권</b>: 오아시스에 도착하면 1회. 원하는 3×3 구역의 상대 덫 위치를 봅니다.</li>
+      <li>같은 점수는 같은 순위입니다(공동 우승 가능).</li>
+    </ul>
+  </section>
+
+  <section class="card" id="trouble">
+    <h2>6. 문제가 생기면</h2>
+    <dl>
+      <dt>폰 연결이 끊겼어요</dt><dd>화면 위에 '연결이 끊겼어요' 띠가 뜨고 저절로 다시 붙습니다. 새로 고쳐도 같은 기기면 조작이 그대로 유지돼요. 서버가 다시 시작돼도 판은 그대로 이어집니다.</dd>
+      <dt>조작하던 폰이 꺼져서 다른 폰으로 조작하고 싶어요</dt><dd>교사 화면 '팀 접속 관리' → 그 팀 <b>조작권 해제</b>. 그다음 새 기기로 다시 입장하면 그 기기가 조작합니다.</dd>
+      <dt>PIN을 여러 번 틀려 잠겼어요</dt><dd>5번 틀리면 30초 잠깁니다. 교사가 '잠금 해제'를 누르거나, PIN이 새어 나갔다면 'PIN 재발급'(그 팀 기기는 새 PIN으로 다시 입장).</dd>
+      <dt>TV 화면 주소가 학생에게 퍼졌어요</dt><dd>TV 화면은 보기 전용이라 조작은 못 하지만, 'TV 열쇠 재발급'을 누르면 예전 주소는 바로 끊깁니다. 새 TV 화면을 다시 여세요.</dd>
+      <dt>이동을 못 했어요</dt><dd>시간 안에 안 고르면 제자리입니다. 속박에 걸린 팀은 2라운드 동안 움직일 수 없어요.</dd>
+      <dt>판을 만들 수 없다고 나와요</dt><dd>세트에 쉬움·보통·어려움이 각 1문항 이상인지 문제은행에서 확인하세요(빨간 칸이 0개인 난이도).</dd>
+    </dl>
+  </section>
+
+  <section class="card" id="format">
+    <h2>7. 문제 파일 형식</h2>
+    <p>애니멀 더비와 같은 JSON 형식입니다. <code>difficulty</code>는 <code>easy</code>·<code>medium</code>·<code>hard</code>(또는 <code>쉬움</code>·<code>보통</code>·<code>어려움</code>), <code>answer</code>는 정답 보기 번호(1~4), <code>explanation</code>은 비워도 됩니다. 보기는 꼭 4개, 문제는 500자·보기는 150자·해설은 1000자까지.</p>
+<pre><code>{
+  "title": "효소 단원",
+  "questions": [
+    {
+      "difficulty": "easy",
+      "question": "효소의 주성분은?",
+      "choices": ["탄수화물", "단백질", "지방", "핵산"],
+      "answer": 2,
+      "explanation": "효소는 대부분 단백질로 이루어져 있다."
+    }
+  ]
+}</code></pre>
+    <p class="muted" style="font-size:.9rem;margin:10px 0 0">형식이 틀린 문항은 가져오기 미리보기에서 '몇 번째 문항이 왜' 틀렸는지 알려 주고 건너뜁니다.</p>
+  </section>
+</main>
+</body>
+</html>

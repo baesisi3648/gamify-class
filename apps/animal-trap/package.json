@@ -11,7 +11,8 @@
     "unit": "node --test test/*.test.ts",
     "test": "npm run typecheck && npm run unit",
     "deploy": "npm run test && npm run build && wrangler deploy",
-    "simulate": "node scripts/simulate.ts"
+    "simulate": "node scripts/simulate.ts",
+    "e2e:faults": "npm run build && node scripts/e2e-faults.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260905.1",

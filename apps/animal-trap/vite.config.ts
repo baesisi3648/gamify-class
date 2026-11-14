@@ -21,7 +21,8 @@ export default defineConfig({
         teacher: at('./src/client/teacher.html'), // 교사 진행
         tv: at('./src/client/tv.html'),           // TV (읽기 전용)
         // 문제은행 관리는 별도 진입점 — 수업용 번들에 관리 코드가 실리지 않게
-        admin: at('./src/client/admin.html')
+        admin: at('./src/client/admin.html'),
+        guide: at('./src/client/guide.html')     // 사용 안내 (정적)
       }
     }
   }

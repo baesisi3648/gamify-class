@@ -31,14 +31,29 @@ export interface Env {
 
 type Tag =
   | { role: 'pending'; at: number }
-  | { role: 'teacher' }
-  | { role: 'tv'; tvGen: number }
-  | { role: 'team'; team: number; pinGen: number; controller: boolean; controlGen: number };
+  | { role: 'closed'; at: number } // 우리가 닫은 소켓 — 상대가 닫기 응답을 안 해 남아 있어도 어떤 칸에도 세지 않는다
+  | { role: 'teacher'; since?: number }
+  | { role: 'tv'; tvGen: number; since?: number }
+  | { role: 'team'; team: number; pinGen: number; controller: boolean; controlGen: number; since?: number };
 
-const MAX_SOCKETS = 64;      // 인증된 소켓
+/**
+ * 인증 소켓 자리는 역할·팀별로 나눈다 — 한 팀이 소켓을 반복 인증해도 교사·TV·다른 팀 자리를 빼앗지 못한다.
+ * 칸이 차면 **같은 칸의 가장 오래된 소켓**을 닫고 새 소켓을 받는다(재접속한 폰이 죽은 옛 소켓에 막히지 않게).
+ * 합계 4 + 4 + 7×8 = 64개가 한 판의 인증 소켓 최대치.
+ */
+const SLOT_LIMIT = { teacher: 4, tv: 4, team: 7 } as const;
 const MAX_PENDING = 16;      // hello 전 소켓 (넘으면 가장 오래된 것부터 닫는다)
 const HELLO_TIMEOUT_MS = 10_000;
 const MAX_MESSAGE = 4096;
+/** 닫기 전에 '닫힘' 표시 — close() 는 즉시 목록에서 빠지지 않는다(CLOSING 으로 남음) */
+function shut(ws: WebSocket, code: number, reason: string) {
+  try { ws.serializeAttachment({ role: 'closed', at: Date.now() } satisfies Tag); } catch { /* 이미 닫힘 */ }
+  try { ws.close(code, reason); } catch { /* 이미 닫힘 */ }
+}
+/** 닫히는 중인 것까지 포함한 소켓 수 상한 — 닫기 응답을 안 보내고 버티는 소켓이 쌓여도 여기서 멈춘다 */
+const HARD_MAX = 128;
+const slotOf = (t: Tag | null): string | null => (!t || t.role === 'pending' || t.role === 'closed' ? null : t.role === 'team' ? 'team:' + t.team : t.role);
+const sinceOf = (w: WebSocket): number => ((w.deserializeAttachment() as { since?: number } | null)?.since ?? 0);
 const ok = (data: unknown): Envelope => ({ ok: true, data });
 const no = (error: string): Envelope => ({ ok: false, error });
 const rand = () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
@@ -154,11 +169,13 @@ export class TrapRoom extends DurableObject<Env> {
     if (!this.state) return new Response('no room', { status: 404 });
     this.closeStalePending();
     const all = this.ctx.getWebSockets();
+    if (all.length >= HARD_MAX) return new Response('too many sockets', { status: 429 });
     const pending = all.filter((w) => (w.deserializeAttachment() as Tag | null)?.role === 'pending');
-    if (all.length - pending.length >= MAX_SOCKETS) return new Response('too many sockets', { status: 429 });
+    // 인증 소켓 전체 한도는 여기서 막지 않는다 — 칸별 한도(합 64)가 hello 때 같은 칸의 옛 소켓을 밀어내며 지킨다.
+    // 여기서 막으면 64개가 찬 뒤엔 재접속한 폰이 교체 로직에 닿지도 못한다. 인증 전 소켓은 MAX_PENDING 으로 따로 묶는다
     if (pending.length >= MAX_PENDING) { // 인증 전 소켓이 자리를 다 차지하지 못하게: 가장 오래된 것부터 닫는다
       const oldest = pending.sort((a, b) => (a.deserializeAttachment() as { at: number }).at - (b.deserializeAttachment() as { at: number }).at)[0];
-      try { oldest.close(1008, 'too many pending'); } catch { /* */ }
+      try { shut(oldest, 1008, 'too many pending'); } catch { /* */ }
     }
     const pair = new WebSocketPair();
     const [client, server] = [pair[0], pair[1]];
@@ -169,20 +186,24 @@ export class TrapRoom extends DurableObject<Env> {
 
   override async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
     const bytes = typeof message === 'string' ? new TextEncoder().encode(message).byteLength : message.byteLength;
-    if (bytes > MAX_MESSAGE) { ws.close(1009, 'too big'); return; }
+    if (bytes > MAX_MESSAGE) { shut(ws, 1009, 'too big'); return; }
     let msg: Record<string, unknown> | null = null;
     try { const v = JSON.parse(typeof message === 'string' ? message : new TextDecoder().decode(message)); msg = v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch { /* 아래에서 거절 */ }
-    if (!msg || !this.state) { ws.close(1003, 'bad message'); return; }
+    if (!msg || !this.state) { shut(ws, 1003, 'bad message'); return; }
     const tag = this.currentTag(ws);
     if (!tag) return; // 무효화되어 닫힘
     if (tag.role === 'pending') {
-      if (msg.type !== 'hello') { ws.close(1008, 'hello first'); return; }
+      if (msg.type !== 'hello') { shut(ws, 1008, 'hello first'); return; }
       const next = await this.authSocket(msg);
-      if (!next) { ws.close(1008, 'unauthorized'); return; }
-      // 인증 소켓 한도를 전환 직전에 다시 센다(await 이후라 다른 소켓이 먼저 인증됐을 수 있다). 세고 바꾸는 사이에 await 없음
-      const authed = this.ctx.getWebSockets().filter((w) => w !== ws && (w.deserializeAttachment() as Tag | null)?.role !== 'pending').length;
-      if (authed >= MAX_SOCKETS) { ws.close(1013, 'too many sockets'); return; }
-      ws.serializeAttachment(next);
+      if (!next) { shut(ws, 1008, 'unauthorized'); return; }
+      // 칸별 한도를 전환 직전에 센다(await 이후라 다른 소켓이 먼저 인증됐을 수 있다). 세고 바꾸는 사이에 await 없음
+      const slot = slotOf(next);
+      const same = this.ctx.getWebSockets().filter((w) => w !== ws && slotOf(w.deserializeAttachment() as Tag | null) === slot);
+      const limit = next.role === 'teacher' ? SLOT_LIMIT.teacher : next.role === 'tv' ? SLOT_LIMIT.tv : SLOT_LIMIT.team;
+      if (same.length >= limit) {
+        same.sort((a, b) => sinceOf(a) - sinceOf(b)).slice(0, same.length - limit + 1).forEach((w) => { try { shut(w, 4003, 'replaced'); } catch { /* */ } });
+      }
+      ws.serializeAttachment({ ...next, since: Date.now() });
       this.send(ws, next);
       return;
     }
@@ -228,11 +249,12 @@ export class TrapRoom extends DurableObject<Env> {
   private currentTag(ws: WebSocket): Tag | null {
     const s = this.state as RoomState;
     const tag = ws.deserializeAttachment() as Tag | null;
-    if (!tag) { ws.close(1008, 'no tag'); return null; }
-    if (tag.role === 'pending' && Date.now() - tag.at > HELLO_TIMEOUT_MS) { ws.close(1008, 'hello timeout'); return null; }
-    if (tag.role === 'tv' && tag.tvGen !== s.creds.tvGen) { ws.close(4001, 'tv key reissued'); return null; }
+    if (!tag) { shut(ws, 1008, 'no tag'); return null; }
+    if (tag.role === 'closed') return null;
+    if (tag.role === 'pending' && Date.now() - tag.at > HELLO_TIMEOUT_MS) { shut(ws, 1008, 'hello timeout'); return null; }
+    if (tag.role === 'tv' && tag.tvGen !== s.creds.tvGen) { shut(ws, 4001, 'tv key reissued'); return null; }
     if (tag.role === 'team') {
-      if (tag.pinGen !== s.creds.pinGen[tag.team]) { ws.close(4002, 'pin reissued'); return null; }
+      if (tag.pinGen !== s.creds.pinGen[tag.team]) { shut(ws, 4002, 'pin reissued'); return null; }
       if (tag.controller && tag.controlGen !== s.creds.controlGen[tag.team]) {
         const demoted: Tag = { ...tag, controller: false, controlGen: s.creds.controlGen[tag.team] };
         ws.serializeAttachment(demoted);
@@ -260,7 +282,7 @@ export class TrapRoom extends DurableObject<Env> {
   private closeStalePending() {
     for (const ws of this.ctx.getWebSockets()) {
       const tag = ws.deserializeAttachment() as Tag | null;
-      if (tag?.role === 'pending' && Date.now() - tag.at > HELLO_TIMEOUT_MS) { try { ws.close(1008, 'hello timeout'); } catch { /* */ } }
+      if (tag?.role === 'pending' && Date.now() - tag.at > HELLO_TIMEOUT_MS) { try { shut(ws, 1008, 'hello timeout'); } catch { /* */ } }
     }
   }
 }

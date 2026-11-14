@@ -36,7 +36,7 @@ export interface LiveOptions<V> {
   onClosedForGood?: (code: number) => void;
 }
 
-/** 판 하나에 붙는 소켓. 자격이 무효(4001·4002·1008)면 다시 붙지 않는다. close() 로 완전히 정리된다 */
+/** 판 하나에 붙는 소켓. 자격이 무효(4001·4002·1008)거나 같은 칸에 새 기기가 들어와 밀려났으면(4003) 다시 붙지 않는다(서로 밀어내는 반복 방지). close() 로 완전히 정리된다 */
 export function live<V extends { stateVersion: number }>(o: LiveOptions<V>): { resync(): void; close(): void } {
   let ws: WebSocket | null = null, tries = 0, stopped = false, lastVersion = -1;
   let bannerTimer: number | undefined, retryTimer: number | undefined;
@@ -61,7 +61,7 @@ export function live<V extends { stateVersion: number }>(o: LiveOptions<V>): { r
       if (ws !== sock) return;                       // 이미 교체된 옛 소켓의 close 는 무시
       ws = null;
       if (stopped) return;
-      if (e.code === 4001 || e.code === 4002 || e.code === 1008) { stopped = true; o.onClosedForGood?.(e.code); return; }
+      if (e.code === 4001 || e.code === 4002 || e.code === 1008 || e.code === 4003) { stopped = true; o.onClosedForGood?.(e.code); return; }
       clearTimeout(bannerTimer);
       bannerTimer = window.setTimeout(() => o.onStatus(false), 1500); // 짧은 재연결에 빨간 띠가 번쩍이지 않게
       const base = BACKOFF[Math.min(tries++, BACKOFF.length - 1)];

@@ -143,7 +143,7 @@ function bind() {
   $('#sample').onclick = () => download('애니멀트랩_양식.json', SAMPLE);
   $('#file').onchange = async () => {
     const f = ($('#file') as HTMLInputElement).files?.[0]; if (!f) return;
-    if (f.size > 2_000_000) return toast('파일이 너무 커요 (2MB까지).');
+    if (f.size > 4_000_000) return toast('파일이 너무 커요 (4MB까지).');
     ($('#paste') as HTMLTextAreaElement).value = await f.text();
     preview();
   };

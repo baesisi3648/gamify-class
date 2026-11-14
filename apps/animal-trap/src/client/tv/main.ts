@@ -150,7 +150,7 @@ else {
     hello: () => ({ role: 'tv', key: cred.key }),
     onState: (v) => { view = v; clock = Countdown.of(v); render(); },
     onStatus: (up) => { $('#banners').innerHTML = up ? '' : '<div class="banner off">연결이 끊겼어요. 다시 연결하는 중…</div>'; },
-    onClosedForGood: () => { stopAll(); try { sessionStorage.removeItem(SS); } catch { /* */ } view = null; waitScreen('TV 열쇠가 바뀌었어요. 교사 화면에서 ‘TV 화면 열기’를 다시 눌러 주세요.'); }
+    onClosedForGood: (code) => { if (code === 4003) { waitScreen('같은 판의 TV 화면이 너무 많이 열려 이 화면의 연결을 끊었어요. 새로 고치면 다시 연결돼요.'); return; } stopAll(); try { sessionStorage.removeItem(SS); } catch { /* */ } view = null; waitScreen('TV 열쇠가 바뀌었어요. 교사 화면에서 ‘TV 화면 열기’를 다시 눌러 주세요.'); }
   });
   const timer = window.setInterval(tickClock, 250);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');

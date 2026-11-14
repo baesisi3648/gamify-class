@@ -614,14 +614,19 @@ var APPS = [
   {
     id: "animal-trap",
     title: "애니멀 트랩",
-    description: "8팀이 16×16 초원에서 숨은 덫을 피해 오아시스로 달리는 실시간 퀴즈 게임. 덫을 밟으면 문제를 풀어 덫을 걷어 내고, 주변 덫 센서와 정찰로 길을 찾습니다. 지금 만드는 중입니다.",
+    description: "8팀이 16×16 초원에서 숨은 덫을 피해 오아시스로 달리는 실시간 퀴즈 게임. 덫을 밟으면 문제를 풀어 덫을 걷어 내고, 주변 덫 센서와 정찰로 길을 찾습니다. 문제만 넣으면 어떤 과목이든 됩니다.",
     category: "game",
     tags: ["QUIZ", "STRATEGY", "REALTIME"],
-    url: "https://animal-trap.baesisi3648.workers.dev/",
+    url: "https://animal-trap.baesisi3648.workers.dev/teacher",
     thumbnail: "/assets/animal-trap.svg",
     thumbAlt: "가운데 오아시스가 있는 16×16 초원 게임판에 여러 동물과 덫이 놓인 그림",
-    status: "building",
-    external: true
+    status: "available",
+    external: true,
+    links: [
+      { label: "사용 안내", url: "https://animal-trap.baesisi3648.workers.dev/guide" },
+      { label: "학생 입장", url: "https://animal-trap.baesisi3648.workers.dev/" },
+      { label: "문제은행", url: "https://animal-trap.baesisi3648.workers.dev/admin" }
+    ]
   },
   {
     id: "wild-derby",

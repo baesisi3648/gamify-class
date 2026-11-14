@@ -41,7 +41,7 @@ function renderHome() {
   endSession();
   const games = savedGames();
   app.innerHTML = `
-    <div class="top"><h1>🌴 애니멀 트랩 · 교사</h1><div class="row"><a class="small" href="/admin" style="text-decoration:none">📚 문제은행</a><a class="small" href="/" target="_blank" rel="noopener">학생 화면 열기 ↗</a></div></div>
+    <div class="top"><h1>🌴 애니멀 트랩 · 교사</h1><div class="row"><a class="small" href="/guide" style="text-decoration:none">사용 안내</a><a class="small" href="/admin" style="text-decoration:none">📚 문제은행</a><a class="small" href="/" target="_blank" rel="noopener">학생 화면 열기 ↗</a></div></div>
     <div class="layout">
       <section class="card form" aria-labelledby="mk">
         <h2 id="mk">새 판 만들기</h2>
@@ -129,7 +129,7 @@ function openGame(g: Saved) {
     hello: () => ({ role: 'teacher', key: g.hostKey }),
     onState: (v) => { view = v; clock = Countdown.of(v); render(); },
     onStatus: (up) => { $('#banners').innerHTML = up ? '' : '<div class="banner off" role="alert">연결이 끊겼어요. 다시 연결하는 중…</div>'; },
-    onClosedForGood: () => { forget(g.code); renderHome(); toast('이 판에 접속할 수 없어요(열쇠가 맞지 않음).'); }
+    onClosedForGood: (code) => { if (code === 4003) { $('#banners').innerHTML = '<div class="banner off" role="alert">이 판에 기기가 너무 많이 접속해 이 화면의 연결을 끊었어요. 새로 고치면 다시 연결돼요.</div>'; return; } forget(g.code); renderHome(); toast('이 판에 접속할 수 없어요(열쇠가 맞지 않음).'); }
   });
   const timer = window.setInterval(tickClock, 250);
   let raf = 0;
