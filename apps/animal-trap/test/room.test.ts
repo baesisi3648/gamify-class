@@ -321,3 +321,21 @@ test('정찰 후 수동 종료해도 정찰 결과는 남는다(정보 조회는
   sim.ok(T, { type: 'finish' });
   assert.ok(sim.s.committed!.teams[2].recon);
 });
+
+test('복습 화면 선택: 덫 지도·문항·순위를 교사가 고르고, 공개한 문항을 다시 누르면 다시 띄운다', () => {
+  const { sim, target } = simWithTrapForTeam0();
+  sim.moveAll((t) => (t === 0 ? target : sim.safeNeighbor(t)));
+  sim.do(team(0), { type: 'answer', round: sim.qr(), choice: 1 });
+  sim.ok(T, { type: 'finish' });
+  assert.equal(sim.s.review.display, 'ranking');
+  sim.ok(T, { type: 'review' });
+  const q = sim.s.committed!.quizLog[0].questionId;
+  sim.ok(T, { type: 'revealQuestion', questionId: q });
+  assert.deepEqual([sim.s.review.display, sim.s.review.focus], ['question', q]);
+  sim.ok(T, { type: 'revealTraps' });
+  assert.equal(sim.s.review.display, 'map', '문항을 공개한 뒤에도 덫 지도로 바꿀 수 있다');
+  sim.ok(T, { type: 'revealQuestion', questionId: q });
+  assert.equal(sim.s.review.display, 'question');
+  sim.ok(T, { type: 'showRanking' });
+  assert.equal(sim.s.review.display, 'ranking');
+});

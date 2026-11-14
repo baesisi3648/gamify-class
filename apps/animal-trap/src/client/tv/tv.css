@@ -1,0 +1,40 @@
+/* TV — 가로 대화면. 보드는 화면 높이를 꽉 채우고, 오른쪽에 시간·점수판·사건 */
+body { overflow: hidden; }
+#app { height: 100dvh; display: grid; grid-template-columns: auto minmax(340px, 1fr); gap: 2.2vh; padding: 2.2vh; }
+/* 4:3 화면에서도 옆 패널(최소 340px)이 들어가도록 보드 크기를 너비로도 제한 */
+.stage { height: min(calc(100dvh - 4.4vh), calc(100vw - 340px - 6.6vh)); aspect-ratio: 1; position: relative; align-self: center; }
+canvas.board { width: 100%; height: 100%; display: block; border-radius: 2vh; box-shadow: var(--shadow); background: #9ccf7c; }
+.side { display: grid; grid-template-rows: auto auto 1fr auto; gap: 1.6vh; min-height: 0; }
+.title { display: flex; justify-content: space-between; align-items: center; gap: 1vh; }
+.title h1 { font-size: 3.4vh; margin: 0; letter-spacing: -.02em; }
+.title .code { font-size: 2.6vh; font-weight: 900; letter-spacing: .14em; background: #fff; padding: .4vh 1.2vh; border-radius: 1vh; }
+.clocks { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2vh; }
+.clocks .card { padding: 1.4vh 1.8vh; }
+.clocks .lbl { font-size: 1.9vh; color: var(--muted); font-weight: 700; }
+.clocks b { font-size: 6vh; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.clocks .step { background: var(--leaf); color: #fff; }
+.clocks .step .lbl { color: #e6f4e3; }
+.clocks .step.paused { background: #7a7a7a; }
+.board-list { display: grid; gap: .6vh; align-content: start; margin: 0; padding: 0; }
+.board-list li { list-style: none; display: grid; grid-template-columns: 4vh 4.6vh 1fr auto auto; align-items: center; gap: 1vh; padding: .5vh 1.2vh; border-radius: 1.2vh; background: #fff; box-shadow: var(--shadow); font-size: 2.2vh; font-weight: 700; }
+.board-list .rk { font-size: 2.6vh; font-weight: 900; text-align: center; }
+.board-list .an { font-size: 2.8vh; width: 4.6vh; height: 4.6vh; display: grid; place-items: center; border-radius: 50%; border: .5vh solid var(--c); }
+.board-list .st { font-size: 1.9vh; color: var(--muted); }
+.board-list .sc { font-size: 3vh; font-weight: 900; font-variant-numeric: tabular-nums; min-width: 6vh; text-align: right; }
+.feed { margin: 0; padding: 0; display: grid; gap: .6vh; align-content: start; overflow: hidden; }
+.feed li { list-style: none; background: var(--bg2); border-radius: 1vh; padding: .6vh 1.2vh; font-size: 2vh; font-weight: 700; display: flex; justify-content: space-between; animation: pop .5s ease-out both; }
+@keyframes pop { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+.tools { display: flex; gap: 1vh; justify-content: flex-end; align-items: center; }
+.tools button { padding: .9vh 1.4vh; background: #fff; font-weight: 800; font-size: 1.8vh; box-shadow: var(--shadow); }
+.tools input { width: 14vh; }
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(15, 35, 20, .55); border-radius: 2vh; color: #fff; text-align: center; padding: 4vh; }
+.overlay .box { background: rgba(255,255,255,.97); color: var(--ink); border-radius: 2.4vh; padding: 4vh; max-width: 92%; max-height: 92%; overflow: auto; box-shadow: var(--shadow); }
+.summary { width: 100%; border-collapse: collapse; font-size: 2.2vh; }
+.summary th, .summary td { padding: .6vh 1vh; border-bottom: 1px solid var(--line); text-align: center; }
+.summary td:nth-child(2) { text-align: left; }
+.overlay h2 { font-size: 5vh; margin: 0 0 2vh; }
+.overlay .big { font-size: 9vh; }
+.overlay ol { text-align: left; font-size: 3vh; line-height: 1.6; }
+.overlay .ans { color: var(--ok); font-weight: 900; }
+.wait { display: grid; place-items: center; height: 100dvh; text-align: center; padding: 16px; }
+.wait input { padding: 12px; font-size: 1.2rem; border-radius: 12px; border: 2px solid var(--line); text-align: center; letter-spacing: .1em; }

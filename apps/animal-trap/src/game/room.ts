@@ -65,7 +65,8 @@ export interface RoomState {
   cancelled: { round: number; team: number; questionId: string }[]; // 수동 종료로 취소된 문항(감사용)
   processed: Record<string, { id: string; result: CmdResult }[]>;
   creds: Creds;
-  review: { revealed: string[]; trapsRevealed: boolean };
+  /** 복습: 공개한 문항·덫 지도, 그리고 지금 TV 에 띄울 것(교사가 고른다) */
+  review: { revealed: string[]; trapsRevealed: boolean; display: 'ranking' | 'map' | 'question'; focus: string | null };
 }
 
 export type Actor = { kind: 'teacher' } | { kind: 'team'; team: number } | { kind: 'system' };
@@ -74,7 +75,7 @@ export type Command =
   /** 교사 진행 버튼은 '지금 보고 있는 라운드·단계'를 함께 보낸다. 그사이 마감으로 단계가 바뀌었으면 STALE */
   | { type: 'next'; round: number } | { type: 'closePhase'; target: Target }
   | { type: 'pause' } | { type: 'resume' } | { type: 'finish' } | { type: 'review' } | { type: 'revealTraps' }
-  | { type: 'revealQuestion'; questionId: string }
+  | { type: 'revealQuestion'; questionId: string } | { type: 'showRanking' }
   | { type: 'trapMove'; trapId: number; to: Cell } | { type: 'trapSwap'; a: number; b: number } | { type: 'trapConfirm' }
   /** 이동·답안은 대상 라운드에 묶인다 — 지난 라운드의 늦은 재전송이 다음 라운드에 적용되지 않게 */
   | { type: 'move'; round: number; to: Cell } | { type: 'answer'; round: number; choice: number } | { type: 'recon'; topLeft: Cell }
@@ -123,7 +124,7 @@ export function createRoom(input: { code: string; title: string; setName: string
     zones: null, setupTraps: null, confirmed: Array(TEAMS).fill(false), committed: null, pending: null,
     moves: Array(TEAMS).fill(null), answers: Array(TEAMS).fill(null), clock: newClock(input.config.durationMs),
     finishAfterRound: false, endReason: null, lastEvents: [], eventSeq: 0, cancelled: [], processed: {}, creds: input.creds,
-    review: { revealed: [], trapsRevealed: false }
+    review: { revealed: [], trapsRevealed: false, display: 'ranking', focus: null }
   };
   return { state, warnings: v.warnings };
 }
@@ -270,13 +271,18 @@ function apply(c: Ctx, actor: Actor, cmd: Command): CmdResult {
         s.phase = 'REVIEW'; return OK;
       case 'revealTraps':
         if (s.phase !== 'FINISHED' && s.phase !== 'REVIEW') return fail('BAD_PHASE');
-        s.review.trapsRevealed = true; return OK;
+        s.review.trapsRevealed = true; s.review.display = 'map'; return OK;
       case 'revealQuestion': {
         if (s.phase !== 'REVIEW') return fail('BAD_PHASE');
         const used = new Set([...(s.committed?.quizLog ?? []).map((q) => q.questionId), ...s.cancelled.map((q) => q.questionId)]);
         if (!used.has(cmd.questionId)) return fail('NOT_USED');
         if (!s.review.revealed.includes(cmd.questionId)) s.review.revealed.push(cmd.questionId);
+        s.review.display = 'question'; s.review.focus = cmd.questionId; // 이미 공개한 문항을 다시 누르면 TV 에 다시 띄운다
         return OK;
+      }
+      case 'showRanking': {
+        if (s.phase !== 'FINISHED' && s.phase !== 'REVIEW') return fail('BAD_PHASE');
+        s.review.display = 'ranking'; s.review.focus = null; return OK;
       }
       default: return fail('FORBIDDEN');
     }

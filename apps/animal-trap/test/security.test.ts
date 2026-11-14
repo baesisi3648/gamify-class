@@ -97,7 +97,7 @@ const PUBLIC = ['code', 'title', 'phase', 'step', 'round', 'stateVersion', 'serv
   'events[]', 'events[].type', 'events[].team', 'events[].from', 'events[].to', 'events[].reason', 'events[].points', 'events[].zone', 'events[].correct', 'events[].timeout',
   'events[].cell', 'events[].count', 'events[].effect', 'events[].rank', 'oasisArrivals', 'endReason',
   'trapMap', 'trapMap[]', 'trapMap[].cell', 'trapMap[].owner', 'trapMap[].type', 'trapMap[].active',
-  'reviewQuestions[]', 'reviewQuestions[].id', 'reviewQuestions[].level', 'reviewQuestions[].text', 'reviewQuestions[].choices[]', 'reviewQuestions[].answer', 'reviewQuestions[].explanation'];
+  'reviewDisplay.mode', 'reviewDisplay.questionId', 'reviewQuestions[]', 'reviewQuestions[].id', 'reviewQuestions[].level', 'reviewQuestions[].text', 'reviewQuestions[].choices[]', 'reviewQuestions[].answer', 'reviewQuestions[].explanation'];
 const ALLOWED = {
   tv: new Set(['role', ...PUBLIC]),
   teacher: new Set(['role', ...PUBLIC, 'pins[]', 'tvKey', 'access[]', 'access[].hasController', 'access[].pinLocked', 'final',

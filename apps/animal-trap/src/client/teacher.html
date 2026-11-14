@@ -3,15 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>애니멀 트랩 · 교사 화면</title>
+  <meta name="theme-color" content="#2f7d3b">
+  <title>애니멀 트랩 · 교사</title>
   <link rel="icon" href="/favicon.svg">
   <link rel="stylesheet" href="./shared/base.css">
+  <link rel="stylesheet" href="./teacher/teacher.css">
 </head>
 <body>
-  <main>
-    <h1>🌴 애니멀 트랩 — 교사 화면</h1>
-    <p>판을 만들고 진행하는 화면입니다.</p>
-    <p>준비 중입니다.</p>
-  </main>
+  <div id="banners"></div>
+  <main id="app"></main>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script type="module" src="./teacher/main.ts"></script>
 </body>
 </html>

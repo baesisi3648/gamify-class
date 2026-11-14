@@ -45,6 +45,8 @@ export interface PublicView {
   teams: PublicTeam[]; events: PublicEvent[]; oasisArrivals: number; endReason: 'time' | 'manual' | null;
   trapMap: FullTrap[] | null;              // 종료 후 교사가 '덫 지도 공개'를 눌렀을 때만
   reviewQuestions: RevealedQuestion[];     // 복습에서 교사가 공개한 문항만
+  /** 종료 후 TV 에 띄울 것(교사 선택): 순위 / 덫 지도 / 공개한 문항 하나 */
+  reviewDisplay: { mode: 'ranking' | 'map' | 'question'; questionId: string | null };
 }
 export interface TvView extends PublicView { role: 'tv' }
 export interface TeacherView extends PublicView {
@@ -124,7 +126,8 @@ function publicView(s: RoomState, bank: readonly BankQuestion[], now: number): P
     config: { durationMs: s.config.durationMs, moveMs: s.config.moveMs, quizMs: s.config.quizMs, setupMs: s.config.setupMs, autoNext: s.config.autoNext },
     teams, events: s.lastEvents.map(publicEvent), oasisArrivals: c?.oasisArrivals ?? 0, endReason: s.endReason,
     trapMap: finished(s) && s.review.trapsRevealed ? fullTraps(s) : null,
-    reviewQuestions: s.review.revealed.map((id) => bank.find((q) => q.id === id)).filter((q): q is BankQuestion => !!q).map(revealQ)
+    reviewQuestions: s.review.revealed.map((id) => bank.find((q) => q.id === id)).filter((q): q is BankQuestion => !!q).map(revealQ),
+    reviewDisplay: finished(s) ? { mode: s.review.display, questionId: s.review.display === 'question' ? s.review.focus : null } : { mode: 'ranking', questionId: null }
   };
 }
 

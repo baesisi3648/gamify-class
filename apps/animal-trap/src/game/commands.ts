@@ -23,7 +23,7 @@ function target(v: unknown): Target | null {
 export function parseTeacherCommand(raw: unknown): Command | AccessCommand | null {
   const c = o(raw); if (!c) return null;
   switch (c.type) {
-    case 'draw': case 'startSetup': case 'startGame': case 'pause': case 'resume': case 'finish': case 'review': case 'revealTraps':
+    case 'draw': case 'startSetup': case 'startGame': case 'pause': case 'resume': case 'finish': case 'review': case 'revealTraps': case 'showRanking':
       return { type: c.type };
     case 'next': return roundNo(c.round) ? { type: 'next', round: c.round } : null;
     case 'closePhase': { const t = target(c.target); return t ? { type: 'closePhase', target: t } : null; }
