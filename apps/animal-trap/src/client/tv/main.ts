@@ -28,6 +28,7 @@ function readKey(): { code: string; key: string } | null {
 let view: TvView | null = null;
 let clock: Countdown | null = null;
 let lastEventsKey = '';
+let idleText = '';
 let stopAll: () => void = () => {};
 
 function waitScreen(msg: string) {
@@ -85,9 +86,13 @@ function render() {
   $('#code').textContent = v.code;
   const box = $('#stepBox'); box.className = 'card step' + (v.paused ? ' paused' : '');
   $('#stepLabel').textContent = v.paused ? '⏸ 잠시 멈춤' : v.phase === 'RUNNING' ? `${v.round}라운드 · ${STEP[v.step ?? '']}` : PHASE[v.phase];
+  // 단계 시계가 없을 때 초록 칸이 비지 않게 — 큰 글씨로 지금 상황
+  const joined = v.teams.filter((t) => t.status.joined).length;
+  idleText = v.paused ? '⏸' : v.phase === 'LOBBY' ? `${joined}/8 입장` : v.phase === 'DRAWN' ? '추첨 완료' : v.phase === 'READY' ? '곧 시작' : v.phase === 'RUNNING' && v.step === 'ROUND_SUMMARY' ? '결과 발표' : v.phase === 'FINISHED' ? '🏁' : v.phase === 'REVIEW' ? '📖' : '';
   const order = [...v.teams].sort((a, b) => a.rank - b.rank || a.team - b.team);
   const status = (t: TvView['teams'][number]) => {
     if (v.phase === 'TRAP_SETUP') return t.status.setupConfirmed ? '설치 확정' : '설치 중';
+    if (v.phase === 'LOBBY' || v.phase === 'DRAWN') return t.status.joined ? '✔ 입장' : '대기';
     if (v.phase !== 'RUNNING') return t.oasisRank ? `🌴 ${t.oasisRank}등` : '';
     const s: string[] = [];
     if (v.step === 'MOVE_OPEN') s.push(t.status.boundLeft ? '⛓️ 속박' : t.status.moved ? '✔ 이동' : '…');
@@ -108,7 +113,8 @@ function render() {
 }
 
 function overlay(v: TvView): string {
-  if (v.phase === 'LOBBY') return `<div class="overlay"><div class="box"><h2>🌴 애니멀 트랩</h2><p style="font-size:3vh;margin:0">팀마다 QR을 찍고 PIN으로 입장하세요</p></div></div>`;
+  if (v.phase === 'LOBBY') return `<div class="overlay"><div class="box"><h2>🌴 애니멀 트랩</h2><p style="font-size:3vh;margin:0 0 2.4vh">팀 카드 QR을 찍거나, 이 주소에서 판 코드·PIN을 넣어요</p>
+    <div class="join"><div><div class="muted">학생 주소</div><b>${esc(location.host)}</b></div><div><div class="muted">판 코드</div><b class="codebig">${esc(v.code)}</b></div></div></div></div>`;
   // 종료 후에는 교사가 고른 것(순위 / 덫 지도 / 문항 하나)만 띄운다
   const d = v.reviewDisplay;
   const focusQ = d.mode === 'question' ? v.reviewQuestions.find((x) => x.id === d.questionId) : undefined;
@@ -131,7 +137,8 @@ function overlay(v: TvView): string {
 function tickClock() {
   if (!clock) return;
   const m = document.getElementById('mainClock'); if (m) m.textContent = mmss(clock.mainLeft());
-  const p = document.getElementById('phaseClock'); const l = clock.phaseLeft(); if (p) p.textContent = l === null ? '' : mmss(l);
+  const p = document.getElementById('phaseClock'); const l = clock.phaseLeft();
+  if (p) { p.textContent = l === null ? idleText : mmss(l); p.classList.toggle('idle', l === null); }
 }
 
 function boardModel(v: TvView): BoardModel {

@@ -44,3 +44,5 @@ table.teams td.num { text-align: right; font-variant-numeric: tabular-nums; font
   .qr svg { width: 100%; height: auto; max-width: 40mm; }
 }
 .qr svg { max-width: 100%; }
+table.teams th, table.teams td { white-space: nowrap; }
+.lv-tag { font-weight: 800; font-size: .85rem; } .lv-쉬움 { color: var(--ok); } .lv-보통 { color: #9a6b00; } .lv-어려움 { color: var(--danger); }

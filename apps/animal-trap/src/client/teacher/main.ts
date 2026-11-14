@@ -241,6 +241,7 @@ function qrSection(v: TeacherView): string {
 function teamTable(v: TeacherView): string {
   const status = (t: TeacherView['teams'][number]) => {
     if (v.phase === 'TRAP_SETUP') return t.status.setupConfirmed ? '<span class="ok">확정</span>' : '설치 중';
+    if (v.phase === 'LOBBY' || v.phase === 'DRAWN') return t.status.joined ? '<span class="ok">입장</span>' : '<span class="muted">대기</span>';
     if (v.phase !== 'RUNNING') return '';
     const s: string[] = [];
     if (v.step === 'MOVE_OPEN') s.push(t.status.boundLeft ? '⛓️ 속박' : t.status.moved ? '<span class="ok">이동함</span>' : '고르는 중');
@@ -250,7 +251,7 @@ function teamTable(v: TeacherView): string {
   };
   const order = [...v.teams].sort((a, b) => a.rank - b.rank || a.team - b.team);
   const fin = order.some((t) => t.summary);
-  return `<section class="card"><h2>${fin ? '최종 결과' : '팀 현황'}</h2><table class="teams"><thead><tr><th>순위</th><th>팀</th><th>${fin ? '정답/오답 · 상대 구역 · 🌴' : '상태'}</th><th style="text-align:right">점수</th></tr></thead><tbody>
+  return `<section class="card"><h2>${fin ? '최종 결과' : '팀 현황'}</h2><table class="teams"><thead><tr><th>순위</th><th>팀</th><th>${fin ? '정·오 · 구역 · 🌴' : '상태'}</th><th style="text-align:right">점수</th></tr></thead><tbody>
     ${order.map((t) => `<tr><td>${t.rank}</td><td><span class="swatch" style="--c:${TEAM_COLORS[t.team]}" aria-hidden="true">${t.animal.emoji}</span> ${esc(t.animal.name)}${!fin && t.oasisRank ? ' 🌴' + t.oasisRank : ''}</td><td>${t.summary ? `${t.summary.correct}/${t.summary.wrong} · ${t.summary.zones} · ${t.summary.oasisRank ?? '–'}` : status(t)}</td><td class="num">${t.score}</td></tr>`).join('')}
     </tbody></table></section>`;
 }
@@ -273,7 +274,7 @@ function reviewSection(v: TeacherView, off: string): string {
   const stat = (id: string) => { const log = v.final!.quizLog.filter((q) => q.questionId === id); return log.length ? `${log.length}팀 풀이 · 정답 ${log.filter((q) => q.correct).length}` : '취소된 문제'; };
   return `<section class="card"><h2>📖 이번 판에 나온 문제 ${v.final.questions.length}개</h2>
     ${v.phase !== 'REVIEW' ? '<p class="muted">‘문제 복습 시작’을 누르면 TV에 한 문제씩 정답을 공개할 수 있어요.</p>' : ''}
-    <div class="qlist">${v.final.questions.map((q, i) => `<div class="qitem"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b><span class="lv-tag muted">${esc(q.level)}</span></div>
+    <div class="qlist">${v.final.questions.map((q, i) => `<div class="qitem"><div class="row" style="justify-content:space-between"><b>${i + 1}. ${esc(q.text)}</b><span class="lv-tag lv-${esc(q.level)}">${esc(q.level)}</span></div>
       <div class="meta muted">${stat(q.id)} · 정답 ${q.answer}번 (${esc(q.choices[q.answer - 1])})</div>
       ${v.phase === 'REVIEW' ? (v.reviewDisplay.mode === 'question' && v.reviewDisplay.questionId === q.id ? '<span class="ok">▶ TV에 표시 중</span>' : `<button class="small" data-reveal="${esc(q.id)}" ${off}>${revealed.has(q.id) ? 'TV에 다시 띄우기' : 'TV에 정답 공개'}</button>`) : ''}</div>`).join('') || '<p class="muted">나온 문제가 없어요.</p>'}</div></section>`;
 }

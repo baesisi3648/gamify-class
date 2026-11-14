@@ -31,7 +31,7 @@ export type PublicEvent =
 export interface PublicTeam {
   team: number; animal: { code: string; name: string; emoji: string };
   zone: number | null; pos: Cell | null; score: number; rank: number; oasisRank: number | null;
-  status: { setupConfirmed: boolean; moved: boolean; quiz: 'none' | 'pending' | 'done'; boundLeft: number; confusedLeft: number };
+  status: { joined: boolean; setupConfirmed: boolean; moved: boolean; quiz: 'none' | 'pending' | 'done'; boundLeft: number; confusedLeft: number };
   /** 종료 후에만: 공개 사건(정오·상대 구역·오아시스)의 누적 요약 */
   summary: null | { correct: number; wrong: number; zones: number; oasisRank: number | null };
 }
@@ -107,6 +107,7 @@ function publicView(s: RoomState, bank: readonly BankQuestion[], now: number): P
       team, animal: { ...animal }, zone: s.zones ? s.zones[team] : null, pos: positions[team], score: scores[team], rank: ranks[team],
       oasisRank: t?.oasisRank ?? null,
       status: {
+        joined: s.creds.controlToken[team] !== null, // 공개 정보(TV 에 '입장 완료'로 보인다). 토큰 값은 싣지 않는다
         setupConfirmed: s.confirmed[team],
         moved: s.phase === 'RUNNING' && s.step === 'MOVE_OPEN' && s.moves[team] !== null,
         quiz: s.step === 'QUESTION_OPEN' && l && l.questionId !== null ? (s.answers[team] !== null ? 'done' : 'pending') : 'none',

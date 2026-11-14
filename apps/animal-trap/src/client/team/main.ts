@@ -240,7 +240,7 @@ function render() {
   $('#hud').innerHTML = `
     <div class="me" style="--c:${TEAM_COLORS[v.me.team]}"><span class="e" aria-hidden="true">${me.animal.emoji}</span><span>${esc(me.animal.name)}팀</span></div>
     <div class="score">${me.score}점 <span class="muted" style="font-size:.9rem">${v.phase === 'RUNNING' || v.phase === 'FINISHED' || v.phase === 'REVIEW' ? me.rank + '위' : ''}</span></div>
-    <div class="clock"><span class="muted" style="font-size:.8rem">${v.round ? v.round + '라운드' : esc(v.title)}</span><b id="mainClock">${mmss(v.mainRemainingMs)}</b></div>`;
+    <div class="clock"><span class="muted" style="font-size:.8rem">${v.round ? v.round + '라운드' : '게임 시간'}</span><b id="mainClock">${mmss(v.mainRemainingMs)}</b></div>`;
   const label = v.paused ? '⏸ 선생님이 잠시 멈췄어요' : v.phase === 'RUNNING' ? STEP_TEXT[v.step ?? ''] ?? '' : PHASE_TEXT[v.phase];
   const ph = $('#phase'); ph.className = 'phase' + (v.paused ? ' paused' : '');
   ph.innerHTML = `<span>${esc(label)}</span><span class="t" id="phaseClock"></span>`;
@@ -322,7 +322,7 @@ function panel(v: TeamView): string {
       if (ui.reconMode) return reconPanel(v);
       if (me.status.boundLeft) return sensorCard(v) + `<div class="card"><h2>⛓️ 속박 중</h2><p class="muted" style="margin:0">이번 라운드는 제자리에 있어요.</p></div>` + recon;
       if (me.status.moved) return sensorCard(v) + `<div class="card"><h2>👣 이동 확정</h2><p class="muted" style="margin:0">다른 팀을 기다리는 중이에요.</p></div>` + recon;
-      return sensorCard(v) + `<div class="card"><h2>어디로 갈까요?</h2><p class="muted" style="margin:0 0 10px">반짝이는 8칸 중 하나를 누르거나 아래 방향을 고르세요. 시간 안에 안 고르면 제자리예요.</p>${v.me.controller ? movePad(v) : ''}</div>
+      return sensorCard(v) + `<div class="card"><h2>어디로 갈까요?</h2><p class="muted" style="margin:0 0 10px">반짝이는 8칸 중 하나를 누르거나 아래 방향을 고른 뒤 <b>‘이 칸으로 이동하기’</b>를 눌러요. 시간 안에 안 누르면 제자리예요.</p>${v.me.controller ? movePad(v) : ''}</div>
         ${v.me.controller ? `<button class="btn" id="move" ${ui.pick === null || !canMove(v) ? 'disabled' : ''}>${ui.pick === null ? '칸을 먼저 고르세요' : '이 칸으로 이동하기 (' + coord(ui.pick) + ')'}</button>` : ''}${recon}`;
     }
     if (v.step === 'QUESTION_OPEN') {

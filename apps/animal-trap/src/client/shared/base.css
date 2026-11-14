@@ -14,7 +14,7 @@ button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; border: 0; border-radius: 12px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 button:disabled { opacity: .45; cursor: not-allowed; }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
-.btn { padding: 14px 18px; font-weight: 700; font-size: 1.05rem; background: var(--leaf); color: #fff; box-shadow: 0 3px 0 #1f5a28; }
+.btn { display: inline-block; text-decoration: none; text-align: center; border-radius: 12px; padding: 14px 18px; font-weight: 700; font-size: 1.05rem; background: var(--leaf); color: #fff; box-shadow: 0 3px 0 #1f5a28; }
 .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #1f5a28; }
 .btn.ghost { background: #fff; color: var(--leaf); box-shadow: inset 0 0 0 2px var(--leaf); }
 .btn.warn { background: var(--danger); box-shadow: 0 3px 0 #8e1b1b; }

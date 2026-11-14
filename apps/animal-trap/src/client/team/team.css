@@ -63,7 +63,8 @@ details.review summary { font-weight: 700; cursor: pointer; }
 .pad .me { display: grid; place-items: center; font-size: 1.6rem; }
 .pan { display: flex; gap: 6px; }
 .pan button { min-width: 44px; min-height: 40px; background: #fff; font-weight: 800; box-shadow: var(--shadow); }
-.trap-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.trap-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
+.trap-list button { text-align: left; white-space: nowrap; }
 .trap-list button { min-height: 44px; padding: 6px 10px; background: #fff; box-shadow: inset 0 0 0 2px var(--line); font-weight: 700; }
 .trap-list button[aria-pressed="true"] { box-shadow: inset 0 0 0 3px var(--navy); background: #e8eefc; }
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; font-size: .85rem; }
