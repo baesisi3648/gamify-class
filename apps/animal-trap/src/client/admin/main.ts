@@ -213,8 +213,12 @@ async function deleteQuestion(id: number) {
   const q = questions.find((x) => x.id === id);
   if (!q || !confirm(`이 문항을 삭제할까요?\n\n${q.text.slice(0, 80)}`)) return;
   await busy(async () => {
-    const r = await api('/api/admin/questions/delete', { id });
-    if (!r.ok) { if (password) say(r); return; }
+    const r = await api('/api/admin/questions/delete', { id, setName: openSet, text: q.text });
+    if (!r.ok) {
+      if (password) say(r);
+      if (r.error === 'NOT_FOUND' && openSet) { const fresh = await api<{ questions: StoredQuestion[] }>('/api/admin/questions', { setName: openSet }); if (fresh.ok) questions = fresh.data.questions; await loadSets(); }
+      return;
+    }
     questions = questions.filter((x) => x.id !== id);
     await loadSets();
   });

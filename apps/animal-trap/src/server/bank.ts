@@ -22,7 +22,8 @@ export interface ImportError { index: number; reason: string }
 export interface ImportSummary { title: string; total: number; byLevel: Record<Level, number>; errors: ImportError[] }
 
 export function levelOf(difficulty: unknown): Level | null {
-  const d = String(difficulty ?? '').trim();
+  if (typeof difficulty !== 'string') return null;
+  const d = difficulty.trim();
   const i = (DIFFICULTIES as readonly string[]).indexOf(d.toLowerCase());
   if (i >= 0) return LEVELS[i];
   if (d === '중간') return '보통'; // 예전 이름
@@ -33,12 +34,15 @@ export const difficultyOf = (level: Level): string => DIFFICULTIES[LEVELS.indexO
 /** 세트 이름 정규화 — 가져오기·판 생성·조회 모두 이것 하나로(공백 차이로 세트를 못 찾는 일 방지) */
 export const cleanSetName = (v: unknown) => (typeof v === 'string' ? v : '').trim().replace(/\s+/g, ' ').slice(0, LIMITS.setName);
 /** 글자(또는 비어 있음)만 받는다. 숫자는 글자로 바꿔 준다(보기에 숫자를 그냥 적는 경우). 객체·배열·참거짓은 null */
+/** 오류 문장에 넣을 값 — 어떤 JSON 값이 와도 던지지 않는다 */
+const shown = (v: unknown): string => (typeof v === 'string' ? v.slice(0, 40) : typeof v === 'number' || typeof v === 'boolean' ? String(v) : v === null || v === undefined ? '(없음)' : Array.isArray(v) ? '(배열)' : '(객체)');
 const textOf = (v: unknown): string | null => (v === undefined || v === null ? '' : typeof v === 'string' ? v.trim() : typeof v === 'number' && Number.isFinite(v) ? String(v) : null);
 
 function itemOf(raw: unknown, setName: string): QuestionRow | string {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return '문항이 객체가 아니에요';
   const r = raw as Record<string, unknown>;
-  if (r.type !== undefined && r.type !== null && String(r.type).trim() !== '' && String(r.type).trim() !== 'multiple_choice') return `객관식만 지원해요 ('${String(r.type).trim()}' 형식은 넣을 수 없어요)`;
+  const type = typeof r.type === 'string' ? r.type.trim() : r.type;
+  if (type !== undefined && type !== null && type !== '' && type !== 'multiple_choice') return `객관식만 지원해요 ('${shown(type)}' 형식은 넣을 수 없어요)`;
   const text = textOf(r.question ?? r.text);
   if (text === null) return '문제는 글자여야 해요';
   if (!text) return '문제가 비어 있어요';
@@ -54,9 +58,9 @@ function itemOf(raw: unknown, setName: string): QuestionRow | string {
   const long = choices.findIndex((c) => c.length > LIMITS.choice);
   if (long >= 0) return `${long + 1}번 보기가 너무 길어요 (최대 ${LIMITS.choice}자)`;
   const answer = typeof r.answer === 'number' ? r.answer : typeof r.answer === 'string' && /^\s*[1-4]\s*$/.test(r.answer) ? Number(r.answer) : NaN;
-  if (!Number.isInteger(answer) || answer < 1 || answer > 4) return `정답은 1~4 중 하나여야 해요 ('${String(r.answer)}' 은(는) 아니에요)`;
+  if (!Number.isInteger(answer) || answer < 1 || answer > 4) return `정답은 1~4 중 하나여야 해요 ('${shown(r.answer)}' 은(는) 아니에요)`;
   const level = levelOf(r.difficulty ?? r.level);
-  if (!level) return `난이도는 easy·medium·hard(또는 쉬움·보통·어려움) 중 하나여야 해요 ('${String(r.difficulty ?? r.level)}' 은(는) 아니에요)`;
+  if (!level) return `난이도는 easy·medium·hard(또는 쉬움·보통·어려움) 중 하나여야 해요 ('${shown(r.difficulty ?? r.level)}' 은(는) 아니에요)`;
   const explanation = textOf(r.explanation);
   if (explanation === null) return '해설은 글자여야 해요';
   if (explanation.length > LIMITS.explanation) return `해설이 너무 길어요 (최대 ${LIMITS.explanation}자)`;

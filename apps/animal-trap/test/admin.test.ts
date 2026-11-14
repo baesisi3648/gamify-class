@@ -50,7 +50,7 @@ function fakeAdmin(over: Partial<AdminPorts> = {}) {
     listQuestions: async (s) => rows.filter((r) => r.setName === s),
     importRows: async (s, mode, add: QuestionRow[]): Promise<number | 'FULL'> => { if (mode === 'replace') rows = rows.filter((r) => r.setName !== s); rows.push(...add.map((r) => ({ ...r, id: nextId++ }))); return add.length; },
     deleteSet: async (s) => { const n = rows.length; rows = rows.filter((r) => r.setName !== s); return n - rows.length; },
-    deleteQuestion: async (id) => { const n = rows.length; rows = rows.filter((r) => r.id !== id); return n !== rows.length; },
+    deleteQuestion: async (id, s, text) => { const n = rows.length; rows = rows.filter((r) => !(r.id === id && r.setName === s && r.text === text)); return n !== rows.length; },
     adminAttempt: async (ip) => { tries.push(ip); return tries.length <= 50; },
     ...over
   };
@@ -103,7 +103,11 @@ test('admin: 내보내기·문항 삭제·세트 삭제', async () => {
   assert.equal(d.fileName, '애니멀트랩_유전_2026-11-14.json');
   assert.equal(JSON.parse(d.content).questions.length, 2);
   assert.equal(!(await call(f.ports, 'POST', '/api/admin/export', { setName: '없음' }))?.ok, true);
-  assert.ok((await call(f.ports, 'POST', '/api/admin/questions/delete', { id: f.rows[0].id }))?.ok);
+  const first = f.rows[0];
+  assert.equal(!(await call(f.ports, 'POST', '/api/admin/questions/delete', { id: first.id, setName: '유전', text: '다른 문항' }))?.ok, true, '같은 id 라도 글이 다르면 지우지 않는다');
+  assert.equal(!(await call(f.ports, 'POST', '/api/admin/questions/delete', { id: first.id, setName: '다른 세트', text: first.text }))?.ok, true);
+  assert.equal(f.rows.length, 2);
+  assert.ok((await call(f.ports, 'POST', '/api/admin/questions/delete', { id: first.id, setName: '유전', text: first.text }))?.ok);
   assert.equal(!(await call(f.ports, 'POST', '/api/admin/questions/delete', { id: 'x' }))?.ok, true);
   assert.equal(f.rows.length, 1);
   const del = await call(f.ports, 'POST', '/api/admin/sets/delete', { setName: '유전' });
@@ -169,4 +173,13 @@ test('admin: 저장소가 FULL 이면 오류로 알리고 아무것도 바뀌지
   const r = await call(f.ports, 'POST', '/api/admin/import', { json: { title: 'X', questions: [q('easy', 1)] }, mode: 'add' });
   assert.equal(!r?.ok && r?.error, 'BAD_FILE');
   assert.match(!r?.ok ? r?.message ?? '' : '', /아무것도/);
+});
+
+test('bank: toString 을 가진 객체 등 어떤 JSON 값이 와도 던지지 않고 문항 오류로', () => {
+  const evil = { toString: 'x' };
+  const r = parseImport({ title: 'T', questions: [q('easy', 0), q('easy', 1, { difficulty: evil }), q('easy', 2, { type: evil }), q('easy', 3, { answer: evil }), q('easy', 4, { answer: [1] })] }, null);
+  assert.ok(typeof r !== 'string');
+  assert.equal(r.rows.length, 1);
+  assert.deepEqual(r.summary.errors.map((e) => e.index), [1, 2, 3, 4]);
+  assert.match(r.summary.errors[0].reason, /\(객체\)/);
 });

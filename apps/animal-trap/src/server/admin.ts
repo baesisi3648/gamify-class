@@ -8,7 +8,7 @@
  *   POST /api/admin/import           {json, setName?, mode: add|replace}
  *   POST /api/admin/export           {setName}   → {fileName, content}
  *   POST /api/admin/sets/delete      {setName}
- *   POST /api/admin/questions/delete {id}
+ *   POST /api/admin/questions/delete {id, setName, text}  — 세 값이 모두 맞을 때만(ID 는 재사용될 수 있다)
  */
 import type { Level } from '../game/types.ts';
 import { cleanSetName, exportFileName, LEVELS, LIMITS, parseImport, toPortable, type QuestionRow } from './bank.ts';
@@ -27,7 +27,8 @@ export interface AdminPorts {
   /** add: 이어 붙이기 / replace: 같은 이름 세트를 지우고 넣기 — 한 트랜잭션 */
   importRows(setName: string, mode: 'add' | 'replace', rows: QuestionRow[]): Promise<number | 'FULL'>;
   deleteSet(setName: string): Promise<number>;
-  deleteQuestion(id: number): Promise<boolean>;
+  /** id·세트·문제 글이 모두 같은 행만 지운다 — 다른 탭에서 세트를 갈아끼워 같은 id 가 새 문항이 됐으면 지우지 않는다 */
+  deleteQuestion(id: number, setName: string, text: string): Promise<boolean>;
 }
 
 const ok = (data: unknown): Envelope => ({ ok: true, data });
@@ -94,7 +95,9 @@ export async function adminRoute(req: { method: string; path: string; headers: R
   if (path === '/api/admin/questions/delete') {
     const id = Number(b.id);
     if (!Number.isInteger(id) || id <= 0) return no('BAD_REQUEST');
-    return (await p.deleteQuestion(id)) ? ok({ id }) : no('NOT_FOUND');
+    const setName = cleanSetName(b.setName);
+    if (!setName || typeof b.text !== 'string') return no('BAD_REQUEST');
+    return (await p.deleteQuestion(id, setName, b.text)) ? ok({ id }) : no('NOT_FOUND', '그 문항이 이미 바뀌었거나 지워졌어요. 목록을 새로 볼게요.');
   }
   return no('NOT_FOUND');
 }

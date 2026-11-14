@@ -77,7 +77,7 @@ function portsOf(env: Env): Ports {
       return rows.length;
     },
     deleteSet: async (setName) => (await env.DB.prepare('DELETE FROM questions WHERE set_name = ?').bind(setName).run()).meta?.changes ?? 0,
-    deleteQuestion: async (id) => ((await env.DB.prepare('DELETE FROM questions WHERE id = ?').bind(id).run()).meta?.changes ?? 0) === 1,
+    deleteQuestion: async (id, setName, text) => ((await env.DB.prepare('DELETE FROM questions WHERE id = ? AND set_name = ? AND text = ?').bind(id, setName, text).run()).meta?.changes ?? 0) === 1,
     eq: safeEqual,
     now: () => Date.now(),
     randomCode,
