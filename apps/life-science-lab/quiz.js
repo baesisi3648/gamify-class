@@ -2,6 +2,7 @@ import { renderQuizPaper } from './quiz-paper.js';
 const heading='<div class="page-heading"><span class="eyebrow">RESEARCH QUIZ</span><h1>퀴즈</h1><p>탐구에서 배운 내용을 확인하세요.</p></div>';
 const qType={choice:'선택형',short:'단답형',ox:'O/X',essay:'서술형',match:'짝맞추기',order:'순서맞추기'};
 const kinds=Object.entries(qType).map(([id,label])=>'<option value="'+id+'">'+label+'</option>').join('');
+const shuffleSettings='<fieldset class="quiz-shuffle-settings"><legend>문항 표시 설정</legend><label><input type="checkbox" name="shuffleChoices"> 학생마다 선택형 보기 순서 섞기</label><label><input type="checkbox" name="shuffleQuestions"> 학생마다 문항 순서 섞기 <small>같은 유형끼리 묶고, 묶음 안의 문항만 섞습니다.</small></label></fieldset>';
 function editorFields(type) {
   if(type==='choice')return '<div class="quiz-options" data-options></div><button type="button" data-add-option>보기 추가</button><p class="hint">정답 보기를 선택하세요.</p>';
   if(type==='short')return '<div class="quiz-options" data-options></div><button type="button" data-add-option>유사 정답 추가</button><label class="quiz-inline"><input type="checkbox" name="strict"> 띄어쓰기까지 맞아야 정답</label>';
@@ -13,17 +14,33 @@ function editorFields(type) {
 function addOption(card) {
   const type=card.querySelector('[name=type]').value, holder=card.querySelector('[data-options]');if(!holder)return;
   const n=holder.children.length, row=document.createElement('div');row.className='quiz-option-row';
-  row.innerHTML=(type==='choice'?'<label class="quiz-correct"><input type="radio" name="correct-'+card.dataset.card+'" value="'+n+'" '+(!n?'checked':'')+' aria-label="'+(n+1)+'번 정답"></label>':type==='match'?'<span class="quiz-index">'+(n+1)+'</span>':'<span class="quiz-index">'+(n+1)+'</span>')+
+  row.innerHTML=(type==='choice'?'<span class="quiz-drag-handle" draggable="true" title="끌어서 보기 순서 변경" aria-label="보기 순서 끌어서 변경">⋮⋮</span><label class="quiz-correct"><input type="radio" name="correct-'+card.dataset.card+'" value="'+n+'" '+(!n?'checked':'')+' aria-label="'+(n+1)+'번 정답"></label>':type==='match'?'<span class="quiz-index">'+(n+1)+'</span>':'<span class="quiz-index">'+(n+1)+'</span>')+
     '<input class="quiz-option-input" maxlength="300" placeholder="'+(type==='match'?'기준':type==='order'?'단계':type==='short'?'허용 답안':'보기')+'" aria-label="'+(n+1)+'번 '+(type==='match'?'기준':'보기')+'" required>'+
     (type==='match'?'<span>→</span><input class="quiz-pair-input" maxlength="300" placeholder="짝" aria-label="'+(n+1)+'번 짝" required>':'')+
+    (type==='choice'?'<button type="button" data-move-option="up" aria-label="보기 위로 이동">↑</button><button type="button" data-move-option="down" aria-label="보기 아래로 이동">↓</button>':'')+
     '<button type="button" data-remove-option aria-label="보기 삭제">×</button>';
   holder.append(row);
+}
+function renumberOptions(card) {
+  [...card.querySelectorAll('.quiz-option-row')].forEach((row,i)=>{
+    const radio=row.querySelector('.quiz-correct input');if(radio){radio.value=i;radio.setAttribute('aria-label',(i+1)+'번 정답');}
+    const index=row.querySelector('.quiz-index');if(index)index.textContent=i+1;
+  });
 }
 function questionCard(number,type='choice') {
   const card=document.createElement('section');card.className='quiz-editor-card';card.dataset.card=crypto.randomUUID();
   card.innerHTML='<div class="quiz-editor-head"><strong>문제 '+number+'</strong><select name="type" aria-label="문제 유형">'+kinds+'</select><span class="quiz-editor-tools"><button type="button" data-duplicate aria-label="문제 복제">복제</button><button type="button" data-remove-card aria-label="문제 삭제">삭제</button></span></div><label class="quiz-prompt"><span class="sr-only">질문</span><textarea name="prompt" maxlength="1000" placeholder="질문 입력" required></textarea></label><div class="quiz-kind-fields"></div><div class="quiz-editor-foot"><label>배점 <input name="points" type="number" min="1" max="100" value="5" required></label><label>힌트 (선택) <input name="hint" maxlength="500" placeholder="학생에게 보여 줄 힌트"></label></div>';
   card.querySelector('[name=type]').value=type;
-  const reset=()=>{card.querySelector('.quiz-kind-fields').innerHTML=editorFields(card.querySelector('[name=type]').value);for(let i=0;i<(['choice','match','order'].includes(card.querySelector('[name=type]').value)?4:card.querySelector('[name=type]').value==='short'?1:0);i++)addOption(card);};
+  const reset=()=>{
+    card.querySelector('.quiz-kind-fields').innerHTML=editorFields(card.querySelector('[name=type]').value);
+    for(let i=0;i<(['choice','match','order'].includes(card.querySelector('[name=type]').value)?4:card.querySelector('[name=type]').value==='short'?1:0);i++)addOption(card);
+    const holder=card.querySelector('[data-options]');if(!holder)return;
+    let dragging=null;
+    holder.addEventListener('dragstart',(event)=>{const handle=event.target.closest('.quiz-drag-handle');if(!handle)return;dragging=handle.closest('.quiz-option-row');event.dataTransfer.effectAllowed='move';});
+    holder.addEventListener('dragover',(event)=>{if(dragging && event.target.closest('.quiz-option-row'))event.preventDefault();});
+    holder.addEventListener('drop',(event)=>{const target=event.target.closest('.quiz-option-row');if(!dragging||!target||dragging===target)return;event.preventDefault();if(event.clientY<target.getBoundingClientRect().top+target.offsetHeight/2)target.before(dragging);else target.after(dragging);renumberOptions(card);dragging=null;});
+    holder.addEventListener('dragend',()=>{dragging=null;});
+  };
   card.querySelector('[name=type]').onchange=reset;reset();return card;
 }
 function collect(card) {
@@ -40,7 +57,7 @@ function collect(card) {
 }
 function answerControls(q,esc) {
   if(q.type==='ox')return '<div class="quiz-ox">'+['O','X'].map((v)=>'<label><input type="radio" name="'+esc(q.id)+'" value="'+v+'"> '+v+'</label>').join('')+'</div>';
-  if(q.type==='choice')return '<div class="quiz-student-options">'+q.choices.map((v,i)=>'<label><input type="radio" name="'+esc(q.id)+'" value="'+i+'"> '+esc(v)+'</label>').join('')+'</div>';
+  if(q.type==='choice')return '<div class="quiz-student-options">'+q.choices.map((v,i)=>'<label><input type="radio" name="'+esc(q.id)+'" value="'+(q.choiceOrder?.[i]??i)+'"> '+esc(v)+'</label>').join('')+'</div>';
   if(q.type==='match')return '<div class="quiz-student-options">'+q.pairs.map((v,i)=>'<label>'+esc(v)+' <select data-answer-index="'+i+'"><option value="">짝 선택</option>'+q.options.map((item)=>'<option value="'+esc(item)+'">'+esc(item)+'</option>').join('')+'</select></label>').join('')+'</div>';
   if(q.type==='order')return '<div class="quiz-student-options">'+q.options.map((_,i)=>'<label>'+ (i+1)+'번째 <select data-answer-index="'+i+'"><option value="">순서 선택</option>'+q.options.map((item)=>'<option value="'+esc(item)+'">'+esc(item)+'</option>').join('')+'</select></label>').join('')+'</div>';
   return q.type==='short'?'<input name="'+esc(q.id)+'" data-student-answer maxlength="4000" autocomplete="off" placeholder="정답 입력">':'<textarea name="'+esc(q.id)+'" data-student-answer maxlength="4000" rows="6" placeholder="직접 작성하세요"></textarea>';
@@ -52,8 +69,8 @@ export async function renderQuiz({main,api,user,esc,mode='full'}) {
   async function list(){
     const data=await api('quiz.list');
     main.innerHTML=(mode==='results'?'':heading)+'<p id="quiz-message" role="status"></p>'+(user.role==='teacher' && mode!=='results' ?
-      '<section class="quiz-builder"><div class="quiz-builder-top"><h2>새 퀴즈 만들기</h2><p>문제를 추가하고 정답을 지정한 뒤 비공개로 저장하세요.</p></div><form id="quiz-create"><label class="quiz-title">퀴즈 제목<input name="title" maxlength="120" placeholder="예: 효소의 작용 원리" required></label><label class="quiz-time-setting">전체 제한 시간 (분) <input name="timeLimitMinutes" type="number" min="0" max="180" step="1" value="0" required><small>0분은 제한 없음 · 1~180분 설정 가능 · 학생이 처음 열 때 시작됩니다.</small></label><div id="quiz-questions"></div><div class="quiz-type-grid">'+Object.entries(qType).map(([id,label])=>'<button type="button" data-add-kind="'+id+'">＋ '+label+'</button>').join('')+'</div><div class="quiz-builder-actions"><span>서술형은 교사가 최종 채점합니다.</span><button class="primary">비공개로 저장</button></div></form></section>' : '')+
-      '<section class="panel"><h2>'+ (user.role==='teacher'?'등록한 퀴즈':'응시 가능한 퀴즈')+'</h2><div class="quiz-list">'+(data.quizzes.length ? data.quizzes.map((q)=>'<article class="quiz-card"><div><h3>'+esc(q.title)+'</h3><p>'+q.questions.length+'문항 · '+(q.timeLimitMinutes?q.timeLimitMinutes+'분':'시간 제한 없음')+' · '+({hidden:'비공개',open:'응시 중',closed:'종료'}[q.status]||q.status)+'</p></div><div class="actions"><button type="button" data-open="'+esc(q.id)+'">'+(user.role==='teacher'?'답안·채점 보기':'응시하기')+'</button>'+(user.role==='teacher'?'<select aria-label="'+esc(q.title)+' 운영 상태" data-status="'+esc(q.id)+'"><option value="hidden"'+(q.status==='hidden'?' selected':'')+'>비공개</option><option value="open"'+(q.status==='open'?' selected':'')+'>응시 중</option><option value="closed"'+(q.status==='closed'?' selected':'')+'>종료</option></select>':'')+'</div></article>').join(''):'<p class="hint">아직 공개된 퀴즈가 없습니다.</p>')+'</div></section>';
+      '<section class="quiz-builder"><div class="quiz-builder-top"><h2>새 퀴즈 만들기</h2><p>문제를 추가하고 정답을 지정한 뒤 비공개로 저장하세요.</p></div><form id="quiz-create"><label class="quiz-title">퀴즈 제목<input name="title" maxlength="120" placeholder="예: 효소의 작용 원리" required></label><label class="quiz-time-setting">전체 제한 시간 (분) <input name="timeLimitMinutes" type="number" min="0" max="180" step="1" value="0" required><small>0분은 제한 없음 · 1~180분 설정 가능 · 학생이 처음 열 때 시작됩니다.</small></label>'+shuffleSettings+'<div id="quiz-questions"></div><div class="quiz-type-grid">'+Object.entries(qType).map(([id,label])=>'<button type="button" data-add-kind="'+id+'">＋ '+label+'</button>').join('')+'</div><div class="quiz-builder-actions"><span>서술형은 교사가 최종 채점합니다.</span><button class="primary">비공개로 저장</button></div></form></section>' : '')+
+      '<section class="panel"><h2>'+ (user.role==='teacher'?'등록한 퀴즈':'응시 가능한 퀴즈')+'</h2><div class="quiz-list">'+(data.quizzes.length ? data.quizzes.map((q)=>'<article class="quiz-card"><div><h3>'+esc(q.title)+'</h3><p>'+q.questions.length+'문항 · '+(q.shuffleChoices?'보기 섞기 · ':'')+(q.shuffleQuestions?'유형별 문항 섞기 · ':'')+(q.timeLimitMinutes?q.timeLimitMinutes+'분':'시간 제한 없음')+' · '+({hidden:'비공개',open:'응시 중',closed:'종료'}[q.status]||q.status)+'</p></div><div class="actions"><button type="button" data-open="'+esc(q.id)+'">'+(user.role==='teacher'?'답안·채점 보기':'응시하기')+'</button>'+(user.role==='teacher'?'<select aria-label="'+esc(q.title)+' 운영 상태" data-status="'+esc(q.id)+'"><option value="hidden"'+(q.status==='hidden'?' selected':'')+'>비공개</option><option value="open"'+(q.status==='open'?' selected':'')+'>응시 중</option><option value="closed"'+(q.status==='closed'?' selected':'')+'>종료</option></select>':'')+'</div></article>').join(''):'<p class="hint">아직 공개된 퀴즈가 없습니다.</p>')+'</div></section>';
     if(user.role==='teacher' && mode!=='results'){
       const holder=main.querySelector('#quiz-questions');
       const renumber=()=>[...holder.children].forEach((card,i)=>card.querySelector('.quiz-editor-head strong').textContent='문제 '+(i+1));
@@ -61,13 +78,13 @@ export async function renderQuiz({main,api,user,esc,mode='full'}) {
       main.querySelectorAll('[data-add-kind]').forEach((button)=>button.onclick=()=>append(button.dataset.addKind));append('choice');
       holder.onclick=(e)=>{const card=e.target.closest('.quiz-editor-card');if(!card)return;
         if(e.target.closest('[data-add-option]'))addOption(card);
-        if(e.target.closest('[data-remove-option]')){e.target.closest('.quiz-option-row').remove();[...card.querySelectorAll('.quiz-option-row')].forEach((row,i)=>{const radio=row.querySelector('[type=radio]');if(radio)radio.value=i;const index=row.querySelector('.quiz-index');if(index)index.textContent=i+1;});}
+        if(e.target.closest('[data-remove-option]')){const row=e.target.closest('.quiz-option-row'),wasCorrect=row.querySelector('.quiz-correct input')?.checked;row.remove();renumberOptions(card);if(wasCorrect)card.querySelector('.quiz-correct input')?.click();}if(e.target.closest('[data-move-option]')){const row=e.target.closest('.quiz-option-row'),direction=e.target.closest('[data-move-option]').dataset.moveOption,target=direction==='up'?row.previousElementSibling:row.nextElementSibling;if(target){if(direction==='up')target.before(row);else target.after(row);renumberOptions(card);}}
         if(e.target.closest('[data-remove-card]')){card.remove();renumber();}
         if(e.target.closest('[data-duplicate]')){const clone=questionCard(holder.children.length+1,card.querySelector('[name=type]').value);const original=collect(card);clone.querySelector('[name=prompt]').value=original.prompt;clone.querySelector('[name=points]').value=original.points;clone.querySelector('[name=hint]').value=original.hint;while(clone.querySelectorAll('.quiz-option-input').length<card.querySelectorAll('.quiz-option-input').length)addOption(clone);clone.querySelectorAll('.quiz-option-input').forEach((input,i)=>input.value=card.querySelectorAll('.quiz-option-input')[i]?.value||'');clone.querySelectorAll('.quiz-pair-input').forEach((input,i)=>input.value=card.querySelectorAll('.quiz-pair-input')[i]?.value||'');if(original.type==='choice')clone.querySelectorAll('.quiz-correct input')[original.correct].checked=true;if(original.type==='short')clone.querySelector('[name=strict]').checked=original.strict;if(original.type==='essay')clone.querySelector('[name=rubric]').value=original.rubric;if(original.type==='ox')clone.querySelector('[name=ox-answer][value="'+original.accepted+'"]').checked=true;holder.append(clone);}
       };
       main.querySelector('#quiz-create').onsubmit=async(e)=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{
         const rows=[...holder.children].map(collect);
-        await api('quiz.create',{title:e.target.elements.title.value,timeLimitMinutes:Number(e.target.elements.timeLimitMinutes.value),questions:rows});await list();message('퀴즈를 비공개로 저장했습니다. 운영 상태를 응시 중으로 바꾸면 학생에게 공개됩니다.');
+        await api('quiz.create',{title:e.target.elements.title.value,timeLimitMinutes:Number(e.target.elements.timeLimitMinutes.value),shuffleChoices:e.target.elements.shuffleChoices.checked,shuffleQuestions:e.target.elements.shuffleQuestions.checked,questions:rows});await list();message('퀴즈를 비공개로 저장했습니다. 운영 상태를 응시 중으로 바꾸면 학생에게 공개됩니다.');
       }catch(err){message(err.message);}finally{button.disabled=false;}};
     }
     main.querySelectorAll('[data-open]').forEach((b)=>b.onclick=()=>user.role==='teacher'?showResults(b.dataset.open):showStudent(b.dataset.open));

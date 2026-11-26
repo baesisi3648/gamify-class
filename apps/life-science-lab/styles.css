@@ -437,6 +437,14 @@ footer > a { color: var(--green); font-size: 11px; font-weight: 650; letter-spac
 .quiz-prompt textarea::placeholder, .quiz-option-row input::placeholder { color: #8d97aa; }
 .quiz-kind-fields { margin: 20px 0; }
 .quiz-option-row { margin: 10px 0; }
+.quiz-drag-handle { cursor: grab; user-select: none; touch-action: none; padding: 8px 3px; color: #52637c; font-weight: 800; }
+.quiz-drag-handle:active { cursor: grabbing; }
+.quiz-option-row button[data-move-option] { padding: 9px 10px; }
+.quiz-shuffle-settings { margin: 18px 0; padding: 16px 18px; border: 1px solid #dce3ee; border-radius: 12px; background: #fff; }
+.quiz-shuffle-settings legend { padding: 0 6px; font-weight: 700; }
+.quiz-shuffle-settings label { display: block; margin: 8px 0; }
+.quiz-shuffle-settings input { width: auto; margin-right: 6px; }
+.quiz-shuffle-settings small { display: block; color: #52637c; margin-left: 25px; }
 .quiz-option-row input.quiz-option-input, .quiz-option-row input.quiz-pair-input { flex: 1; min-width: 0; margin: 0; }
 .quiz-option-row button { flex: 0 0 auto; padding: 9px 14px; }
 .quiz-index { width: 25px; text-align: center; font-weight: 700; color: #5d6f90; }

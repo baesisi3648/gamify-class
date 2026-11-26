@@ -8,6 +8,7 @@ test('퀴즈는 그룹과 역할을 격리하고 교사가 최종 채점을 확�
   const LAB_DB=d1Shim();
   LAB_DB.raw.exec(readFileSync(new URL('../migrations/0003_quizzes.sql',import.meta.url),'utf8'));
   LAB_DB.raw.exec(readFileSync(new URL('../migrations/0004_quiz_timer.sql',import.meta.url),'utf8'));
+  LAB_DB.raw.exec(readFileSync(new URL('../migrations/0005_quiz_shuffle.sql',import.meta.url),'utf8'));
   const student={id:'student-1',groupId:'legacy',authVersion:1,active:true,name:'테스트학생'};
   LAB_DB.raw.prepare('INSERT INTO Students (id,grp,data) VALUES (?,?,?)').run(student.id,'legacy',JSON.stringify(student));
   const teacher={role:'teacher',groupId:'legacy',owner:true};
@@ -43,7 +44,7 @@ test('퀴즈는 그룹과 역할을 격리하고 교사가 최종 채점을 확�
 });
 
 test('제한 시간은 첫 열람부터 시작하며 만료 시 저장된 답안을 제출한다',async()=>{
-  const LAB_DB=d1Shim();for(const name of ['0003_quizzes.sql','0004_quiz_timer.sql'])LAB_DB.raw.exec(readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8'));
+  const LAB_DB=d1Shim();for(const name of ['0003_quizzes.sql','0004_quiz_timer.sql','0005_quiz_shuffle.sql'])LAB_DB.raw.exec(readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8'));
   const student={id:'timer-student',groupId:'legacy',authVersion:1,active:true,name:'시간시험'};
   LAB_DB.raw.prepare('INSERT INTO Students (id,grp,data) VALUES (?,?,?)').run(student.id,'legacy',JSON.stringify(student));
   const env={LAB_DB},teacher={role:'teacher',groupId:'legacy',owner:true},pupil={role:'student',groupId:'legacy',id:student.id,authVersion:1};
@@ -61,7 +62,7 @@ test('제한 시간은 첫 열람부터 시작하며 만료 시 저장된 답안
 });
 
 test('선택형·짝맞추기·순서맞추기는 정답을 숨기고 정확히 채점한다',async()=>{
-  const LAB_DB=d1Shim();LAB_DB.raw.exec(readFileSync(new URL('../migrations/0003_quizzes.sql',import.meta.url),'utf8'));LAB_DB.raw.exec(readFileSync(new URL('../migrations/0004_quiz_timer.sql',import.meta.url),'utf8'));
+  const LAB_DB=d1Shim();for(const name of ['0003_quizzes.sql','0004_quiz_timer.sql','0005_quiz_shuffle.sql'])LAB_DB.raw.exec(readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8'));
   const student={id:'student-2',groupId:'legacy',authVersion:1,active:true,name:'테스트학생'};
   LAB_DB.raw.prepare('INSERT INTO Students (id,grp,data) VALUES (?,?,?)').run(student.id,'legacy',JSON.stringify(student));
   const env={LAB_DB},teacher={role:'teacher',groupId:'legacy',owner:true},pupil={role:'student',groupId:'legacy',id:student.id,authVersion:1};
@@ -82,4 +83,29 @@ test('선택형·짝맞추기·순서맞추기는 정답을 숨기고 정확히 
   await call('quiz.submit',{quizId:id,answers,version:started.attempt.version},pupil);
   const grading=(await call('quiz.results',{id})).attempts[0].grading;
   assert.deepEqual([grading.choice.score,grading.match.score,grading.order.score],[2,3,4]);
+});
+
+test('보기·유형별 문항 섞기를 켜도 재입장과 자동 채점이 일치한다',async()=>{
+  const LAB_DB=d1Shim();for(const name of ['0003_quizzes.sql','0004_quiz_timer.sql','0005_quiz_shuffle.sql'])LAB_DB.raw.exec(readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8'));
+  const student={id:'shuffle-student',groupId:'legacy',authVersion:1,active:true,name:'섞기학생'};
+  LAB_DB.raw.prepare('INSERT INTO Students (id,grp,data) VALUES (?,?,?)').run(student.id,'legacy',JSON.stringify(student));
+  const env={LAB_DB},teacher={role:'teacher',groupId:'legacy',owner:true},pupil={role:'student',groupId:'legacy',id:student.id,authVersion:1};
+  const call=(action,p={},actor=teacher)=>handleQuiz(action,p,actor,env);
+  const {id}=await call('quiz.create',{title:'섞기 퀴즈',shuffleChoices:true,shuffleQuestions:true,questions:[
+    {id:'c1',type:'choice',prompt:'A를 고르세요',points:2,choices:['A','B','C','D'],correct:0},
+    {id:'o1',type:'ox',prompt:'O를 고르세요',points:1,accepted:'O'},
+    {id:'c2',type:'choice',prompt:'C를 고르세요',points:2,choices:['A','B','C','D'],correct:2},
+    {id:'o2',type:'ox',prompt:'X를 고르세요',points:1,accepted:'X'}
+  ]});
+  await call('quiz.status',{id,status:'open'});
+  const first=await call('quiz.attempt',{quizId:id},pupil);
+  const reopened=await call('quiz.attempt',{quizId:id},pupil);
+  assert.deepEqual(first.quiz.questions,reopened.quiz.questions);
+  assert.deepEqual(first.quiz.questions.map((q)=>q.type),['choice','choice','ox','ox']);
+  const firstChoice=first.quiz.questions.find((q)=>q.id==='c1');
+  assert.equal(firstChoice.choices[firstChoice.choiceOrder.indexOf(0)],'A');
+  await call('quiz.submit',{quizId:id,version:first.attempt.version,answers:{c1:'0',o1:'O',c2:'2',o2:'X'}},pupil);
+  const result=await call('quiz.results',{id});
+  assert.equal(Object.values(result.attempts[0].grading).reduce((sum,grade)=>sum+grade.score,0),6);
+  assert.deepEqual(result.quiz.questions.map((q)=>q.id),['c1','o1','c2','o2']);
 });

@@ -1,11 +1,13 @@
+import {studentQuestionOrder} from './quiz-order.js';
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 const parse = (value) => JSON.parse(value || '[]');
 const clean = (value) => String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, '').toLocaleLowerCase('ko');
-const quizRow = (row, teacher = false) => row && ({ id:row.id, title:row.title, status:row.status, timeLimitMinutes:row.timeLimitMinutes||0,
-  questions:parse(row.questions).map((q) => teacher ? q : {id:q.id,type:q.type,prompt:q.prompt,points:q.points,hint:q.hint||'',
+const quizRow = (row, teacher = false, attemptId = '') => row && ({ id:row.id, title:row.title, status:row.status, timeLimitMinutes:row.timeLimitMinutes||0,
+  shuffleChoices:!!row.shuffleChoices,shuffleQuestions:!!row.shuffleQuestions,
+  questions:teacher ? parse(row.questions) : studentQuestionOrder(parse(row.questions).map((q) => ({id:q.id,type:q.type,prompt:q.prompt,points:q.points,hint:q.hint||'',
     choices:q.type==='choice'?q.choices:undefined,
     pairs:q.type==='match'?q.pairs.map((v)=>v.left):undefined,
-    options:q.type==='match'?q.pairs.map((v)=>v.right).reverse():q.type==='order'?[...q.items].reverse():undefined}),
+    options:q.type==='match'?q.pairs.map((v)=>v.right).reverse():q.type==='order'?[...q.items].reverse():undefined})),{shuffleChoices:!!row.shuffleChoices,shuffleQuestions:!!row.shuffleQuestions},attemptId),
   updatedAt:row.updatedAt });
 const attemptRow = (row, teacher = false) => row && ({ id:row.id, quizId:row.quizId, studentId:teacher ? row.studentId : undefined,
   answers:parse(row.answers), status:row.status, version:row.version, updatedAt:row.updatedAt, deadlineAt:row.deadlineAt||null,
@@ -84,7 +86,7 @@ export async function handleQuiz(action,p,user,env) {
       await db.prepare('INSERT OR IGNORE INTO LabQuizAttempts (id,quizId,groupId,studentId,answers,grading,status,version,createdAt,updatedAt,deadlineAt) VALUES (?,?,?,?,?,?,?,?,?,?,?)').bind(crypto.randomUUID(),quiz.id,groupId,user.id,'{}','{}','draft',1,now,now,deadlineAt).run();
       attempt=await getAttempt(db,quiz.id,user);
     }
-    return {quiz:quizRow(quiz),attempt:attemptRow(await finishExpired(db,quiz,attempt))};
+    return {quiz:quizRow(quiz,false,attempt?.id),attempt:attemptRow(await finishExpired(db,quiz,attempt))};
   }
   if(action==='quiz.save' || action==='quiz.submit') {
     if(teacher) fail(403,'학생 전용 요청입니다.');
@@ -110,8 +112,9 @@ export async function handleQuiz(action,p,user,env) {
     if(!title || title.length>120 || !questions.length || questions.length>50) fail(400,'제목과 1~50개 문항을 확인하세요.');
     const timeLimitMinutes=Number(p.timeLimitMinutes||0);
     if(!Number.isInteger(timeLimitMinutes)||timeLimitMinutes<0||timeLimitMinutes>180) fail(400,'제한 시간은 없음 또는 1~180분으로 설정하세요.');
+    const shuffleChoices=p.shuffleChoices===true,shuffleQuestions=p.shuffleQuestions===true;
     const id=crypto.randomUUID(),now=new Date().toISOString();
-    await db.prepare('INSERT INTO LabQuizzes (id,groupId,title,status,questions,createdAt,updatedAt,timeLimitMinutes) VALUES (?,?,?,?,?,?,?,?)').bind(id,groupId,title,'hidden',JSON.stringify(questions),now,now,timeLimitMinutes).run();
+    await db.prepare('INSERT INTO LabQuizzes (id,groupId,title,status,questions,createdAt,updatedAt,timeLimitMinutes,shuffleChoices,shuffleQuestions) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(id,groupId,title,'hidden',JSON.stringify(questions),now,now,timeLimitMinutes,Number(shuffleChoices),Number(shuffleQuestions)).run();
     return {id};
   }
   if(action==='quiz.status') {
