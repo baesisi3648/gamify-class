@@ -45,16 +45,16 @@ function answerControls(q,esc) {
   if(q.type==='order')return '<div class="quiz-student-options">'+q.options.map((_,i)=>'<label>'+ (i+1)+'번째 <select data-answer-index="'+i+'"><option value="">순서 선택</option>'+q.options.map((item)=>'<option value="'+esc(item)+'">'+esc(item)+'</option>').join('')+'</select></label>').join('')+'</div>';
   return q.type==='short'?'<input name="'+esc(q.id)+'" data-student-answer maxlength="4000" autocomplete="off" placeholder="정답 입력">':'<textarea name="'+esc(q.id)+'" data-student-answer maxlength="4000" rows="6" placeholder="직접 작성하세요"></textarea>';
 }
-export async function renderQuiz({main,api,user,esc}) {
+export async function renderQuiz({main,api,user,esc,mode='full'}) {
   if(!user){main.innerHTML=heading+'<section class="panel"><h2>로그인이 필요합니다</h2><p>학생 또는 교사로 로그인하면 현재 연구 그룹의 퀴즈를 볼 수 있습니다.</p><a class="button primary" href="#lab">로그인</a></section>';return;}
   let current=null,quiz=null,attempt=null,results=null;
   const message=(value)=>{const el=main.querySelector('#quiz-message');if(el)el.textContent=value;};
   async function list(){
     const data=await api('quiz.list');
-    main.innerHTML=heading+'<p id="quiz-message" role="status"></p>'+(user.role==='teacher' ?
+    main.innerHTML=(mode==='results'?'':heading)+'<p id="quiz-message" role="status"></p>'+(user.role==='teacher' && mode!=='results' ?
       '<section class="quiz-builder"><div class="quiz-builder-top"><h2>새 퀴즈 만들기</h2><p>문제를 추가하고 정답을 지정한 뒤 비공개로 저장하세요.</p></div><form id="quiz-create"><label class="quiz-title">퀴즈 제목<input name="title" maxlength="120" placeholder="예: 효소의 작용 원리" required></label><label class="quiz-time-setting">전체 제한 시간 (분) <input name="timeLimitMinutes" type="number" min="0" max="180" step="1" value="0" required><small>0분은 제한 없음 · 1~180분 설정 가능 · 학생이 처음 열 때 시작됩니다.</small></label><div id="quiz-questions"></div><div class="quiz-type-grid">'+Object.entries(qType).map(([id,label])=>'<button type="button" data-add-kind="'+id+'">＋ '+label+'</button>').join('')+'</div><div class="quiz-builder-actions"><span>서술형은 교사가 최종 채점합니다.</span><button class="primary">비공개로 저장</button></div></form></section>' : '')+
       '<section class="panel"><h2>'+ (user.role==='teacher'?'등록한 퀴즈':'응시 가능한 퀴즈')+'</h2><div class="quiz-list">'+(data.quizzes.length ? data.quizzes.map((q)=>'<article class="quiz-card"><div><h3>'+esc(q.title)+'</h3><p>'+q.questions.length+'문항 · '+(q.timeLimitMinutes?q.timeLimitMinutes+'분':'시간 제한 없음')+' · '+({hidden:'비공개',open:'응시 중',closed:'종료'}[q.status]||q.status)+'</p></div><div class="actions"><button type="button" data-open="'+esc(q.id)+'">'+(user.role==='teacher'?'답안·채점 보기':'응시하기')+'</button>'+(user.role==='teacher'?'<select aria-label="'+esc(q.title)+' 운영 상태" data-status="'+esc(q.id)+'"><option value="hidden"'+(q.status==='hidden'?' selected':'')+'>비공개</option><option value="open"'+(q.status==='open'?' selected':'')+'>응시 중</option><option value="closed"'+(q.status==='closed'?' selected':'')+'>종료</option></select>':'')+'</div></article>').join(''):'<p class="hint">아직 공개된 퀴즈가 없습니다.</p>')+'</div></section>';
-    if(user.role==='teacher'){
+    if(user.role==='teacher' && mode!=='results'){
       const holder=main.querySelector('#quiz-questions');
       const renumber=()=>[...holder.children].forEach((card,i)=>card.querySelector('.quiz-editor-head strong').textContent='문제 '+(i+1));
       const append=(type)=>{holder.append(questionCard(holder.children.length+1,type));};
@@ -104,7 +104,7 @@ export async function renderQuiz({main,api,user,esc}) {
   async function showResults(id){
     results=await api('quiz.results',{id});
     const qs=results.quiz.questions;
-    main.innerHTML=heading+'<div class="actions"><button id="quiz-back">목록으로</button></div><p id="quiz-message" role="status"></p><section class="panel"><h2>'+esc(results.quiz.title)+' · 제출 현황</h2>'+(results.attempts.length?results.attempts.map((a)=>'<article class="quiz-card"><div><h3>'+esc(a.student)+'</h3><p>'+({draft:'작성 중',submitted:'채점 대기',graded:'채점 완료'}[a.status]||a.status)+'</p></div><div class="actions"><button type="button" data-paper="'+esc(a.id)+'">시험지 보기</button><button type="button" data-grade="'+esc(a.id)+'">답안 채점</button></div></article>').join(''):'<p class="hint">아직 제출한 학생이 없습니다.</p>')+'</section><section id="quiz-detail"></section>';
+    main.innerHTML=(mode==='results'?'':heading)+'<div class="actions"><button id="quiz-back">퀴즈 목록으로</button></div><p id="quiz-message" role="status"></p><section class="panel"><h2>'+esc(results.quiz.title)+' · 제출 현황</h2>'+(results.attempts.length?results.attempts.map((a)=>'<article class="quiz-card"><div><h3>'+esc(a.student)+'</h3><p>'+({draft:'작성 중',submitted:'채점 대기',graded:'채점 완료'}[a.status]||a.status)+'</p></div><div class="actions"><button type="button" data-paper="'+esc(a.id)+'">시험지 보기</button><button type="button" data-grade="'+esc(a.id)+'">답안 채점</button></div></article>').join(''):'<p class="hint">아직 제출한 학생이 없습니다.</p>')+'</section><section id="quiz-detail"></section>';
     main.querySelector('#quiz-back').onclick=list;
     const detail=main.querySelector('#quiz-detail');
     main.querySelectorAll('[data-paper]').forEach((button)=>button.onclick=()=>{

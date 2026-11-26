@@ -423,9 +423,10 @@ async function work(id) {
 async function admin() {
   if (state.user?.role !== 'teacher') return login('teacher');
   main.innerHTML = '<div class="page-heading"><span class="eyebrow">TEACHER STUDIO</span><h1>탐구의 다음 단계를 함께.</h1><p class="muted">명단부터 피드백, 최종 전시까지 한곳에서 관리하세요.</p></div><div class="admin-tabs">' +
-    [['reports','보고서 검토'],['trash','휴지통'],['students','학생 명단'],['assessments','탐구 활동 설정'],['publications','전시 관리'],['groups','그룹 관리']].map(([id,title]) => '<button data-tab="' + id + '" class="' + (id === state.adminTab ? 'active' : '') + '">' + title + '</button>').join('') +
+    [['reports','보고서 검토'],['quizzes','퀴즈 결과'],['trash','휴지통'],['students','학생 명단'],['assessments','탐구 활동 설정'],['publications','전시 관리'],['groups','그룹 관리']].map(([id,title]) => '<button data-tab="' + id + '" class="' + (id === state.adminTab ? 'active' : '') + '">' + title + '</button>').join('') +
     (state.user.owner?'<button data-action="refresh-sheets">한글 시트 새로고침</button>':'')+'<button data-action="refresh-admin" class="ghost">↻ 새로고침</button></div><div id="admin-content"><p class="loading">불러오는 중…</p></div>';
   if (state.adminTab === 'groups') await groups();
+  else if (state.adminTab === 'quizzes') await renderQuiz({main:$('#admin-content'),api,user:state.user,esc,mode:'results'});
   else if (state.adminTab === 'trash') await trashReports();
   else if (state.adminTab === 'students') await students();
   else if (state.adminTab === 'assessments') await assessments();
