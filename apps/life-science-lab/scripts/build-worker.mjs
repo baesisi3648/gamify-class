@@ -1,6 +1,6 @@
 import { mkdir, copyFile } from 'node:fs/promises';
 const app = new URL('../',import.meta.url);
-for (const file of ['index.html','styles.css','app.js','quiz.js','autosave.js','draft-store.js','roster.js','seed.js','vendor/qrcode.mjs','vendor/xlsx.full.min.js']) {
+for (const file of ['index.html','styles.css','app.js','quiz.js','quiz-paper.js','autosave.js','draft-store.js','roster.js','seed.js','vendor/qrcode.mjs','vendor/xlsx.full.min.js']) {
   const target = new URL('dist/'+file,app);
   await mkdir(new URL('./',target),{recursive:true});
   await copyFile(new URL(file,app),target);

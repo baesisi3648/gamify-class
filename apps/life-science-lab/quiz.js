@@ -1,3 +1,4 @@
+import { renderQuizPaper } from './quiz-paper.js';
 const heading='<div class="page-heading"><span class="eyebrow">RESEARCH QUIZ</span><h1>퀴즈</h1><p>탐구에서 배운 내용을 확인하세요.</p></div>';
 const qType={choice:'선택형',short:'단답형',ox:'O/X',essay:'서술형',match:'짝맞추기',order:'순서맞추기'};
 const kinds=Object.entries(qType).map(([id,label])=>'<option value="'+id+'">'+label+'</option>').join('');
@@ -103,9 +104,34 @@ export async function renderQuiz({main,api,user,esc}) {
   async function showResults(id){
     results=await api('quiz.results',{id});
     const qs=results.quiz.questions;
-    main.innerHTML=heading+'<div class="actions"><button id="quiz-back">목록으로</button></div><p id="quiz-message" role="status"></p><section class="panel"><h2>'+esc(results.quiz.title)+' · 제출 현황</h2>'+(results.attempts.length?results.attempts.map((a)=>'<article class="quiz-card"><div><h3>'+esc(a.student)+'</h3><p>'+({draft:'작성 중',submitted:'채점 대기',graded:'채점 완료'}[a.status]||a.status)+'</p></div><button data-grade="'+esc(a.id)+'">답안 확인</button></article>').join(''):'<p class="hint">아직 제출한 학생이 없습니다.</p>')+'</section><section id="quiz-detail"></section>';
+    main.innerHTML=heading+'<div class="actions"><button id="quiz-back">목록으로</button></div><p id="quiz-message" role="status"></p><section class="panel"><h2>'+esc(results.quiz.title)+' · 제출 현황</h2>'+(results.attempts.length?results.attempts.map((a)=>'<article class="quiz-card"><div><h3>'+esc(a.student)+'</h3><p>'+({draft:'작성 중',submitted:'채점 대기',graded:'채점 완료'}[a.status]||a.status)+'</p></div><div class="actions"><button type="button" data-paper="'+esc(a.id)+'">시험지 보기</button><button type="button" data-grade="'+esc(a.id)+'">답안 채점</button></div></article>').join(''):'<p class="hint">아직 제출한 학생이 없습니다.</p>')+'</section><section id="quiz-detail"></section>';
     main.querySelector('#quiz-back').onclick=list;
-    main.querySelectorAll('[data-grade]').forEach((b)=>b.onclick=()=>{const a=results.attempts.find((r)=>r.id===b.dataset.grade);const detail=main.querySelector('#quiz-detail');detail.innerHTML='<section class="panel"><h2>'+esc(a.student)+' 답안</h2><form id="quiz-grade" class="stack">'+qs.map((q,i)=>'<fieldset class="quiz-question"><legend>'+(i+1)+'. '+esc(q.prompt)+' <small>'+q.points+'점</small></legend><p class="quiz-answer-text">'+esc(a.answers?.[q.id]||'(미작성)')+'</p><p class="hint">'+(q.type==='essay'?'채점 기준: '+esc(q.rubric):q.type==='choice'?'정답: '+esc(q.choices[q.correct]):q.type==='match'?'정답 짝: '+esc(q.pairs.map((v)=>v.left+' → '+v.right).join(', ')):q.type==='order'?'정답 순서: '+esc(q.items.join(' → ')):'허용 답안: '+esc(q.accepted.join(', ')))+'</p><label>점수<input type="number" data-score="'+esc(q.id)+'" min="0" max="'+q.points+'" value="'+(a.grading?.[q.id]?.score??0)+'" required></label><label>피드백<textarea data-feedback="'+esc(q.id)+'" maxlength="2000">'+esc(a.grading?.[q.id]?.feedback||'')+'</textarea></label></fieldset>').join('')+'<button class="primary"'+(a.status==='draft'?' disabled':'')+'>교사 최종 점수 확정</button></form></section>';detail.scrollIntoView({behavior:'smooth'});
+    const detail=main.querySelector('#quiz-detail');
+    main.querySelectorAll('[data-paper]').forEach((button)=>button.onclick=()=>{
+      const attempt=results.attempts.find((row)=>row.id===button.dataset.paper);
+      detail.innerHTML='<div class="quiz-paper-toolbar actions"><button type="button" data-print-quiz>인쇄</button><button type="button" class="primary" data-pdf-quiz>PDF 다운로드</button></div>'+renderQuizPaper(results.quiz,attempt);
+      detail.scrollIntoView({behavior:'smooth'});
+      detail.querySelector('[data-print-quiz]').onclick=()=>{
+        document.body.classList.add('printing-quiz');
+        window.addEventListener('afterprint',()=>document.body.classList.remove('printing-quiz'),{once:true});
+        window.print();
+      };
+      detail.querySelector('[data-pdf-quiz]').onclick=async(event)=>{
+        const pdfButton=event.currentTarget;pdfButton.disabled=true;
+        try{
+          if(typeof globalThis.html2pdf!=='function')await new Promise((resolve,reject)=>{
+            const script=document.createElement('script');script.src='./vendor/html2pdf.bundle.min.js';script.onload=resolve;script.onerror=()=>reject(new Error('PDF 도구를 불러오지 못했습니다.'));document.head.append(script);
+          });
+          await document.fonts.ready;
+          const safeName=String(attempt.student||'학생').replace(/[\/:*?"<>|]/g,'_');
+          await globalThis.html2pdf().set({margin:0,filename:'퀴즈_답안_'+safeName+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from(detail.querySelector('#quiz-printable')).save();
+        }catch(error){message(error.message);}finally{pdfButton.disabled=false;}
+      };
+    });
+    main.querySelectorAll('[data-grade]').forEach((button)=>button.onclick=()=>{
+      const a=results.attempts.find((row)=>row.id===button.dataset.grade);
+      detail.innerHTML='<section class="panel"><h2>'+esc(a.student)+' 답안 채점</h2><form id="quiz-grade" class="stack">'+qs.map((q,i)=>'<fieldset class="quiz-question"><legend>'+(i+1)+'. '+esc(q.prompt)+' <small>'+q.points+'점</small></legend><p class="quiz-answer-text">'+esc(a.answers?.[q.id]||'(미작성)')+'</p><p class="hint">'+(q.type==='essay'?'채점 기준: '+esc(q.rubric):q.type==='choice'?'정답: '+esc(q.choices[q.correct]):q.type==='match'?'정답 짝: '+esc(q.pairs.map((v)=>v.left+' → '+v.right).join(', ')):q.type==='order'?'정답 순서: '+esc(q.items.join(' → ')):'허용 답안: '+esc(q.accepted.join(', ')))+'</p><label>점수<input type="number" data-score="'+esc(q.id)+'" min="0" max="'+q.points+'" value="'+(a.grading?.[q.id]?.score??0)+'" required></label><label>피드백<textarea data-feedback="'+esc(q.id)+'" maxlength="2000">'+esc(a.grading?.[q.id]?.feedback||'')+'</textarea></label></fieldset>').join('')+'<button class="primary"'+(a.status==='draft'?' disabled':'')+'>교사 최종 점수 확정</button></form></section>';
+      detail.scrollIntoView({behavior:'smooth'});
       detail.querySelector('form').onsubmit=async(e)=>{e.preventDefault();const scores={},feedback={};detail.querySelectorAll('[data-score]').forEach((el)=>scores[el.dataset.score]=Number(el.value));detail.querySelectorAll('[data-feedback]').forEach((el)=>feedback[el.dataset.feedback]=el.value);try{await api('quiz.grade',{id:a.id,version:a.version,scores,feedback});await showResults(id);message('최종 점수를 저장했습니다.');}catch(err){message(err.message);}};
     });
   }
