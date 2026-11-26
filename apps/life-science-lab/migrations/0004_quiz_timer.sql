@@ -1,0 +1,2 @@
+ALTER TABLE LabQuizzes ADD COLUMN timeLimitMinutes INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE LabQuizAttempts ADD COLUMN deadlineAt TEXT;

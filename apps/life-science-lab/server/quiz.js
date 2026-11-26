@@ -1,14 +1,14 @@
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 const parse = (value) => JSON.parse(value || '[]');
 const clean = (value) => String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, '').toLocaleLowerCase('ko');
-const quizRow = (row, teacher = false) => row && ({ id:row.id, title:row.title, status:row.status,
+const quizRow = (row, teacher = false) => row && ({ id:row.id, title:row.title, status:row.status, timeLimitMinutes:row.timeLimitMinutes||0,
   questions:parse(row.questions).map((q) => teacher ? q : {id:q.id,type:q.type,prompt:q.prompt,points:q.points,hint:q.hint||'',
     choices:q.type==='choice'?q.choices:undefined,
     pairs:q.type==='match'?q.pairs.map((v)=>v.left):undefined,
     options:q.type==='match'?q.pairs.map((v)=>v.right).reverse():q.type==='order'?[...q.items].reverse():undefined}),
   updatedAt:row.updatedAt });
 const attemptRow = (row, teacher = false) => row && ({ id:row.id, quizId:row.quizId, studentId:teacher ? row.studentId : undefined,
-  answers:parse(row.answers), status:row.status, version:row.version, updatedAt:row.updatedAt,
+  answers:parse(row.answers), status:row.status, version:row.version, updatedAt:row.updatedAt, deadlineAt:row.deadlineAt||null,
   grading:teacher || row.status === 'graded' ? parse(row.grading) : undefined });
 const question = (raw) => {
   const type=String(raw.type||'');
@@ -48,6 +48,14 @@ async function getQuiz(db,id,groupId) {
 async function getAttempt(db,quizId,user) {
   return db.prepare('SELECT * FROM LabQuizAttempts WHERE quizId = ? AND groupId = ? AND studentId = ?').bind(quizId,user.groupId,user.id).first();
 }
+async function finishExpired(db,quiz,attempt) {
+  if (!attempt || attempt.status!=='draft' || !attempt.deadlineAt || Date.now()<Date.parse(attempt.deadlineAt)) return attempt;
+  const questions=parse(quiz.questions),answers=parse(attempt.answers);
+  const grading=Object.fromEntries(questions.map((q)=>[q.id,automatic(q,answers[q.id]||'')]));
+  const now=new Date().toISOString();
+  await db.prepare("UPDATE LabQuizAttempts SET status='submitted',grading=?,version=version+1,updatedAt=? WHERE id=? AND version=? AND status='draft'").bind(JSON.stringify(grading),now,attempt.id,attempt.version).run();
+  return db.prepare('SELECT * FROM LabQuizAttempts WHERE id=?').bind(attempt.id).first();
+}
 export async function handleQuiz(action,p,user,env) {
   if(!env.LAB_DB) fail(503,'퀴즈 저장소가 연결되지 않았습니다.');
   const db=env.LAB_DB, groupId=String(user.groupId||'legacy'), teacher=user.role==='teacher';
@@ -70,35 +78,40 @@ export async function handleQuiz(action,p,user,env) {
     if(teacher) fail(403,'학생 전용 요청입니다.');
     const quiz=await getQuiz(db,String(p.quizId||''),groupId);
     if(quiz.status==='hidden') fail(403,'현재 응시할 수 없는 퀴즈입니다.');
-    return {quiz:quizRow(quiz),attempt:attemptRow(await getAttempt(db,quiz.id,user))};
+    let attempt=await getAttempt(db,quiz.id,user);
+    if(!attempt && quiz.status==='open') {
+      const now=new Date().toISOString(),deadlineAt=quiz.timeLimitMinutes ? new Date(Date.now()+quiz.timeLimitMinutes*60000).toISOString() : null;
+      await db.prepare('INSERT OR IGNORE INTO LabQuizAttempts (id,quizId,groupId,studentId,answers,grading,status,version,createdAt,updatedAt,deadlineAt) VALUES (?,?,?,?,?,?,?,?,?,?,?)').bind(crypto.randomUUID(),quiz.id,groupId,user.id,'{}','{}','draft',1,now,now,deadlineAt).run();
+      attempt=await getAttempt(db,quiz.id,user);
+    }
+    return {quiz:quizRow(quiz),attempt:attemptRow(await finishExpired(db,quiz,attempt))};
   }
   if(action==='quiz.save' || action==='quiz.submit') {
     if(teacher) fail(403,'학생 전용 요청입니다.');
     const quiz=await getQuiz(db,String(p.quizId||''),groupId);
     if(quiz.status!=='open') fail(403,'현재 응시할 수 없는 퀴즈입니다.');
-    const existing=await getAttempt(db,quiz.id,user);
-    if(existing && existing.status!=='draft') fail(409,'이미 제출한 퀴즈입니다.');
+    const existing=await finishExpired(db,quiz,await getAttempt(db,quiz.id,user));
+    if(!existing) fail(409,'퀴즈 화면을 다시 열어 시작하세요.');
+    if(existing.status!=='draft') fail(409,'제출되었거나 제한 시간이 끝난 퀴즈입니다. 다시 불러오세요.');
     if(existing && Number(p.version)!==existing.version) fail(409,'다른 화면에서 답안이 변경됐습니다. 다시 불러오세요.');
     const questions=parse(quiz.questions), input=p.answers && typeof p.answers==='object' ? p.answers : {};
     const answers=Object.fromEntries(questions.map((q)=>[q.id,String(input[q.id]||'').slice(0,4000)]));
     const submit=action==='quiz.submit';
     const grading=submit ? Object.fromEntries(questions.map((q)=>[q.id,automatic(q,answers[q.id])])) : {};
     const now=new Date().toISOString(), id=existing?.id||crypto.randomUUID();
-    if(existing) {
-      const result=await db.prepare('UPDATE LabQuizAttempts SET answers=?,grading=?,status=?,version=version+1,updatedAt=? WHERE id=? AND version=? AND status=?').bind(JSON.stringify(answers),JSON.stringify(grading),submit?'submitted':'draft',now,id,existing.version,'draft').run();
-      if(!result.meta.changes) fail(409,'답안이 변경됐습니다. 다시 불러오세요.');
-    } else {
-      await db.prepare('INSERT INTO LabQuizAttempts (id,quizId,groupId,studentId,answers,grading,status,version,createdAt,updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(id,quiz.id,groupId,user.id,JSON.stringify(answers),JSON.stringify(grading),submit?'submitted':'draft',1,now,now).run();
-    }
-    return {id,version:(existing?.version||0)+1,status:submit?'submitted':'draft'};
+    const result=await db.prepare('UPDATE LabQuizAttempts SET answers=?,grading=?,status=?,version=version+1,updatedAt=? WHERE id=? AND version=? AND status=? AND (deadlineAt IS NULL OR deadlineAt>?)').bind(JSON.stringify(answers),JSON.stringify(grading),submit?'submitted':'draft',now,id,existing.version,'draft',now).run();
+    if(!result.meta.changes) fail(409,'답안이 변경됐거나 제한 시간이 끝났습니다. 다시 불러오세요.');
+    return {id,version:existing.version+1,status:submit?'submitted':'draft',deadlineAt:existing.deadlineAt||null};
   }
   if(!teacher) fail(403,'교사 전용 요청입니다.');
   if(action==='quiz.create') {
     const title=String(p.title||'').trim();
     const questions=Array.isArray(p.questions) ? p.questions.map(question) : [];
     if(!title || title.length>120 || !questions.length || questions.length>50) fail(400,'제목과 1~50개 문항을 확인하세요.');
+    const timeLimitMinutes=Number(p.timeLimitMinutes||0);
+    if(!Number.isInteger(timeLimitMinutes)||timeLimitMinutes<0||timeLimitMinutes>180) fail(400,'제한 시간은 없음 또는 1~180분으로 설정하세요.');
     const id=crypto.randomUUID(),now=new Date().toISOString();
-    await db.prepare('INSERT INTO LabQuizzes (id,groupId,title,status,questions,createdAt,updatedAt) VALUES (?,?,?,?,?,?,?)').bind(id,groupId,title,'hidden',JSON.stringify(questions),now,now).run();
+    await db.prepare('INSERT INTO LabQuizzes (id,groupId,title,status,questions,createdAt,updatedAt,timeLimitMinutes) VALUES (?,?,?,?,?,?,?,?)').bind(id,groupId,title,'hidden',JSON.stringify(questions),now,now,timeLimitMinutes).run();
     return {id};
   }
   if(action==='quiz.status') {
@@ -110,7 +123,8 @@ export async function handleQuiz(action,p,user,env) {
   if(action==='quiz.results') {
     const quiz=await getQuiz(db,String(p.id||''),groupId);
     const {results}=await db.prepare('SELECT a.*,s.data AS studentData FROM LabQuizAttempts a LEFT JOIN Students s ON s.id=a.studentId WHERE a.quizId=? AND a.groupId=? ORDER BY a.updatedAt DESC').bind(quiz.id,groupId).all();
-    return {quiz:quizRow(quiz,true),attempts:results.map((r)=>({...attemptRow(r,true),student:JSON.parse(r.studentData||'{}').name||r.studentId}))};
+    const attempts=await Promise.all(results.map(async(r)=>({...attemptRow(await finishExpired(db,quiz,r),true),student:JSON.parse(r.studentData||'{}').name||r.studentId})));
+    return {quiz:quizRow(quiz,true),attempts};
   }
   if(action==='quiz.grade') {
     const row=await db.prepare('SELECT a.* FROM LabQuizAttempts a JOIN LabQuizzes q ON q.id=a.quizId WHERE a.id=? AND a.groupId=? AND q.groupId=?').bind(String(p.id||''),groupId,groupId).first();

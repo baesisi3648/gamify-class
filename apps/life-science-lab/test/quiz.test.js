@@ -7,6 +7,7 @@ import {handleQuiz} from '../server/quiz.js';
 test('퀴즈는 그룹과 역할을 격리하고 교사가 최종 채점을 확정한다',async()=>{
   const LAB_DB=d1Shim();
   LAB_DB.raw.exec(readFileSync(new URL('../migrations/0003_quizzes.sql',import.meta.url),'utf8'));
+  LAB_DB.raw.exec(readFileSync(new URL('../migrations/0004_quiz_timer.sql',import.meta.url),'utf8'));
   const student={id:'student-1',groupId:'legacy',authVersion:1,active:true,name:'테스트학생'};
   LAB_DB.raw.prepare('INSERT INTO Students (id,grp,data) VALUES (?,?,?)').run(student.id,'legacy',JSON.stringify(student));
   const teacher={role:'teacher',groupId:'legacy',owner:true};
@@ -24,7 +25,7 @@ test('퀴즈는 그룹과 역할을 격리하고 교사가 최종 채점을 확�
   assert.equal(view.quiz.questions[0].accepted,undefined);
   assert.equal(view.quiz.questions[2].rubric,undefined);
   const answers={a:'O',b:' substrate ',c:'활성 부위에 맞는 기질이 결합한다.'};
-  const draft=await call('quiz.save',{quizId:created.id,answers},pupil);
+  const draft=await call('quiz.save',{quizId:created.id,answers,version:view.attempt.version},pupil);
   assert.equal(draft.status,'draft');
   const submitted=await call('quiz.submit',{quizId:created.id,answers,version:draft.version},pupil);
   assert.equal(submitted.status,'submitted');
@@ -41,8 +42,26 @@ test('퀴즈는 그룹과 역할을 격리하고 교사가 최종 채점을 확�
   await assert.rejects(call('quiz.attempt',{quizId:created.id},{...pupil,groupId:'other'}),{status:401});
 });
 
+test('제한 시간은 첫 열람부터 시작하며 만료 시 저장된 답안을 제출한다',async()=>{
+  const LAB_DB=d1Shim();for(const name of ['0003_quizzes.sql','0004_quiz_timer.sql'])LAB_DB.raw.exec(readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8'));
+  const student={id:'timer-student',groupId:'legacy',authVersion:1,active:true,name:'시간시험'};
+  LAB_DB.raw.prepare('INSERT INTO Students (id,grp,data) VALUES (?,?,?)').run(student.id,'legacy',JSON.stringify(student));
+  const env={LAB_DB},teacher={role:'teacher',groupId:'legacy',owner:true},pupil={role:'student',groupId:'legacy',id:student.id,authVersion:1};
+  const call=(a,p={},u=teacher)=>handleQuiz(a,p,u,env);
+  const {id}=await call('quiz.create',{title:'시간제 퀴즈',timeLimitMinutes:10,questions:[{id:'q',type:'ox',prompt:'정답은 O',points:5,accepted:'O'}]});
+  await call('quiz.status',{id,status:'open'});
+  const started=await call('quiz.attempt',{quizId:id},pupil);
+  assert.ok(Date.parse(started.attempt.deadlineAt)>Date.now());
+  const saved=await call('quiz.save',{quizId:id,version:started.attempt.version,answers:{q:'O'}},pupil);
+  LAB_DB.raw.prepare('UPDATE LabQuizAttempts SET deadlineAt=? WHERE id=?').run('2020-01-01T00:00:00.000Z',saved.id);
+  const expired=await call('quiz.attempt',{quizId:id},pupil);
+  assert.equal(expired.attempt.status,'submitted');
+  assert.equal((await call('quiz.results',{id})).attempts[0].grading.q.score,5);
+  await assert.rejects(call('quiz.save',{quizId:id,version:expired.attempt.version,answers:{q:'X'}},pupil),{status:409});
+});
+
 test('선택형·짝맞추기·순서맞추기는 정답을 숨기고 정확히 채점한다',async()=>{
-  const LAB_DB=d1Shim();LAB_DB.raw.exec(readFileSync(new URL('../migrations/0003_quizzes.sql',import.meta.url),'utf8'));
+  const LAB_DB=d1Shim();LAB_DB.raw.exec(readFileSync(new URL('../migrations/0003_quizzes.sql',import.meta.url),'utf8'));LAB_DB.raw.exec(readFileSync(new URL('../migrations/0004_quiz_timer.sql',import.meta.url),'utf8'));
   const student={id:'student-2',groupId:'legacy',authVersion:1,active:true,name:'테스트학생'};
   LAB_DB.raw.prepare('INSERT INTO Students (id,grp,data) VALUES (?,?,?)').run(student.id,'legacy',JSON.stringify(student));
   const env={LAB_DB},teacher={role:'teacher',groupId:'legacy',owner:true},pupil={role:'student',groupId:'legacy',id:student.id,authVersion:1};
@@ -59,7 +78,8 @@ test('선택형·짝맞추기·순서맞추기는 정답을 숨기고 정확히 
   assert.equal(publicQuiz.questions[1].options[0],'단백질 합성');
   assert.equal(publicQuiz.questions[2].items,undefined);
   const answers={choice:'1',match:JSON.stringify(['유전 정보','단백질 합성']),order:JSON.stringify(['리보솜','소포체','골지체'])};
-  await call('quiz.submit',{quizId:id,answers},pupil);
+  const started=await call('quiz.attempt',{quizId:id},pupil);
+  await call('quiz.submit',{quizId:id,answers,version:started.attempt.version},pupil);
   const grading=(await call('quiz.results',{id})).attempts[0].grading;
   assert.deepEqual([grading.choice.score,grading.match.score,grading.order.score],[2,3,4]);
 });
