@@ -1,8 +1,41 @@
 import { renderQuizPaper } from './quiz-paper.js';
+import {collectPromptParts,renderQuestionPrompt} from './quiz-rich.js';
 const heading='<div class="page-heading"><span class="eyebrow">RESEARCH QUIZ</span><h1>퀴즈</h1><p>탐구에서 배운 내용을 확인하세요.</p></div>';
 const qType={choice:'선택형',short:'단답형',ox:'O/X',essay:'서술형',match:'짝맞추기',order:'순서맞추기'};
 const kinds=Object.entries(qType).map(([id,label])=>'<option value="'+id+'">'+label+'</option>').join('');
 const shuffleSettings='<fieldset class="quiz-shuffle-settings"><legend>문항 표시 설정</legend><label><input type="checkbox" name="shuffleChoices"> 학생마다 선택형 보기 순서 섞기</label><label><input type="checkbox" name="shuffleQuestions"> 학생마다 문항 순서 섞기 <small>같은 유형끼리 묶고, 묶음 안의 문항만 섞습니다.</small></label></fieldset>';
+const promptEditor='<div class="quiz-prompt-toolbar"><button type="button" data-format="underline">U̲ 밑줄</button><button type="button" data-format="highlight">▰ 하이라이트</button><button type="button" data-insert-image>▧ 이미지</button><input type="file" data-image-file accept="image/png,image/jpeg,image/webp" hidden></div><div class="quiz-rich-editor" data-prompt-editor contenteditable="true" role="textbox" aria-label="질문 입력" aria-multiline="true" data-placeholder="질문 입력"></div><p class="hint">이미지는 파일을 선택하거나 이 칸에 붙여넣을 수 있습니다. 최대 4장, 각 5MB 이하.</p>';
+
+function bindPromptEditor(card,message,pendingUploads){
+  const editor=card.querySelector('[data-prompt-editor]'),fileInput=card.querySelector('[data-image-file]');
+  card.querySelectorAll('[data-format]').forEach((button)=>{
+    button.onmousedown=(event)=>event.preventDefault();
+    button.onclick=()=>{editor.focus();document.execCommand(button.dataset.format==='underline'?'underline':'hiliteColor',false,button.dataset.format==='underline'?null:'#fff2a8');};
+  });
+  card.querySelector('[data-insert-image]').onclick=()=>fileInput.click();
+  async function insertImage(file){
+    if(!file)return;
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024||!file.size){message('JPG, PNG, WebP 이미지(5MB 이하)를 선택하세요.');return;}
+    if(editor.querySelectorAll('[data-quiz-image-id]').length>=4){message('한 문제에 이미지는 최대 4장까지 넣을 수 있습니다.');return;}
+    const selection=window.getSelection();
+    const range=selection?.rangeCount&&editor.contains(selection.anchorNode)?selection.getRangeAt(0).cloneRange():null;
+    const task=(async()=>{const response=await fetch('/api/lab/quiz-image',{method:'POST',headers:{'Content-Type':file.type},body:file});const data=await response.json();if(!response.ok)throw new Error(data.error||'이미지를 올리지 못했습니다.');return data.result.id;})();
+    pendingUploads.add(task);task.then(()=>pendingUploads.delete(task),()=>pendingUploads.delete(task));
+    try{
+      const id=await task;
+      const image=document.createElement('img');image.src='/api/lab/quiz-image/'+id;image.dataset.quizImageId=id;image.alt='문제 이미지';image.className='quiz-prompt-image';
+      if(range&&editor.isConnected){range.collapse(false);range.insertNode(image);}else editor.append(image);
+      card.dataset.uploadError='';message('문제 이미지를 추가했습니다.');
+    }catch(error){card.dataset.uploadError=error.message;message(error.message);}
+  }
+  fileInput.onchange=()=>{insertImage(fileInput.files?.[0]);fileInput.value='';};
+  editor.onpaste=(event)=>{
+    const image=[...event.clipboardData.items].find((item)=>item.kind==='file'&&item.type.startsWith('image/'));
+    event.preventDefault();
+    if(image)insertImage(image.getAsFile());
+    else document.execCommand('insertText',false,event.clipboardData.getData('text/plain'));
+  };
+}
 function editorFields(type) {
   if(type==='choice')return '<div class="quiz-options" data-options></div><button type="button" data-add-option>보기 추가</button><p class="hint">정답 보기를 선택하세요.</p>';
   if(type==='short')return '<div class="quiz-options" data-options></div><button type="button" data-add-option>유사 정답 추가</button><label class="quiz-inline"><input type="checkbox" name="strict"> 띄어쓰기까지 맞아야 정답</label>';
@@ -29,7 +62,7 @@ function renumberOptions(card) {
 }
 function questionCard(number,type='choice') {
   const card=document.createElement('section');card.className='quiz-editor-card';card.dataset.card=crypto.randomUUID();
-  card.innerHTML='<div class="quiz-editor-head"><strong>문제 '+number+'</strong><select name="type" aria-label="문제 유형">'+kinds+'</select><span class="quiz-editor-tools"><button type="button" data-duplicate aria-label="문제 복제">복제</button><button type="button" data-remove-card aria-label="문제 삭제">삭제</button></span></div><label class="quiz-prompt"><span class="sr-only">질문</span><textarea name="prompt" maxlength="1000" placeholder="질문 입력" required></textarea></label><div class="quiz-kind-fields"></div><div class="quiz-editor-foot"><label>배점 <input name="points" type="number" min="1" max="100" value="5" required></label><label>힌트 (선택) <input name="hint" maxlength="500" placeholder="학생에게 보여 줄 힌트"></label></div>';
+  card.innerHTML='<div class="quiz-editor-head"><strong>문제 '+number+'</strong><select name="type" aria-label="문제 유형">'+kinds+'</select><span class="quiz-editor-tools"><button type="button" data-duplicate aria-label="문제 복제">복제</button><button type="button" data-remove-card aria-label="문제 삭제">삭제</button></span></div>'+promptEditor+'<div class="quiz-kind-fields"></div><div class="quiz-editor-foot"><label>배점 <input name="points" type="number" min="1" max="100" value="5" required></label><label>힌트 (선택) <input name="hint" maxlength="500" placeholder="학생에게 보여 줄 힌트"></label></div>';
   card.querySelector('[name=type]').value=type;
   const reset=()=>{
     card.querySelector('.quiz-kind-fields').innerHTML=editorFields(card.querySelector('[name=type]').value);
@@ -45,7 +78,7 @@ function questionCard(number,type='choice') {
 }
 function collect(card) {
   const type=card.querySelector('[name=type]').value;
-  const row={type,prompt:card.querySelector('[name=prompt]').value,points:card.querySelector('[name=points]').value,hint:card.querySelector('[name=hint]').value};
+  const row={type,promptParts:collectPromptParts(card.querySelector('[data-prompt-editor]')),points:card.querySelector('[name=points]').value,hint:card.querySelector('[name=hint]').value};
   const options=[...card.querySelectorAll('.quiz-option-input')].map((el)=>el.value);
   if(type==='choice'){row.choices=options;row.correct=Number(card.querySelector('.quiz-correct input:checked')?.value||0);}
   if(type==='short'){row.accepted=options.join('\n');row.strict=card.querySelector('[name=strict]').checked;}
@@ -66,6 +99,7 @@ export async function renderQuiz({main,api,user,esc,mode='full'}) {
   if(!user){main.innerHTML=heading+'<section class="panel"><h2>로그인이 필요합니다</h2><p>학생 또는 교사로 로그인하면 현재 연구 그룹의 퀴즈를 볼 수 있습니다.</p><a class="button primary" href="#lab">로그인</a></section>';return;}
   let current=null,quiz=null,attempt=null,results=null;
   const message=(value)=>{const el=main.querySelector('#quiz-message');if(el)el.textContent=value;};
+  const pendingUploads=new Set();
   async function list(){
     const data=await api('quiz.list');
     main.innerHTML=(mode==='results'?'':heading)+'<p id="quiz-message" role="status"></p>'+(user.role==='teacher' && mode!=='results' ?
@@ -74,16 +108,16 @@ export async function renderQuiz({main,api,user,esc,mode='full'}) {
     if(user.role==='teacher' && mode!=='results'){
       const holder=main.querySelector('#quiz-questions');
       const renumber=()=>[...holder.children].forEach((card,i)=>card.querySelector('.quiz-editor-head strong').textContent='문제 '+(i+1));
-      const append=(type)=>{holder.append(questionCard(holder.children.length+1,type));};
+      const append=(type)=>{const card=questionCard(holder.children.length+1,type);holder.append(card);bindPromptEditor(card,message,pendingUploads);};
       main.querySelectorAll('[data-add-kind]').forEach((button)=>button.onclick=()=>append(button.dataset.addKind));append('choice');
       holder.onclick=(e)=>{const card=e.target.closest('.quiz-editor-card');if(!card)return;
         if(e.target.closest('[data-add-option]'))addOption(card);
         if(e.target.closest('[data-remove-option]')){const row=e.target.closest('.quiz-option-row'),wasCorrect=row.querySelector('.quiz-correct input')?.checked;row.remove();renumberOptions(card);if(wasCorrect)card.querySelector('.quiz-correct input')?.click();}if(e.target.closest('[data-move-option]')){const row=e.target.closest('.quiz-option-row'),direction=e.target.closest('[data-move-option]').dataset.moveOption,target=direction==='up'?row.previousElementSibling:row.nextElementSibling;if(target){if(direction==='up')target.before(row);else target.after(row);renumberOptions(card);}}
         if(e.target.closest('[data-remove-card]')){card.remove();renumber();}
-        if(e.target.closest('[data-duplicate]')){const clone=questionCard(holder.children.length+1,card.querySelector('[name=type]').value);const original=collect(card);clone.querySelector('[name=prompt]').value=original.prompt;clone.querySelector('[name=points]').value=original.points;clone.querySelector('[name=hint]').value=original.hint;while(clone.querySelectorAll('.quiz-option-input').length<card.querySelectorAll('.quiz-option-input').length)addOption(clone);clone.querySelectorAll('.quiz-option-input').forEach((input,i)=>input.value=card.querySelectorAll('.quiz-option-input')[i]?.value||'');clone.querySelectorAll('.quiz-pair-input').forEach((input,i)=>input.value=card.querySelectorAll('.quiz-pair-input')[i]?.value||'');if(original.type==='choice')clone.querySelectorAll('.quiz-correct input')[original.correct].checked=true;if(original.type==='short')clone.querySelector('[name=strict]').checked=original.strict;if(original.type==='essay')clone.querySelector('[name=rubric]').value=original.rubric;if(original.type==='ox')clone.querySelector('[name=ox-answer][value="'+original.accepted+'"]').checked=true;holder.append(clone);}
+        if(e.target.closest('[data-duplicate]')){const clone=questionCard(holder.children.length+1,card.querySelector('[name=type]').value);const original=collect(card);clone.querySelector('[data-prompt-editor]').innerHTML=card.querySelector('[data-prompt-editor]').innerHTML;clone.querySelector('[name=points]').value=original.points;clone.querySelector('[name=hint]').value=original.hint;while(clone.querySelectorAll('.quiz-option-input').length<card.querySelectorAll('.quiz-option-input').length)addOption(clone);clone.querySelectorAll('.quiz-option-input').forEach((input,i)=>input.value=card.querySelectorAll('.quiz-option-input')[i]?.value||'');clone.querySelectorAll('.quiz-pair-input').forEach((input,i)=>input.value=card.querySelectorAll('.quiz-pair-input')[i]?.value||'');if(original.type==='choice')clone.querySelectorAll('.quiz-correct input')[original.correct].checked=true;if(original.type==='short')clone.querySelector('[name=strict]').checked=original.strict;if(original.type==='essay')clone.querySelector('[name=rubric]').value=original.rubric;if(original.type==='ox')clone.querySelector('[name=ox-answer][value="'+original.accepted+'"]').checked=true;holder.append(clone);bindPromptEditor(clone,message,pendingUploads);}
       };
       main.querySelector('#quiz-create').onsubmit=async(e)=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{
-        const rows=[...holder.children].map(collect);
+        await Promise.all([...pendingUploads]);if(holder.querySelector('[data-upload-error]:not([data-upload-error=""])'))throw new Error('문제 이미지 업로드 실패를 확인하세요.');const rows=[...holder.children].map(collect);
         await api('quiz.create',{title:e.target.elements.title.value,timeLimitMinutes:Number(e.target.elements.timeLimitMinutes.value),shuffleChoices:e.target.elements.shuffleChoices.checked,shuffleQuestions:e.target.elements.shuffleQuestions.checked,questions:rows});await list();message('퀴즈를 비공개로 저장했습니다. 운영 상태를 응시 중으로 바꾸면 학생에게 공개됩니다.');
       }catch(err){message(err.message);}finally{button.disabled=false;}};
     }
@@ -92,7 +126,7 @@ export async function renderQuiz({main,api,user,esc,mode='full'}) {
   }
   async function showStudent(id){
     const data=await api('quiz.attempt',{quizId:id});quiz=data.quiz;attempt=data.attempt;
-    main.innerHTML=heading+'<div class="actions"><button id="quiz-back">목록으로</button></div><p id="quiz-message" role="status"></p><section class="panel"><div class="quiz-session-head"><h2>'+esc(quiz.title)+'</h2><strong id="quiz-timer" aria-live="off"></strong></div><nav id="quiz-progress" class="quiz-progress" aria-label="문제 이동"></nav><p id="quiz-position" class="hint"></p><form id="quiz-answer" class="stack">'+quiz.questions.map((q,i)=>'<fieldset class="quiz-question" data-question="'+esc(q.id)+'" hidden><legend>'+(i+1)+'. '+esc(q.prompt)+' <small>'+q.points+'점</small></legend>'+answerControls(q,esc)+(q.hint?'<details><summary>힌트 보기</summary><p>'+esc(q.hint)+'</p></details>':'')+'</fieldset>').join('')+'<div class="quiz-navigation"><button type="button" id="quiz-prev">이전 문제</button><button type="button" id="quiz-save">임시 저장</button><button type="button" id="quiz-next">다음 문제</button><button class="primary" type="submit">최종 제출</button></div></form></section>';
+    main.innerHTML=heading+'<div class="actions"><button id="quiz-back">목록으로</button></div><p id="quiz-message" role="status"></p><section class="panel"><div class="quiz-session-head"><h2>'+esc(quiz.title)+'</h2><strong id="quiz-timer" aria-live="off"></strong></div><nav id="quiz-progress" class="quiz-progress" aria-label="문제 이동"></nav><p id="quiz-position" class="hint"></p><form id="quiz-answer" class="stack">'+quiz.questions.map((q,i)=>'<fieldset class="quiz-question" data-question="'+esc(q.id)+'" hidden><legend>'+(i+1)+'. '+renderQuestionPrompt(q)+' <small>'+q.points+'점</small></legend>'+answerControls(q,esc)+(q.hint?'<details><summary>힌트 보기</summary><p>'+esc(q.hint)+'</p></details>':'')+'</fieldset>').join('')+'<div class="quiz-navigation"><button type="button" id="quiz-prev">이전 문제</button><button type="button" id="quiz-save">임시 저장</button><button type="button" id="quiz-next">다음 문제</button><button class="primary" type="submit">최종 제출</button></div></form></section>';
     const form=main.querySelector('#quiz-answer');
     for(const q of quiz.questions){const value=attempt?.answers?.[q.id]||'';const field=form.querySelector('[data-question="'+CSS.escape(q.id)+'"]');if(['ox','choice'].includes(q.type)){const radio=[...field.querySelectorAll('[type=radio]')].find((el)=>el.value===value);if(radio)radio.checked=true;}else if(['match','order'].includes(q.type)){let values=[];try{values=JSON.parse(value);}catch{}field.querySelectorAll('[data-answer-index]').forEach((el,i)=>el.value=values[i]||'');}else form.elements.namedItem(q.id).value=value;}
     const fields=[...form.querySelectorAll('[data-question]')],progress=main.querySelector('#quiz-progress');let step=0,dirty=false,edit=0,saveDelay=null,saving=Promise.resolve(),timer=null;
@@ -140,6 +174,7 @@ export async function renderQuiz({main,api,user,esc,mode='full'}) {
             const script=document.createElement('script');script.src='./vendor/html2pdf.bundle.min.js';script.onload=resolve;script.onerror=()=>reject(new Error('PDF 도구를 불러오지 못했습니다.'));document.head.append(script);
           });
           await document.fonts.ready;
+          await Promise.all([...detail.querySelectorAll('#quiz-printable img')].map((img)=>img.complete?Promise.resolve():img.decode().catch(()=>{})));
           const safeName=String(attempt.student||'학생').replace(/[\/:*?"<>|]/g,'_');
           await globalThis.html2pdf().set({margin:0,filename:'퀴즈_답안_'+safeName+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from(detail.querySelector('#quiz-printable')).save();
         }catch(error){message(error.message);}finally{pdfButton.disabled=false;}
@@ -147,7 +182,7 @@ export async function renderQuiz({main,api,user,esc,mode='full'}) {
     });
     main.querySelectorAll('[data-grade]').forEach((button)=>button.onclick=()=>{
       const a=results.attempts.find((row)=>row.id===button.dataset.grade);
-      detail.innerHTML='<section class="panel"><h2>'+esc(a.student)+' 답안 채점</h2><form id="quiz-grade" class="stack">'+qs.map((q,i)=>'<fieldset class="quiz-question"><legend>'+(i+1)+'. '+esc(q.prompt)+' <small>'+q.points+'점</small></legend><p class="quiz-answer-text">'+esc(a.answers?.[q.id]||'(미작성)')+'</p><p class="hint">'+(q.type==='essay'?'채점 기준: '+esc(q.rubric):q.type==='choice'?'정답: '+esc(q.choices[q.correct]):q.type==='match'?'정답 짝: '+esc(q.pairs.map((v)=>v.left+' → '+v.right).join(', ')):q.type==='order'?'정답 순서: '+esc(q.items.join(' → ')):'허용 답안: '+esc(q.accepted.join(', ')))+'</p><label>점수<input type="number" data-score="'+esc(q.id)+'" min="0" max="'+q.points+'" value="'+(a.grading?.[q.id]?.score??0)+'" required></label><label>피드백<textarea data-feedback="'+esc(q.id)+'" maxlength="2000">'+esc(a.grading?.[q.id]?.feedback||'')+'</textarea></label></fieldset>').join('')+'<button class="primary"'+(a.status==='draft'?' disabled':'')+'>교사 최종 점수 확정</button></form></section>';
+      detail.innerHTML='<section class="panel"><h2>'+esc(a.student)+' 답안 채점</h2><form id="quiz-grade" class="stack">'+qs.map((q,i)=>'<fieldset class="quiz-question"><legend>'+(i+1)+'. '+renderQuestionPrompt(q)+' <small>'+q.points+'점</small></legend><p class="quiz-answer-text">'+esc(a.answers?.[q.id]||'(미작성)')+'</p><p class="hint">'+(q.type==='essay'?'채점 기준: '+esc(q.rubric):q.type==='choice'?'정답: '+esc(q.choices[q.correct]):q.type==='match'?'정답 짝: '+esc(q.pairs.map((v)=>v.left+' → '+v.right).join(', ')):q.type==='order'?'정답 순서: '+esc(q.items.join(' → ')):'허용 답안: '+esc(q.accepted.join(', ')))+'</p><label>점수<input type="number" data-score="'+esc(q.id)+'" min="0" max="'+q.points+'" value="'+(a.grading?.[q.id]?.score??0)+'" required></label><label>피드백<textarea data-feedback="'+esc(q.id)+'" maxlength="2000">'+esc(a.grading?.[q.id]?.feedback||'')+'</textarea></label></fieldset>').join('')+'<button class="primary"'+(a.status==='draft'?' disabled':'')+'>교사 최종 점수 확정</button></form></section>';
       detail.scrollIntoView({behavior:'smooth'});
       detail.querySelector('form').onsubmit=async(e)=>{e.preventDefault();const scores={},feedback={};detail.querySelectorAll('[data-score]').forEach((el)=>scores[el.dataset.score]=Number(el.value));detail.querySelectorAll('[data-feedback]').forEach((el)=>feedback[el.dataset.feedback]=el.value);try{await api('quiz.grade',{id:a.id,version:a.version,scores,feedback});await showResults(id);message('최종 점수를 저장했습니다.');}catch(err){message(err.message);}};
     });

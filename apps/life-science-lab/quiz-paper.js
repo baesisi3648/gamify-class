@@ -1,3 +1,4 @@
+import {renderQuestionPrompt} from './quiz-rich.js';
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
 function answerText(question, raw) {
@@ -27,6 +28,6 @@ export function renderQuizPaper(quiz, attempt) {
     const grade = attempt.grading?.[question.id];
     const score = graded ? `<span class="quiz-paper-score">${escapeHtml(grade?.score ?? 0)} / ${escapeHtml(question.points)}점</span>` : `<span class="quiz-paper-score">${escapeHtml(question.points)}점</span>`;
     const feedback = graded && grade?.feedback ? `<p class="quiz-paper-feedback"><strong>교사 피드백</strong><br>${escapeHtml(grade.feedback)}</p>` : '';
-    return `<section class="quiz-paper-question"><div class="quiz-paper-question-head"><h3><span>${String(index + 1).padStart(2,'0')}</span> ${escapeHtml(question.prompt)}</h3>${score}</div><p class="quiz-paper-label">학생 답안</p><div class="quiz-paper-answer">${escapeHtml(answerText(question, attempt.answers?.[question.id]))}</div>${feedback}</section>`;
+    return `<section class="quiz-paper-question"><div class="quiz-paper-question-head"><h3><span>${String(index + 1).padStart(2,'0')}</span> ${renderQuestionPrompt(question)}</h3>${score}</div><p class="quiz-paper-label">학생 답안</p><div class="quiz-paper-answer">${escapeHtml(answerText(question, attempt.answers?.[question.id]))}</div>${feedback}</section>`;
   }).join('')}</div><footer class="quiz-paper-footer">${questions.length}문항 · 총 ${total}점</footer></article>`;
 }

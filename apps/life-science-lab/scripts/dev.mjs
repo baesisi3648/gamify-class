@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { handle } from '../server/api.js';
 import { handleReportImage } from '../server/report-images.js';
+import { handleQuizImage } from '../server/quiz-images.js';
 import { fixture } from '../test/fixture.js';
 import { passwordHash, randomHex } from '../server/auth.js';
 const app = fileURLToPath(new URL('../',import.meta.url)), root=path.resolve(app,'../..');
@@ -18,7 +19,7 @@ const env=demo?{ LAB_SESSION_SECRET:randomHex(32),LAB_ADMIN_HASH:await passwordH
 const f=demo?fixture():null;
 if(f)for(const s of f.db.all('Students'))f.db.put('Students',{...s,passwordHash:await passwordHash('student-demo-2026')});
 const repo=f?{execute:async(a,p,u)=>f.run(a,p,u || {})}:undefined;
-const allowed=new Set(['index.html','app.js','quiz.js','quiz-paper.js','styles.css','seed.js','autosave.js','draft-store.js','roster.js','report-document.js','vendor/qrcode.mjs','vendor/xlsx.full.min.js','vendor/html2pdf.bundle.min.js']);
+const allowed=new Set(['index.html','app.js','quiz.js','quiz-paper.js','quiz-rich.js','styles.css','seed.js','autosave.js','draft-store.js','roster.js','report-document.js','vendor/qrcode.mjs','vendor/xlsx.full.min.js','vendor/html2pdf.bundle.min.js']);
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.woff2':'font/woff2'};
 http.createServer(async(req,res)=>{
   try{
@@ -27,7 +28,7 @@ http.createServer(async(req,res)=>{
       const chunks=[];for await(const chunk of req)chunks.push(chunk);
       const body=Buffer.concat(chunks);
       const request=new Request(url,{method:req.method,headers:req.headers,...(!['GET','HEAD'].includes(req.method)?{body,duplex:'half'}:{})});
-      const result=url.pathname.startsWith('/api/lab/report-image/')?await handleReportImage(request,env,repo):await handle(request,env,repo);
+      const result=url.pathname.startsWith('/api/lab/report-image/')?await handleReportImage(request,env,repo):url.pathname.startsWith('/api/lab/quiz-image')?await handleQuizImage(request,env):await handle(request,env,repo);
       res.writeHead(result.status,Object.fromEntries(result.headers));res.end(Buffer.from(await result.arrayBuffer()));return;
     }
     let file;

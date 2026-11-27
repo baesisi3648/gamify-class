@@ -435,6 +435,16 @@ footer > a { color: var(--green); font-size: 11px; font-weight: 650; letter-spac
 .quiz-prompt { display: block; }
 .quiz-prompt textarea { font-size: 1.2rem; font-weight: 650; min-height: 88px; border: 0; border-bottom: 2px solid #9eb9ed; border-radius: 0; resize: vertical; }
 .quiz-prompt textarea::placeholder, .quiz-option-row input::placeholder { color: #8d97aa; }
+.quiz-prompt-toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.quiz-prompt-toolbar button { padding: 8px 12px; background: #fff; border: 1px solid #dce3ee; color: #263d60; font-weight: 700; }
+.quiz-rich-editor { min-height: 100px; padding: 12px 3px; border-bottom: 2px solid #9eb9ed; font-size: 1.2rem; font-weight: 650; line-height: 1.6; white-space: pre-wrap; outline: 0; overflow-wrap: anywhere; }
+.quiz-rich-editor:focus { border-color: #426cd2; }
+.quiz-rich-editor:empty::before { content: attr(data-placeholder); color: #8d97aa; }
+.quiz-rich-editor img, .quiz-prompt-image { display: block; max-width: 100%; max-height: 420px; width: auto; height: auto; object-fit: contain; margin: 12px 0; }
+.quiz-underlined { text-decoration: underline; text-underline-offset: 3px; }
+.quiz-highlighted { background: #fff2a8; box-decoration-break: clone; }
+.quiz-rich-editor u { text-underline-offset: 3px; }
+.quiz-rich-editor mark { background: #fff2a8; }
 .quiz-kind-fields { margin: 20px 0; }
 .quiz-option-row { margin: 10px 0; }
 .quiz-drag-handle { cursor: grab; user-select: none; touch-action: none; padding: 8px 3px; color: #52637c; font-weight: 800; }

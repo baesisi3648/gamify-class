@@ -109,3 +109,20 @@ test('보기·유형별 문항 섞기를 켜도 재입장과 자동 채점이 �
   assert.equal(Object.values(result.attempts[0].grading).reduce((sum,grade)=>sum+grade.score,0),6);
   assert.deepEqual(result.quiz.questions.map((q)=>q.id),['c1','o1','c2','o2']);
 });
+
+test('이미지·밑줄·하이라이트 문항을 저장하고 학생에게 안전한 구조만 전달한다',async()=>{
+  const LAB_DB=d1Shim();for(const name of ['0003_quizzes.sql','0004_quiz_timer.sql','0005_quiz_shuffle.sql'])LAB_DB.raw.exec(readFileSync(new URL('../migrations/'+name,import.meta.url),'utf8'));
+  const student={id:'rich-student',groupId:'legacy',authVersion:1,active:true,name:'이미지학생'};
+  LAB_DB.raw.prepare('INSERT INTO Students (id,grp,data) VALUES (?,?,?)').run(student.id,'legacy',JSON.stringify(student));
+  const env={LAB_DB},teacher={role:'teacher',groupId:'legacy',owner:true},pupil={role:'student',groupId:'legacy',id:student.id,authVersion:1};
+  const call=(action,p={},actor=teacher)=>handleQuiz(action,p,actor,env);
+  const image='11111111-2222-4333-8444-555555555555';
+  const question={type:'ox',points:2,accepted:'O',promptParts:[{text:'<효소>가 작용한다.',underline:true,highlight:true},{image}]};
+  const {id}=await call('quiz.create',{title:'그림 문제',questions:[question]});
+  await call('quiz.status',{id,status:'open'});
+  const view=await call('quiz.attempt',{quizId:id},pupil);
+  assert.deepEqual(view.quiz.questions[0].promptParts,question.promptParts);
+  assert.equal(view.quiz.questions[0].prompt,'<효소>가 작용한다.[이미지]');
+  assert.equal(view.quiz.questions[0].accepted,undefined);
+  await assert.rejects(call('quiz.create',{title:'위험한 그림',questions:[{...question,promptParts:[{image:'javascript:alert(1)'}]}]}),{status:400});
+});

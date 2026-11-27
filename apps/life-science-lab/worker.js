@@ -2,10 +2,12 @@ import { handle } from './server/api.js';
 import { repositoryFor } from './server/api.js';
 import { syncToSheets } from './server/sheets-sync.js';
 import { handleReportImage } from './server/report-images.js';
+import { handleQuizImage } from './server/quiz-images.js';
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/api/lab/report-image/')) return handleReportImage(request, env, repositoryFor(env));
+    if (url.pathname.startsWith('/api/lab/quiz-image')) return handleQuizImage(request, env);
     if (url.pathname.startsWith('/api/lab/')) return handle(request, env);
     if (url.pathname.startsWith('/apps/life-science-lab/')) {
       url.pathname = url.pathname.slice('/apps/life-science-lab'.length) || '/';

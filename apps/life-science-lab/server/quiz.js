@@ -2,9 +2,10 @@ import {studentQuestionOrder} from './quiz-order.js';
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 const parse = (value) => JSON.parse(value || '[]');
 const clean = (value) => String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, '').toLocaleLowerCase('ko');
+const imageIdPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const quizRow = (row, teacher = false, attemptId = '') => row && ({ id:row.id, title:row.title, status:row.status, timeLimitMinutes:row.timeLimitMinutes||0,
   shuffleChoices:!!row.shuffleChoices,shuffleQuestions:!!row.shuffleQuestions,
-  questions:teacher ? parse(row.questions) : studentQuestionOrder(parse(row.questions).map((q) => ({id:q.id,type:q.type,prompt:q.prompt,points:q.points,hint:q.hint||'',
+  questions:teacher ? parse(row.questions) : studentQuestionOrder(parse(row.questions).map((q) => ({id:q.id,type:q.type,prompt:q.prompt,promptParts:q.promptParts,points:q.points,hint:q.hint||'',
     choices:q.type==='choice'?q.choices:undefined,
     pairs:q.type==='match'?q.pairs.map((v)=>v.left):undefined,
     options:q.type==='match'?q.pairs.map((v)=>v.right).reverse():q.type==='order'?[...q.items].reverse():undefined})),{shuffleChoices:!!row.shuffleChoices,shuffleQuestions:!!row.shuffleQuestions},attemptId),
@@ -15,7 +16,12 @@ const attemptRow = (row, teacher = false) => row && ({ id:row.id, quizId:row.qui
 const question = (raw) => {
   const type=String(raw.type||'');
   if (!['choice','short','ox','essay','match','order'].includes(type)) fail(400,'문항 유형을 선택하세요.');
-  const prompt=String(raw.prompt||'').trim();
+  const promptParts=Array.isArray(raw.promptParts)?raw.promptParts:null;
+  if(promptParts && (promptParts.length>100||promptParts.some((part)=>!part||typeof part!=='object'||
+    !(typeof part.text==='string'&&part.text.length<=1000&&typeof part.underline==='boolean'&&typeof part.highlight==='boolean'||typeof part.image==='string'&&imageIdPattern.test(part.image))||
+    typeof part.text==='string'&&part.image)))fail(400,'문제 내용을 확인해 주세요.');
+  if(promptParts && promptParts.filter((part)=>part.image).length>4)fail(400,'문제 이미지는 최대 4장까지 등록할 수 있습니다.');
+  const prompt=promptParts?promptParts.map((part)=>part.image?'[이미지]':part.text).join('').trim():String(raw.prompt||'').trim();
   const points=Number(raw.points);
   if (!prompt || prompt.length>1000 || !Number.isInteger(points) || points<1 || points>100) fail(400,'문항과 1~100점 배점을 확인하세요.');
   const accepted=['short','ox'].includes(type) ? String(raw.accepted||'').split(/\n|,/).map((s)=>s.trim()).filter(Boolean).slice(0,20) : [];
@@ -30,7 +36,7 @@ const question = (raw) => {
   if(type==='match' && (pairs.length<2 || pairs.some((v)=>!v.left||!v.right))) fail(400,'짝맞추기는 두 쌍 이상을 완성하세요.');
   const items=type==='order' ? (Array.isArray(raw.items)?raw.items:[]).map((v)=>String(v||'').trim()).slice(0,10) : [];
   if(type==='order' && (items.length<2 || items.some((v)=>!v))) fail(400,'순서맞추기는 두 단계 이상을 입력하세요.');
-  return {id:String(raw.id||crypto.randomUUID()),type,prompt,points,accepted,rubric,choices,correct,pairs,items,strict:raw.strict===true,hint:String(raw.hint||'').trim().slice(0,500)};
+  return {id:String(raw.id||crypto.randomUUID()),type,prompt,...(promptParts?{promptParts}:{}),points,accepted,rubric,choices,correct,pairs,items,strict:raw.strict===true,hint:String(raw.hint||'').trim().slice(0,500)};
 };
 function automatic(q,answer) {
   if(q.type==='essay') return {score:null,source:'teacher-pending',feedback:''};
